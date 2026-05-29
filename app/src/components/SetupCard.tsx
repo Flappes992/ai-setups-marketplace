@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
 import { Setup } from '@/types/setup';
 
@@ -46,9 +45,7 @@ const styles = StyleSheet.create({
     height,
     backgroundColor: '#000',
   },
-  thumbnail: {
-    ...StyleSheet.absoluteFillObject,
-  },
+  thumbnail: StyleSheet.absoluteFill,
   overlay: {
     position: 'absolute',
     bottom: 80,

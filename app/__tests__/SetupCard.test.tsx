@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react-native';
 import { SetupCard } from '@/components/SetupCard';
 import { mockSetups } from '@/mocks/setups';
