@@ -4,11 +4,11 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SetupCard } from '@/components/SetupCard';
 import { mockSetups } from '@/mocks/setups';
 import { Setup } from '@/types/setup';
-import { RootStackParamList } from '@/navigation/RootNavigator';
+import { MainStackParamList } from '@/navigation/RootNavigator';
 
 const { height } = Dimensions.get('window');
 
-type FeedNav = NativeStackNavigationProp<RootStackParamList, 'Feed'>;
+type FeedNav = NativeStackNavigationProp<MainStackParamList, 'Feed'>;
 
 export function FeedScreen() {
   const navigation = useNavigation<FeedNav>();
