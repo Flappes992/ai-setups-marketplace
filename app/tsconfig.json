@@ -11,8 +11,7 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "types": ["jest"],
-    "ignoreDeprecations": "6.0"
+    "types": ["jest"]
   },
   "include": ["**/*.ts", "**/*.tsx"]
 }

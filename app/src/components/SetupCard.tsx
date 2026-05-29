@@ -41,7 +41,13 @@ const styles = StyleSheet.create({
     height,
     backgroundColor: '#000',
   },
-  thumbnail: StyleSheet.absoluteFill,
+  thumbnail: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   overlay: {
     position: 'absolute',
     bottom: 80,
