@@ -17,11 +17,7 @@ function formatPriceEur(cents: number): string {
 export function SetupCard({ setup }: SetupCardProps) {
   return (
     <View style={styles.container}>
-      <Image
-        source={{ uri: setup.videoThumbnail }}
-        style={styles.thumbnail}
-        resizeMode="cover"
-      />
+      <Image source={{ uri: setup.videoThumbnail }} style={styles.thumbnail} resizeMode="cover" />
       <View style={styles.overlay}>
         <View style={styles.creatorRow}>
           <Image source={{ uri: setup.creator.avatarUrl }} style={styles.avatar} />
