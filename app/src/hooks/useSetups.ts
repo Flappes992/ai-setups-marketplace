@@ -21,7 +21,7 @@ export function useSetups(): UseSetupsResult {
     setError(null);
     const { data, error: fetchError } = await supabase
       .from('setups')
-      .select('*, creator:profiles(*)')
+      .select('*, creator:profiles!setups_creator_id_fkey(*)')
       .eq('status', 'live')
       .order('created_at', { ascending: false });
 
