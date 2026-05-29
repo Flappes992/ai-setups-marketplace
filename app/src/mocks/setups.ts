@@ -1,0 +1,114 @@
+import { Setup } from '@/types/setup';
+
+const creatorA: Setup['creator'] = {
+  id: 'c1',
+  username: 'lukas_ai',
+  displayName: 'Lukas',
+  avatarUrl: 'https://i.pravatar.cc/150?img=12',
+  bio: 'ChatGPT-Setups für Solopreneure. 3 Jahre Prompt-Engineering.',
+  ratingAverage: 4.8,
+  setupsCount: 14,
+};
+
+const creatorB: Setup['creator'] = {
+  id: 'c2',
+  username: 'maya_workflows',
+  displayName: 'Maya',
+  avatarUrl: 'https://i.pravatar.cc/150?img=47',
+  bio: 'Automationen mit n8n und Claude. Spare 10h/Woche.',
+  ratingAverage: 4.6,
+  setupsCount: 8,
+};
+
+const creatorC: Setup['creator'] = {
+  id: 'c3',
+  username: 'finn_codes',
+  displayName: 'Finn',
+  avatarUrl: 'https://i.pravatar.cc/150?img=33',
+  bio: 'Custom GPTs für Studenten und Lerner.',
+  ratingAverage: 4.9,
+  setupsCount: 22,
+};
+
+export const mockSetups: Setup[] = [
+  {
+    id: 's1',
+    creator: creatorA,
+    title: 'Cold-Email Automation mit Claude',
+    description:
+      'Komplettes Setup für personalisierte Cold-Outreach. Custom GPT + n8n-Workflow + Notion-CRM. 50 Mails/Tag automatisiert.',
+    videoUrl: 'https://placeholder-video.com/v1.mp4',
+    videoThumbnail: 'https://picsum.photos/seed/s1/800/1200',
+    assetType: 'clonable',
+    priceCents: 2900,
+    currency: 'EUR',
+    tags: ['n8n', 'claude', 'sales', 'automation'],
+    ratingAverage: 4.7,
+    ratingsCount: 28,
+    createdAt: '2026-05-20T10:00:00Z',
+  },
+  {
+    id: 's2',
+    creator: creatorB,
+    title: 'Daily-Standup-Bot für Discord',
+    description:
+      'Async Standup automatisiert. Discord-Bot fragt täglich um 9 Uhr nach, sammelt Antworten in Notion, schickt Summary an PM.',
+    videoUrl: 'https://placeholder-video.com/v2.mp4',
+    videoThumbnail: 'https://picsum.photos/seed/s2/800/1200',
+    assetType: 'tutorial_bundle',
+    priceCents: 1500,
+    currency: 'EUR',
+    tags: ['discord', 'notion', 'team', 'productivity'],
+    ratingAverage: 4.4,
+    ratingsCount: 12,
+    createdAt: '2026-05-18T14:30:00Z',
+  },
+  {
+    id: 's3',
+    creator: creatorC,
+    title: 'Uni-Notizen Custom GPT',
+    description:
+      'GPT der Vorlesungs-Audios transkribiert, Karteikarten erstellt und Lernpläne generiert. Mit System-Prompt-Pack.',
+    videoUrl: 'https://placeholder-video.com/v3.mp4',
+    videoThumbnail: 'https://picsum.photos/seed/s3/800/1200',
+    assetType: 'clonable',
+    priceCents: 990,
+    currency: 'EUR',
+    tags: ['chatgpt', 'lernen', 'studium'],
+    ratingAverage: 4.9,
+    ratingsCount: 67,
+    createdAt: '2026-05-22T09:15:00Z',
+  },
+  {
+    id: 's4',
+    creator: creatorA,
+    title: 'Content-Engine für LinkedIn',
+    description:
+      'Multi-Step-Workflow der aus 1 Idee 5 LinkedIn-Posts macht, mit personalisierter Voice. Inkl. Notion-Template + Claude-Prompts.',
+    videoUrl: 'https://placeholder-video.com/v4.mp4',
+    videoThumbnail: 'https://picsum.photos/seed/s4/800/1200',
+    assetType: 'tutorial_bundle',
+    priceCents: 3900,
+    currency: 'EUR',
+    tags: ['content', 'linkedin', 'claude', 'notion'],
+    ratingAverage: 4.5,
+    ratingsCount: 19,
+    createdAt: '2026-05-15T08:00:00Z',
+  },
+  {
+    id: 's5',
+    creator: creatorB,
+    title: 'Receipt-Scanner für Steuerberater',
+    description:
+      'Fotografieren → GPT-4o-Vision extrahiert → Buchungssatz vorschlagen → DATEV-Export. Sparte mir 4h/Woche.',
+    videoUrl: 'https://placeholder-video.com/v5.mp4',
+    videoThumbnail: 'https://picsum.photos/seed/s5/800/1200',
+    assetType: 'clonable',
+    priceCents: 4900,
+    currency: 'EUR',
+    tags: ['vision', 'gpt-4', 'finance', 'datev'],
+    ratingAverage: 4.8,
+    ratingsCount: 9,
+    createdAt: '2026-05-19T16:45:00Z',
+  },
+];
