@@ -1,0 +1,29 @@
+import { render, screen } from '@testing-library/react-native';
+import { SetupDetailScreen } from '@/screens/SetupDetailScreen';
+import { mockSetups } from '@/mocks/setups';
+
+describe('SetupDetailScreen', () => {
+  const setup = mockSetups[0];
+
+  it('renders setup full description', () => {
+    render(<SetupDetailScreen setup={setup} />);
+    expect(screen.getByText(setup.description)).toBeTruthy();
+  });
+
+  it('renders price button text', () => {
+    render(<SetupDetailScreen setup={setup} />);
+    expect(screen.getByText(/29,00 €/)).toBeTruthy();
+  });
+
+  it('renders creator bio', () => {
+    render(<SetupDetailScreen setup={setup} />);
+    expect(screen.getByText(setup.creator.bio)).toBeTruthy();
+  });
+
+  it('renders tags', () => {
+    render(<SetupDetailScreen setup={setup} />);
+    setup.tags.forEach((tag) => {
+      expect(screen.getByText(`#${tag}`)).toBeTruthy();
+    });
+  });
+});
