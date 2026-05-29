@@ -1,4 +1,5 @@
-export type AssetType = 'clonable' | 'tutorial_bundle';
+import { AssetType } from '@/types/database';
+export type { AssetType };
 
 export interface Creator {
   id: string;
