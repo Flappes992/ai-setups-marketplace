@@ -195,9 +195,9 @@ Diese Win-Win-Win-Logik ist Nordstern für jede Produkt-Entscheidung: Wenn ein F
 
 | Käufer-Typ / Creator-Typ | Plattform-Provision | Creator behält |
 |---|---|---|
-| Alle Creators (auch Founding) | **10 %** | 90 % |
+| Alle Creators (auch Founding) | **15 %** | 85 % |
 
-✅ ENTSCHIEDEN (2026-05-29): Einheitliche 10 %, kein Founding-Bonus. Founding-Creators bekommen stattdessen nicht-monetäre Anreize (z.B. „Founding"-Badge im Profil, optionale Feed-Boosts in den ersten Launch-Wochen) — Details in V1.5-Spec.
+✅ ENTSCHIEDEN (2026-05-30): Einheitliche 15 %, kein Founding-Bonus. Begründung: Plattform liefert Discovery (Feed) + Payment-Compliance + Refund-Risk + App-Store-Distribution. Vergleichbar mit Gumroad/Etsy/Substack-Niveau, deutlich unter App-Store (15-30 %). Höher zu setzen ist später schwer ohne Creator-Goodwill zu verbrennen — defensive 10 % wären zu viel Geld auf dem Tisch gelassen. Founding-Creators bekommen nicht-monetäre Anreize („Founding"-Badge, Feed-Boost in den ersten Launch-Wochen) — Details in V1.5-Spec.
 
 **Stripe-Gebühren** (~1,5 % + 0,25 € pro Transaktion in EU): werden **on top** auf den Käuferpreis gerechnet, sodass Creator+Plattform die volle Brutto-Summe teilen. Standard Marketplace-Praxis.
 
