@@ -7,7 +7,12 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { Setup } from '@/types/setup';
+
+function isVideoUrl(url: string): boolean {
+  return /\.(mp4|mov|m4v|webm)(\?|$)/i.test(url);
+}
 
 interface SetupDetailScreenProps {
   setup: Setup;
@@ -21,10 +26,21 @@ function formatPriceEur(cents: number): string {
 }
 
 export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
+  const heroUrl = setup.videoUrl || setup.videoThumbnail;
+  const hasVideo = isVideoUrl(heroUrl);
+  const player = useVideoPlayer(hasVideo ? heroUrl : '', (p) => {
+    p.loop = true;
+    p.muted = false;
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Image source={{ uri: setup.videoThumbnail }} style={styles.hero} resizeMode="cover" />
+        {hasVideo ? (
+          <VideoView player={player} style={styles.hero} nativeControls contentFit="cover" />
+        ) : (
+          <Image source={{ uri: setup.videoThumbnail }} style={styles.hero} resizeMode="cover" />
+        )}
 
         <View style={styles.body}>
           <Text style={styles.title}>{setup.title}</Text>

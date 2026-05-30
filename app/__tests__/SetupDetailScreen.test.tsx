@@ -2,6 +2,11 @@ import { render, screen } from '@testing-library/react-native';
 import { SetupDetailScreen } from '@/screens/SetupDetailScreen';
 import { mockSetups } from '@/mocks/setups';
 
+jest.mock('expo-video', () => ({
+  useVideoPlayer: () => ({}),
+  VideoView: () => null,
+}));
+
 describe('SetupDetailScreen', () => {
   const setup = mockSetups[0];
 

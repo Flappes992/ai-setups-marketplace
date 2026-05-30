@@ -8,17 +8,41 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AssetType } from '@/types/database';
+import type { MainStackParamList } from '@/navigation/RootNavigator';
+import { useAuth } from '@/auth/useAuth';
+import { supabase } from '@/services/supabase';
+import { uploadFileToStorage } from '@/services/storage';
+
+type UploadNav = NativeStackNavigationProp<MainStackParamList, 'SetupUpload'>;
 
 export function SetupUploadScreen() {
+  const navigation = useNavigation<UploadNav>();
+  const { session } = useAuth();
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tagsInput, setTagsInput] = useState('');
   const [priceEur, setPriceEur] = useState('');
   const [assetType, setAssetType] = useState<AssetType>('clonable');
   const [assetUrl, setAssetUrl] = useState('');
+  const [videoUri, setVideoUri] = useState<string | null>(null);
+  const [bundleUri, setBundleUri] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const videoPlayer = useVideoPlayer(videoUri ?? '', (player) => {
+    player.loop = true;
+    player.muted = true;
+  });
 
   const tagsArray = tagsInput
     .split(',')
@@ -28,11 +52,84 @@ export function SetupUploadScreen() {
   const priceCents = Math.round(parseFloat(priceEur.replace(',', '.')) * 100) || 0;
 
   const valid =
+    !!videoUri &&
     title.trim().length >= 3 &&
     description.trim().length >= 20 &&
     tagsArray.length >= 1 &&
     priceCents >= 500 &&
-    (assetType === 'clonable' ? assetUrl.startsWith('https://') : true);
+    (assetType === 'clonable' ? assetUrl.startsWith('https://') : !!bundleUri);
+
+  async function pickVideo() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: 'videos',
+      videoMaxDuration: 60,
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setVideoUri(result.assets[0].uri);
+    }
+  }
+
+  async function pickBundle() {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['application/pdf', 'video/*'],
+      copyToCacheDirectory: true,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setBundleUri(result.assets[0].uri);
+    }
+  }
+
+  async function handleSubmit() {
+    if (!session?.user?.id || !videoUri) return;
+    setSubmitting(true);
+    try {
+      const videoUpload = await uploadFileToStorage(
+        'setup-videos',
+        videoUri,
+        session.user.id,
+        'mp4',
+      );
+
+      let finalAssetUrl: string;
+      if (assetType === 'tutorial_bundle') {
+        if (!bundleUri) throw new Error('Bundle-Datei fehlt');
+        const assetUpload = await uploadFileToStorage(
+          'setup-assets',
+          bundleUri,
+          session.user.id,
+          'pdf',
+        );
+        finalAssetUrl = assetUpload.publicUrl;
+      } else {
+        finalAssetUrl = assetUrl;
+      }
+
+      const { error: insertError } = await supabase.from('setups').insert({
+        creator_id: session.user.id,
+        title: title.trim(),
+        description: description.trim(),
+        video_url: videoUpload.publicUrl,
+        video_thumbnail: videoUpload.publicUrl,
+        asset_type: assetType,
+        asset_url: finalAssetUrl,
+        price_cents: priceCents,
+        currency: 'EUR',
+        tags: tagsArray,
+        status: 'live',
+      });
+      if (insertError) throw new Error(insertError.message);
+
+      Alert.alert('Live!', 'Dein Setup ist veröffentlicht.', [
+        { text: 'OK', onPress: () => navigation.popToTop() },
+      ]);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unbekannter Fehler';
+      Alert.alert('Fehler', msg);
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -44,9 +141,28 @@ export function SetupUploadScreen() {
           <Text style={styles.title}>Neues Setup</Text>
 
           <Section label="Video">
-            <View style={styles.videoPlaceholder}>
-              <Text style={styles.placeholderText}>Video-Picker kommt in Task 2</Text>
-            </View>
+            {videoUri ? (
+              <View>
+                <VideoView
+                  player={videoPlayer}
+                  style={styles.videoPreview}
+                  nativeControls={false}
+                  contentFit="cover"
+                />
+                <TouchableOpacity onPress={pickVideo} style={styles.secondaryButton}>
+                  <Text style={styles.secondaryText}>Anderes Video wählen</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                onPress={pickVideo}
+                style={styles.pickerArea}
+                accessibilityLabel="upload-video-pick"
+              >
+                <Text style={styles.pickerText}>Video aus Gallery wählen</Text>
+                <Text style={styles.pickerHint}>max. 60 Sek vertikal</Text>
+              </TouchableOpacity>
+            )}
           </Section>
 
           <Section label="Titel">
@@ -141,10 +257,16 @@ export function SetupUploadScreen() {
               />
             </Section>
           ) : (
-            <Section label="Asset-Files">
-              <View style={styles.videoPlaceholder}>
-                <Text style={styles.placeholderText}>PDF + Video Upload kommt in Task 4</Text>
-              </View>
+            <Section label="Bundle-Datei (PDF oder Video)">
+              <TouchableOpacity
+                onPress={pickBundle}
+                style={styles.pickerArea}
+                accessibilityLabel="upload-pick-bundle"
+              >
+                <Text style={styles.pickerText}>
+                  {bundleUri ? 'Datei gewählt — ändern' : 'PDF oder Video wählen'}
+                </Text>
+              </TouchableOpacity>
             </Section>
           )}
 
@@ -162,11 +284,16 @@ export function SetupUploadScreen() {
 
           <TouchableOpacity
             style={[styles.submit, !valid && styles.submitDisabled]}
-            disabled={!valid}
+            disabled={!valid || submitting}
+            onPress={handleSubmit}
             accessibilityLabel="upload-submit"
-            accessibilityState={{ disabled: !valid }}
+            accessibilityState={{ disabled: !valid || submitting }}
           >
-            <Text style={styles.submitText}>Veröffentlichen</Text>
+            {submitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.submitText}>Veröffentlichen</Text>
+            )}
           </TouchableOpacity>
 
           <Text style={styles.disclaimer}>
@@ -209,7 +336,7 @@ const styles = StyleSheet.create({
   },
   textarea: { minHeight: 100, textAlignVertical: 'top' },
   hint: { fontSize: 12, color: '#888', marginTop: 4 },
-  videoPlaceholder: {
+  pickerArea: {
     backgroundColor: '#f5f5f5',
     borderRadius: 12,
     padding: 30,
@@ -218,7 +345,17 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
     borderStyle: 'dashed',
   },
-  placeholderText: { color: '#999', fontSize: 14 },
+  pickerText: { color: '#111', fontSize: 15, fontWeight: '600' },
+  pickerHint: { color: '#888', fontSize: 12, marginTop: 4 },
+  videoPreview: {
+    width: '100%',
+    aspectRatio: 9 / 16,
+    maxHeight: 360,
+    borderRadius: 12,
+    backgroundColor: '#000',
+  },
+  secondaryButton: { marginTop: 8, alignItems: 'center' },
+  secondaryText: { color: '#666', fontSize: 14 },
   tagPreview: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
   tagChip: {
     backgroundColor: '#f0f0f0',
