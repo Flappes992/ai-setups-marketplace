@@ -2,14 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
-
-const PLATFORM_FEE_PERCENT = Number(process.env.PLATFORM_FEE_PERCENT ?? 15);
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+export const dynamic = 'force-dynamic';
 
 interface RequestBody {
   setup_id: string;
@@ -18,6 +11,19 @@ interface RequestBody {
 
 export async function POST(req: NextRequest) {
   try {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!stripeKey || !supabaseUrl || !supabaseServiceRoleKey) {
+      return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
+    }
+
+    const stripe = new Stripe(stripeKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+    const platformFeePercent = Number(process.env.PLATFORM_FEE_PERCENT ?? 15);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+
     const body = (await req.json()) as RequestBody;
     if (!body.setup_id || !body.buyer_user_id) {
       return NextResponse.json({ error: 'Missing setup_id or buyer_user_id' }, { status: 400 });
@@ -38,7 +44,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Cannot buy your own setup' }, { status: 400 });
     }
 
-    const platformFee = Math.round((setup.price_cents * PLATFORM_FEE_PERCENT) / 100);
+    const platformFee = Math.round((setup.price_cents * platformFeePercent) / 100);
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -56,8 +62,8 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${APP_URL}/cancel`,
+      success_url: `${appUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/cancel`,
       metadata: {
         setup_id: setup.id,
         buyer_user_id: body.buyer_user_id,
