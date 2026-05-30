@@ -19,6 +19,7 @@ export interface Setup {
   videoUrl: string;
   videoThumbnail: string;
   assetType: AssetType;
+  assetUrl: string;
   /** Preis in Cents */
   priceCents: number;
   currency: 'EUR';

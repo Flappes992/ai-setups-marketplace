@@ -22,6 +22,7 @@ export function mapDbSetupToSetup(db: DbSetupWithCreator): Setup {
     videoUrl: db.video_url ?? '',
     videoThumbnail: db.video_thumbnail,
     assetType: db.asset_type,
+    assetUrl: db.asset_url ?? '',
     priceCents: db.price_cents,
     currency: db.currency as 'EUR',
     tags: db.tags,

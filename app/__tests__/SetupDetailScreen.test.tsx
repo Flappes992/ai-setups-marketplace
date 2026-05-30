@@ -7,6 +7,18 @@ jest.mock('expo-video', () => ({
   VideoView: () => null,
 }));
 
+jest.mock('expo-web-browser', () => ({
+  openBrowserAsync: jest.fn(),
+}));
+
+jest.mock('@/auth/useAuth', () => ({
+  useAuth: () => ({ session: { user: { id: 'buyer-1' } }, loading: false }),
+}));
+
+jest.mock('@/hooks/usePurchase', () => ({
+  usePurchase: () => ({ purchase: null, loading: false, refetch: jest.fn() }),
+}));
+
 describe('SetupDetailScreen', () => {
   const setup = mockSetups[0];
 

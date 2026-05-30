@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,16 +7,20 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  ActivityIndicator,
+  Alert,
+  Linking,
 } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import * as WebBrowser from 'expo-web-browser';
 import { Setup } from '@/types/setup';
+import { useAuth } from '@/auth/useAuth';
+import { usePurchase } from '@/hooks/usePurchase';
+
+const WEB_CHECKOUT_BASE = 'https://web-checkout-sicci-s-projects.vercel.app';
 
 function isVideoUrl(url: string): boolean {
   return /\.(mp4|mov|m4v|webm)(\?|$)/i.test(url);
-}
-
-interface SetupDetailScreenProps {
-  setup: Setup;
 }
 
 function formatPriceEur(cents: number): string {
@@ -25,13 +30,76 @@ function formatPriceEur(cents: number): string {
   }).format(cents / 100);
 }
 
+interface SetupDetailScreenProps {
+  setup: Setup;
+}
+
 export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
+  const { session } = useAuth();
+  const userId = session?.user?.id;
+  const isOwner = userId === setup.creator.id;
+  const { purchase, refetch } = usePurchase(setup.id, userId);
+  const [busy, setBusy] = useState(false);
+  const [polling, setPolling] = useState(false);
+
   const heroUrl = setup.videoUrl || setup.videoThumbnail;
   const hasVideo = isVideoUrl(heroUrl);
   const player = useVideoPlayer(hasVideo ? heroUrl : '', (p) => {
     p.loop = true;
     p.muted = false;
   });
+
+  useEffect(() => {
+    if (!polling) return;
+    const interval = setInterval(() => refetch(), 2500);
+    const timeout = setTimeout(() => setPolling(false), 30000);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [polling, refetch]);
+
+  useEffect(() => {
+    if (polling && purchase?.status === 'completed') {
+      setPolling(false);
+    }
+  }, [polling, purchase?.status]);
+
+  const handleBuy = useCallback(async () => {
+    if (!userId) {
+      Alert.alert('Bitte erst einloggen');
+      return;
+    }
+    setBusy(true);
+    try {
+      const url = `${WEB_CHECKOUT_BASE}/?setup_id=${encodeURIComponent(
+        setup.id,
+      )}&buyer_user_id=${encodeURIComponent(userId)}`;
+      await WebBrowser.openBrowserAsync(url);
+      setPolling(true);
+      await refetch();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unbekannter Fehler';
+      Alert.alert('Fehler', msg);
+    } finally {
+      setBusy(false);
+    }
+  }, [userId, setup.id, refetch]);
+
+  const handleOpenAsset = useCallback(async () => {
+    if (!setup.assetUrl) {
+      Alert.alert('Asset-Link fehlt');
+      return;
+    }
+    await Linking.openURL(setup.assetUrl);
+  }, [setup.assetUrl]);
+
+  const buttonState = (() => {
+    if (isOwner) return 'owner' as const;
+    if (purchase?.status === 'completed') return 'owned' as const;
+    if (polling || purchase?.status === 'pending') return 'pending' as const;
+    return 'buy' as const;
+  })();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -80,43 +148,57 @@ export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
       </ScrollView>
 
       <View style={styles.purchaseBar}>
-        <TouchableOpacity style={styles.purchaseButton} activeOpacity={0.85}>
-          <Text style={styles.purchaseButtonText}>
-            Setup holen · {formatPriceEur(setup.priceCents)}
-          </Text>
-        </TouchableOpacity>
+        {buttonState === 'owner' && (
+          <View style={[styles.purchaseButton, styles.disabledButton]}>
+            <Text style={styles.purchaseButtonText}>Eigenes Setup</Text>
+          </View>
+        )}
+        {buttonState === 'owned' && (
+          <TouchableOpacity
+            style={[styles.purchaseButton, styles.ownedButton]}
+            onPress={handleOpenAsset}
+            accessibilityLabel="open-asset"
+          >
+            <Text style={styles.purchaseButtonText}>
+              {setup.assetType === 'clonable' ? 'Template öffnen' : 'Bundle herunterladen'}
+            </Text>
+          </TouchableOpacity>
+        )}
+        {buttonState === 'pending' && (
+          <View style={[styles.purchaseButton, styles.disabledButton]}>
+            <ActivityIndicator color="#fff" />
+            <Text style={[styles.purchaseButtonText, { marginLeft: 10 }]}>Bezahlung läuft…</Text>
+          </View>
+        )}
+        {buttonState === 'buy' && (
+          <TouchableOpacity
+            style={styles.purchaseButton}
+            activeOpacity={0.85}
+            disabled={busy}
+            onPress={handleBuy}
+            accessibilityLabel="open-checkout"
+          >
+            {busy ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.purchaseButtonText}>
+                Setup holen · {formatPriceEur(setup.priceCents)}
+              </Text>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  content: {
-    paddingBottom: 120,
-  },
-  hero: {
-    width: '100%',
-    height: 300,
-    backgroundColor: '#222',
-  },
-  body: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    marginBottom: 16,
-    color: '#111',
-  },
-  creatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
+  content: { paddingBottom: 120 },
+  hero: { width: '100%', height: 300, backgroundColor: '#222' },
+  body: { padding: 20 },
+  title: { fontSize: 26, fontWeight: '700', marginBottom: 16, color: '#111' },
+  creatorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
   avatar: {
     width: 44,
     height: 44,
@@ -124,16 +206,8 @@ const styles = StyleSheet.create({
     marginRight: 12,
     backgroundColor: '#ccc',
   },
-  creatorName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111',
-  },
-  creatorMeta: {
-    fontSize: 13,
-    color: '#666',
-    marginTop: 2,
-  },
+  creatorName: { fontSize: 16, fontWeight: '600', color: '#111' },
+  creatorMeta: { fontSize: 13, color: '#666', marginTop: 2 },
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',
@@ -143,26 +217,15 @@ const styles = StyleSheet.create({
     marginTop: 18,
     marginBottom: 8,
   },
-  description: {
-    fontSize: 15,
-    color: '#333',
-    lineHeight: 22,
-  },
-  tagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
+  description: { fontSize: 15, color: '#333', lineHeight: 22 },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: {
     backgroundColor: '#f0f0f0',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 10,
   },
-  tagText: {
-    fontSize: 13,
-    color: '#444',
-  },
+  tagText: { fontSize: 13, color: '#444' },
   purchaseBar: {
     position: 'absolute',
     bottom: 0,
@@ -175,14 +238,14 @@ const styles = StyleSheet.create({
     borderTopColor: '#eee',
   },
   purchaseButton: {
+    flexDirection: 'row',
     backgroundColor: '#111',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  purchaseButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
+  ownedButton: { backgroundColor: '#16a34a' },
+  disabledButton: { backgroundColor: '#999' },
+  purchaseButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
