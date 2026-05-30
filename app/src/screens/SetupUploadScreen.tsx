@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -91,6 +92,17 @@ export function SetupUploadScreen() {
         'mp4',
       );
 
+      const { uri: thumbnailLocalUri } = await VideoThumbnails.getThumbnailAsync(videoUri, {
+        time: 1000,
+        quality: 0.7,
+      });
+      const thumbnailUpload = await uploadFileToStorage(
+        'setup-videos',
+        thumbnailLocalUri,
+        session.user.id,
+        'jpg' as 'mp4',
+      );
+
       let finalAssetUrl: string;
       if (assetType === 'tutorial_bundle') {
         if (!bundleUri) throw new Error('Bundle-Datei fehlt');
@@ -110,7 +122,7 @@ export function SetupUploadScreen() {
         title: title.trim(),
         description: description.trim(),
         video_url: videoUpload.publicUrl,
-        video_thumbnail: videoUpload.publicUrl,
+        video_thumbnail: thumbnailUpload.publicUrl,
         asset_type: assetType,
         asset_url: finalAssetUrl,
         price_cents: priceCents,

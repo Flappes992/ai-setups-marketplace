@@ -8,7 +8,8 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useCallback } from 'react';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SetupCard } from '@/components/SetupCard';
 import { Setup } from '@/types/setup';
@@ -21,7 +22,13 @@ type FeedNav = NativeStackNavigationProp<MainStackParamList, 'Feed'>;
 
 export function FeedScreen() {
   const navigation = useNavigation<FeedNav>();
-  const { setups, loading, error } = useSetups();
+  const { setups, loading, error, refetch } = useSetups();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
