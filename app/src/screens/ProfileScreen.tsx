@@ -62,6 +62,14 @@ export function ProfileScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={styles.myPurchasesButton}
+          onPress={() => navigation.navigate('MyPurchases')}
+          accessibilityLabel="profile-my-purchases"
+        >
+          <Text style={styles.myPurchasesText}>Meine Käufe</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={styles.logoutButton}
           onPress={handleLogout}
           accessibilityLabel="profile-logout"
@@ -102,6 +110,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   mySetupsText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  myPurchasesButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    backgroundColor: '#16a34a',
+    marginBottom: 12,
+  },
+  myPurchasesText: { fontSize: 16, fontWeight: '700', color: '#fff' },
   logoutButton: {
     paddingVertical: 14,
     paddingHorizontal: 32,
