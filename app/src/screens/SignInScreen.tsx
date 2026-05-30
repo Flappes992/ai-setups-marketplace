@@ -10,9 +10,15 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '@/services/supabase';
+import type { AuthStackParamList } from '@/navigation/RootNavigator';
+
+type SignInNav = NativeStackNavigationProp<AuthStackParamList, 'SignIn'>;
 
 export function SignInScreen() {
+  const navigation = useNavigation<SignInNav>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +83,16 @@ export function SignInScreen() {
               <Text style={styles.buttonText}>Einloggen</Text>
             )}
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => navigation.navigate('SignUp')}
+            accessibilityLabel="goto-signup"
+          >
+            <Text style={styles.secondaryText}>
+              Noch kein Konto? <Text style={styles.secondaryEmphasis}>Registrieren</Text>
+            </Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -105,4 +121,7 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { backgroundColor: '#999' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  secondaryButton: { marginTop: 16, alignItems: 'center' },
+  secondaryText: { color: '#666', fontSize: 14 },
+  secondaryEmphasis: { color: '#111', fontWeight: '700' },
 });

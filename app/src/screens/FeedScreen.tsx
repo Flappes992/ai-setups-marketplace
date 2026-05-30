@@ -34,6 +34,14 @@ export function FeedScreen() {
         <Text style={styles.profileBadgeText}>Profil</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={styles.uploadFab}
+        onPress={() => navigation.navigate('SetupUpload')}
+        accessibilityLabel="open-upload"
+      >
+        <Text style={styles.uploadFabText}>+</Text>
+      </TouchableOpacity>
+
       {loading ? (
         <View style={styles.centerState}>
           <ActivityIndicator color="#fff" size="large" />
@@ -88,6 +96,29 @@ const styles = StyleSheet.create({
     color: '#111',
     fontSize: 13,
     fontWeight: '700',
+  },
+  uploadFab: {
+    position: 'absolute',
+    bottom: 40,
+    right: 20,
+    zIndex: 10,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 6,
+  },
+  uploadFabText: {
+    color: '#111',
+    fontSize: 28,
+    fontWeight: '300',
+    marginTop: -2,
   },
   centerState: {
     flex: 1,

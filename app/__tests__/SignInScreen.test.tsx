@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react-native';
+import { NavigationContainer } from '@react-navigation/native';
 import { SignInScreen } from '@/screens/SignInScreen';
 import { supabase } from '@/services/supabase';
 
@@ -8,6 +9,10 @@ jest.mock('@/services/supabase', () => ({
 
 const mockSignIn = supabase.auth.signInWithPassword as jest.Mock;
 
+function renderWithNav(component: React.ReactElement) {
+  return render(<NavigationContainer>{component}</NavigationContainer>);
+}
+
 describe('SignInScreen', () => {
   beforeEach(() => {
     mockSignIn.mockClear();
@@ -15,12 +20,12 @@ describe('SignInScreen', () => {
   });
 
   it('renders title', () => {
-    render(<SignInScreen />);
+    renderWithNav(<SignInScreen />);
     expect(screen.getByText(/Anmelden/i)).toBeTruthy();
   });
 
   it('calls supabase signInWithPassword on submit', () => {
-    render(<SignInScreen />);
+    renderWithNav(<SignInScreen />);
     fireEvent.changeText(screen.getByLabelText('signin-email'), 'sicci@test.de');
     fireEvent.changeText(screen.getByLabelText('signin-password'), 'password123');
     fireEvent.press(screen.getByLabelText('signin-submit'));
