@@ -1,6 +1,11 @@
 import { render, screen, fireEvent } from '@testing-library/react-native';
+import { NavigationContainer } from '@react-navigation/native';
 import { ProfileScreen } from '@/screens/ProfileScreen';
 import { supabase } from '@/services/supabase';
+
+function renderWithNav(component: React.ReactElement) {
+  return render(<NavigationContainer>{component}</NavigationContainer>);
+}
 
 jest.mock('@/services/supabase', () => ({
   supabase: {
@@ -38,12 +43,12 @@ jest.mock('@/auth/useAuth', () => ({
 
 describe('ProfileScreen', () => {
   it('renders logout button', () => {
-    render(<ProfileScreen />);
+    renderWithNav(<ProfileScreen />);
     expect(screen.getByLabelText('profile-logout')).toBeTruthy();
   });
 
   it('calls supabase signOut when logout pressed', () => {
-    render(<ProfileScreen />);
+    renderWithNav(<ProfileScreen />);
     fireEvent.press(screen.getByLabelText('profile-logout'));
     expect(supabase.auth.signOut).toHaveBeenCalled();
   });

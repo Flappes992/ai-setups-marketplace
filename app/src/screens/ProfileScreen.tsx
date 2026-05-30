@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/auth/useAuth';
 import { DbProfile } from '@/types/database';
+import type { MainStackParamList } from '@/navigation/RootNavigator';
+
+type ProfileNav = NativeStackNavigationProp<MainStackParamList, 'Profile'>;
 
 export function ProfileScreen() {
+  const navigation = useNavigation<ProfileNav>();
   const { session } = useAuth();
   const [profile, setProfile] = useState<DbProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,6 +54,14 @@ export function ProfileScreen() {
         )}
 
         <TouchableOpacity
+          style={styles.mySetupsButton}
+          onPress={() => navigation.navigate('MySetups')}
+          accessibilityLabel="profile-my-setups"
+        >
+          <Text style={styles.mySetupsText}>Meine Setups</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={styles.logoutButton}
           onPress={handleLogout}
           accessibilityLabel="profile-logout"
@@ -79,8 +93,16 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 22, fontWeight: '700', color: '#111' },
   statLabel: { fontSize: 13, color: '#666', marginTop: 2 },
   error: { fontSize: 16, color: '#cc0000' },
-  logoutButton: {
+  mySetupsButton: {
     marginTop: 'auto',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    backgroundColor: '#111',
+    marginBottom: 12,
+  },
+  mySetupsText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  logoutButton: {
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 12,
