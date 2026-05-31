@@ -1,4 +1,15 @@
-import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { useRef } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+  Animated,
+  Pressable,
+} from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Setup } from '@/types/setup';
 import { useToggleLike } from '@/hooks/useToggleLike';
 import { useToggleSave } from '@/hooks/useToggleSave';
@@ -7,6 +18,7 @@ const { width, height } = Dimensions.get('window');
 
 interface SetupCardProps {
   setup: Setup;
+  onTagPress?: (tag: string) => void;
 }
 
 function formatPriceEur(cents: number): string {
@@ -22,148 +34,226 @@ function formatCount(n: number): string {
   return n.toString();
 }
 
-export function SetupCard({ setup }: SetupCardProps) {
+export function SetupCard({ setup, onTagPress }: SetupCardProps) {
   const { liked, count, toggle: toggleLike } = useToggleLike(setup.id);
   const { saved, toggle: toggleSave } = useToggleSave(setup.id);
+  const likeScale = useRef(new Animated.Value(1)).current;
+  const saveScale = useRef(new Animated.Value(1)).current;
+  const heartBurst = useRef(new Animated.Value(0)).current;
+  const lastTap = useRef(0);
+
+  function bounce(value: Animated.Value) {
+    Animated.sequence([
+      Animated.spring(value, { toValue: 1.35, useNativeDriver: true, friction: 4 }),
+      Animated.spring(value, { toValue: 1, useNativeDriver: true, friction: 4 }),
+    ]).start();
+  }
+
+  function showHeartBurst() {
+    heartBurst.setValue(0);
+    Animated.sequence([
+      Animated.timing(heartBurst, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(heartBurst, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }
+
+  async function handleLikeTap() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    bounce(likeScale);
+    await toggleLike();
+  }
+
+  async function handleSaveTap() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    bounce(saveScale);
+    await toggleSave();
+  }
+
+  function handleCardTap() {
+    const now = Date.now();
+    if (now - lastTap.current < 280) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      showHeartBurst();
+      if (!liked) {
+        bounce(likeScale);
+        toggleLike();
+      }
+    }
+    lastTap.current = now;
+  }
+
+  const heartBurstStyle = {
+    opacity: heartBurst.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+    transform: [
+      {
+        scale: heartBurst.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.4, 1.6],
+        }),
+      },
+    ],
+  };
 
   return (
-    <View style={styles.container}>
+    <Pressable style={styles.container} onPress={handleCardTap}>
       <Image source={{ uri: setup.videoThumbnail }} style={styles.thumbnail} resizeMode="cover" />
+
+      <View style={styles.bottomGradient} pointerEvents="none" />
+
+      <Animated.View style={[styles.heartBurst, heartBurstStyle]} pointerEvents="none">
+        <Text style={styles.heartBurstText}>♥</Text>
+      </Animated.View>
 
       <View style={styles.actionRail}>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={toggleLike}
+          onPress={handleLikeTap}
           accessibilityLabel={liked ? 'unlike' : 'like'}
         >
-          <Text style={[styles.actionIcon, liked && styles.actionIconActive]}>
+          <Animated.Text
+            style={[
+              styles.actionIcon,
+              liked && styles.actionIconActive,
+              { transform: [{ scale: likeScale }] },
+            ]}
+          >
             {liked ? '♥' : '♡'}
-          </Text>
+          </Animated.Text>
           <Text style={styles.actionLabel}>{formatCount(count)}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={toggleSave}
+          onPress={handleSaveTap}
           accessibilityLabel={saved ? 'unsave' : 'save'}
         >
-          <Text style={[styles.actionIcon, saved && styles.actionIconActiveBlue]}>
+          <Animated.Text
+            style={[
+              styles.actionIcon,
+              saved && styles.actionIconActiveYellow,
+              { transform: [{ scale: saveScale }] },
+            ]}
+          >
             {saved ? '★' : '☆'}
-          </Text>
+          </Animated.Text>
           <Text style={styles.actionLabel}>Save</Text>
         </TouchableOpacity>
+
+        <View style={styles.actionButton}>
+          <Text style={styles.actionIcon}>↗</Text>
+          <Text style={styles.actionLabel}>Teilen</Text>
+        </View>
       </View>
 
       <View style={styles.overlay}>
         <View style={styles.creatorRow}>
           <Image source={{ uri: setup.creator.avatarUrl }} style={styles.avatar} />
-          <Text style={styles.creatorName}>{setup.creator.displayName}</Text>
+          <Text style={styles.creatorName}>@{setup.creator.username}</Text>
         </View>
         <Text style={styles.title}>{setup.title}</Text>
         <Text style={styles.description} numberOfLines={2}>
           {setup.description}
         </Text>
+        <View style={styles.tagRow}>
+          {setup.tags.slice(0, 4).map((tag) => (
+            <TouchableOpacity key={tag} onPress={() => onTagPress?.(tag)} style={styles.tagPill}>
+              <Text style={styles.tagText}>#{tag}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
         <View style={styles.priceRow}>
           <Text style={styles.price}>{formatPriceEur(setup.priceCents)}</Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    width,
-    height,
-    backgroundColor: '#000',
-  },
-  thumbnail: {
+  container: { width, height, backgroundColor: '#000' },
+  thumbnail: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  bottomGradient: {
     position: 'absolute',
-    top: 0,
     left: 0,
     right: 0,
     bottom: 0,
+    height: 280,
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
-  overlay: {
+  heartBurst: {
     position: 'absolute',
-    bottom: 80,
-    left: 16,
-    right: 100,
-  },
-  actionRail: {
-    position: 'absolute',
-    right: 12,
-    bottom: 140,
+    top: height / 2 - 70,
+    left: width / 2 - 50,
+    width: 100,
+    height: 100,
     alignItems: 'center',
-    gap: 20,
+    justifyContent: 'center',
   },
-  actionButton: {
-    alignItems: 'center',
-    padding: 4,
-  },
+  heartBurstText: { fontSize: 110, color: '#ef4444' },
+  overlay: { position: 'absolute', bottom: 100, left: 16, right: 96 },
+  actionRail: { position: 'absolute', right: 12, bottom: 160, alignItems: 'center', gap: 18 },
+  actionButton: { alignItems: 'center', padding: 2 },
   actionIcon: {
     color: '#fff',
-    fontSize: 38,
-    lineHeight: 42,
-    textShadowColor: 'rgba(0,0,0,0.4)',
+    fontSize: 36,
+    lineHeight: 40,
+    textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowRadius: 3,
   },
-  actionIconActive: {
-    color: '#ef4444',
-  },
-  actionIconActiveBlue: {
-    color: '#facc15',
-  },
+  actionIconActive: { color: '#ef4444' },
+  actionIconActiveYellow: { color: '#facc15' },
   actionLabel: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
-    marginTop: 2,
-    textShadowColor: 'rgba(0,0,0,0.4)',
+    marginTop: 1,
+    textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  creatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
+  creatorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     marginRight: 8,
     backgroundColor: '#444',
+    borderWidth: 1,
+    borderColor: '#fff',
   },
-  creatorName: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  title: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
+  creatorName: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  title: { color: '#fff', fontSize: 20, fontWeight: '800', marginBottom: 4 },
   description: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 14,
-    marginBottom: 14,
-    lineHeight: 20,
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 13,
+    marginBottom: 10,
+    lineHeight: 18,
   },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
+  tagPill: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
+  tagText: { color: '#fff', fontSize: 11, fontWeight: '600' },
+  priceRow: { flexDirection: 'row', alignItems: 'center' },
   price: {
-    backgroundColor: '#fff',
-    color: '#000',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    backgroundColor: '#facc15',
+    color: '#111',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 14,
     overflow: 'hidden',
   },

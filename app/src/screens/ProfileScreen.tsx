@@ -111,7 +111,12 @@ export function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.topBar}>
-        <View style={{ width: 32 }} />
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Notifications')}
+          accessibilityLabel="open-notifications-profile"
+        >
+          <Text style={styles.bellIcon}>🔔</Text>
+        </TouchableOpacity>
         <Text style={styles.handleTop}>@{profile.username}</Text>
         <TouchableOpacity
           onPress={() => navigation.navigate('Settings')}
@@ -208,6 +213,7 @@ const styles = StyleSheet.create({
   },
   handleTop: { fontSize: 17, fontWeight: '800', color: '#111' },
   gearIcon: { fontSize: 26, color: '#111' },
+  bellIcon: { fontSize: 22 },
   header: { alignItems: 'center', paddingHorizontal: 24, paddingTop: 16, paddingBottom: 12 },
   avatar: {
     width: 96,

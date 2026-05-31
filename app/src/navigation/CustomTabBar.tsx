@@ -1,5 +1,6 @@
 import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -24,26 +25,35 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
       <TabIconButton
         focused={isFeedActive}
         glyph="⌂"
-        onPress={() => navigation.navigate('FeedTab')}
+        onPress={() => {
+          Haptics.selectionAsync();
+          navigation.navigate('FeedTab');
+        }}
         onFeed={isFeedActive}
         label="home"
       />
 
       <TouchableOpacity
         style={styles.plusButton}
-        onPress={() => rootNav.navigate('SetupUpload')}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          rootNav.navigate('SetupUpload');
+        }}
         accessibilityLabel="tab-create"
-        activeOpacity={0.85}
+        activeOpacity={0.8}
       >
-        <View style={styles.plusBg}>
-          <Text style={styles.plusText}>+</Text>
+        <View style={[styles.plusBg, isFeedActive ? styles.plusBgFeed : styles.plusBgProfile]}>
+          <Text style={[styles.plusText, { color: isFeedActive ? '#111' : '#fff' }]}>+</Text>
         </View>
       </TouchableOpacity>
 
       <TabIconButton
         focused={state.index === 1}
-        glyph="◌"
-        onPress={() => navigation.navigate('ProfileTab')}
+        glyph="⬡"
+        onPress={() => {
+          Haptics.selectionAsync();
+          navigation.navigate('ProfileTab');
+        }}
         onFeed={isFeedActive}
         label="profile"
       />
@@ -117,17 +127,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   plusBg: {
-    width: 56,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: '#facc15',
+    width: 50,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#facc15',
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
+  },
+  plusBgFeed: {
+    backgroundColor: '#fff',
+  },
+  plusBgProfile: {
+    backgroundColor: '#111',
   },
   plusText: {
     color: '#111',

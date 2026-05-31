@@ -14,6 +14,9 @@ import { SavedSetupsScreen } from '@/screens/SavedSetupsScreen';
 import { LikedSetupsScreen } from '@/screens/LikedSetupsScreen';
 import { SettingsScreen } from '@/screens/SettingsScreen';
 import { EditProfileScreen } from '@/screens/EditProfileScreen';
+import { SearchScreen } from '@/screens/SearchScreen';
+import { TagFeedScreen } from '@/screens/TagFeedScreen';
+import { NotificationsScreen } from '@/screens/NotificationsScreen';
 import { Setup } from '@/types/setup';
 import { useAuth } from '@/auth/useAuth';
 
@@ -37,6 +40,9 @@ export type MainStackParamList = {
   Liked: undefined;
   Settings: undefined;
   EditProfile: undefined;
+  Search: undefined;
+  TagFeed: { tag: string };
+  Notifications: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -97,6 +103,9 @@ function MainNavigator() {
       <MainStack.Screen name="Liked" component={LikedSetupsScreen} />
       <MainStack.Screen name="Settings" component={SettingsScreen} />
       <MainStack.Screen name="EditProfile" component={EditProfileScreen} />
+      <MainStack.Screen name="Search" component={SearchScreen} />
+      <MainStack.Screen name="TagFeed" component={TagFeedScreen} />
+      <MainStack.Screen name="Notifications" component={NotificationsScreen} />
     </MainStack.Navigator>
   );
 }

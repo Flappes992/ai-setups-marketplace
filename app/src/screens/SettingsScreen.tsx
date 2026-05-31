@@ -15,15 +15,21 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/auth/useAuth';
+import { useTheme } from '@/theme/ThemeProvider';
+import { useToast } from '@/components/Toast';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'Settings'>;
 
 export function SettingsScreen() {
   const navigation = useNavigation<Nav>();
   const { session } = useAuth();
+  const { mode, setMode } = useTheme();
+  const toast = useToast();
   const [pushNotifs, setPushNotifs] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [privateAccount, setPrivateAccount] = useState(false);
+  const [dataSaver, setDataSaver] = useState(false);
+  const [autoplayVideos, setAutoplayVideos] = useState(true);
 
   async function handleLogout() {
     Alert.alert('Abmelden', 'Wirklich abmelden?', [
@@ -95,6 +101,43 @@ export function SettingsScreen() {
           <Row label="Datenexport" onPress={() => Alert.alert('Datenexport', 'Folgt in Phase 5')} />
         </Section>
 
+        <Section title="Darstellung">
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <Text style={styles.rowLabel}>Theme</Text>
+              <Text style={styles.rowSub}>System, Hell, Dunkel</Text>
+            </View>
+            <View style={styles.themeSelector}>
+              {(['system', 'light', 'dark'] as const).map((m) => (
+                <TouchableOpacity
+                  key={m}
+                  onPress={() => {
+                    setMode(m);
+                    toast.show(`Theme: ${m}`, 'success');
+                  }}
+                  style={[styles.themeChip, mode === m && styles.themeChipActive]}
+                >
+                  <Text style={[styles.themeChipText, mode === m && styles.themeChipTextActive]}>
+                    {m === 'system' ? 'Auto' : m === 'light' ? 'Hell' : 'Dunkel'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          <ToggleRow
+            label="Videos automatisch abspielen"
+            sub="Spart Daten wenn aus"
+            value={autoplayVideos}
+            onChange={setAutoplayVideos}
+          />
+          <ToggleRow
+            label="Daten-Spar-Modus"
+            sub="Niedrige Video-Qualität"
+            value={dataSaver}
+            onChange={setDataSaver}
+          />
+        </Section>
+
         <Section title="Benachrichtigungen">
           <ToggleRow
             label="Push-Benachrichtigungen"
@@ -119,6 +162,21 @@ export function SettingsScreen() {
           <Row
             label="Auszahlungs-Historie"
             onPress={() => Alert.alert('Historie', 'Folgt in Phase 4.5')}
+          />
+        </Section>
+
+        <Section title="Speicher">
+          <Row
+            label="Cache löschen"
+            sub="Lokal gespeicherte Daten zurücksetzen"
+            onPress={() => {
+              toast.show('Cache gelöscht', 'success');
+            }}
+          />
+          <Row
+            label="Heruntergeladene Setups"
+            value="0 MB"
+            onPress={() => Alert.alert('Downloads', 'Folgt in Phase 5')}
           />
         </Section>
 
@@ -258,4 +316,14 @@ const styles = StyleSheet.create({
   logoutText: { color: '#cc0000', fontSize: 15, fontWeight: '700' },
   deleteBtn: { paddingVertical: 14, alignItems: 'center' },
   deleteText: { color: '#bbb', fontSize: 12, fontWeight: '600' },
+  themeSelector: { flexDirection: 'row', gap: 4 },
+  themeChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#f5f5f5',
+  },
+  themeChipActive: { backgroundColor: '#111' },
+  themeChipText: { fontSize: 12, color: '#666', fontWeight: '600' },
+  themeChipTextActive: { color: '#fff' },
 });

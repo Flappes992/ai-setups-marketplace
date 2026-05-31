@@ -25,13 +25,13 @@ describe('FeedScreen', () => {
   it('shows loading state', () => {
     mockUseSetups.mockReturnValue({ setups: [], loading: true, error: null, refetch: jest.fn() });
     renderWithNav(<FeedScreen />);
-    expect(screen.getByText(/setiq/i)).toBeTruthy();
+    expect(screen.getByLabelText('open-search')).toBeTruthy();
   });
 
   it('shows empty state when no setups', () => {
     mockUseSetups.mockReturnValue({ setups: [], loading: false, error: null, refetch: jest.fn() });
     renderWithNav(<FeedScreen />);
-    expect(screen.getByText(/Noch keine Setups/i)).toBeTruthy();
+    expect(screen.getByText(/Noch nichts hier/i)).toBeTruthy();
   });
 
   it('shows error state', () => {

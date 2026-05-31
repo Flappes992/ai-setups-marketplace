@@ -16,9 +16,9 @@ describe('SetupCard', () => {
     expect(screen.getByText('Cold-Email Automation mit Claude')).toBeTruthy();
   });
 
-  it('renders creator display name', () => {
+  it('renders creator username', () => {
     render(<SetupCard setup={mockSetups[0]} />);
-    expect(screen.getByText('Lukas')).toBeTruthy();
+    expect(screen.getByText(/@lukas_ai/i)).toBeTruthy();
   });
 
   it('renders formatted price', () => {
