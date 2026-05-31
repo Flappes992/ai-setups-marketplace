@@ -1,8 +1,8 @@
-# AI-Setups Marketplace — MVP Design Spec
+# Setiq — MVP Design Spec
 
-**Datum:** 2026-05-29
+**Datum:** 2026-05-29 (Brand-Update 2026-05-31)
 **Status:** Draft, Review pending
-**Working Title:** `AI-Setups Marketplace` (Final-Name TBD)
+**Brand:** **Setiq** (set + IQ — Intelligent Setup Discovery)
 **Autor:** Sicci + Claude
 
 > ⚠️ **Annahme-Marker:** Stellen mit `🟡 ANNAHME` markieren Defaults, die ich gesetzt habe und die du beim Review bestätigen oder ändern musst.
