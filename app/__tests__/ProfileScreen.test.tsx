@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react-native';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { ProfileScreen } from '@/screens/ProfileScreen';
 import { supabase } from '@/services/supabase';
@@ -42,13 +42,16 @@ jest.mock('@/auth/useAuth', () => ({
 }));
 
 describe('ProfileScreen', () => {
-  it('renders logout button', () => {
+  it('renders logout button after profile loads', async () => {
     renderWithNav(<ProfileScreen />);
-    expect(screen.getByLabelText('profile-logout')).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByLabelText('profile-logout')).toBeTruthy();
+    });
   });
 
-  it('calls supabase signOut when logout pressed', () => {
+  it('calls supabase signOut when logout pressed', async () => {
     renderWithNav(<ProfileScreen />);
+    await waitFor(() => screen.getByLabelText('profile-logout'));
     fireEvent.press(screen.getByLabelText('profile-logout'));
     expect(supabase.auth.signOut).toHaveBeenCalled();
   });

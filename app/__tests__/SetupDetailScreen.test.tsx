@@ -19,6 +19,17 @@ jest.mock('@/hooks/usePurchase', () => ({
   usePurchase: () => ({ purchase: null, loading: false, refetch: jest.fn() }),
 }));
 
+jest.mock('@/hooks/useComments', () => ({
+  useComments: () => ({
+    comments: [],
+    loading: false,
+    error: null,
+    refetch: jest.fn(),
+    add: jest.fn(),
+    remove: jest.fn(),
+  }),
+}));
+
 describe('SetupDetailScreen', () => {
   const setup = mockSetups[0];
 

@@ -19,7 +19,7 @@ import { useSetups } from '@/hooks/useSetups';
 
 const { height } = Dimensions.get('window');
 
-type FeedNav = NativeStackNavigationProp<MainStackParamList, 'Feed'>;
+type FeedNav = NativeStackNavigationProp<MainStackParamList, 'Tabs'>;
 
 export function FeedScreen() {
   const navigation = useNavigation<FeedNav>();
@@ -41,13 +41,6 @@ export function FeedScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <StatusBar barStyle="light-content" />
-      <TouchableOpacity
-        style={styles.profileBadge}
-        onPress={() => navigation.navigate('Profile')}
-        accessibilityLabel="open-profile"
-      >
-        <Text style={styles.profileBadgeText}>Profil</Text>
-      </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.uploadFab}

@@ -16,6 +16,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { Setup } from '@/types/setup';
 import { useAuth } from '@/auth/useAuth';
 import { usePurchase } from '@/hooks/usePurchase';
+import { CommentsSection } from '@/components/CommentsSection';
 
 const WEB_CHECKOUT_BASE = 'https://web-checkout-sicci-s-projects.vercel.app';
 
@@ -145,6 +146,10 @@ export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
               : 'PDF + Video-Tutorial Bundle'}
           </Text>
         </View>
+
+        <View style={styles.divider} />
+
+        <CommentsSection setupId={setup.id} />
       </ScrollView>
 
       <View style={styles.purchaseBar}>
@@ -194,7 +199,8 @@ export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  content: { paddingBottom: 120 },
+  content: { paddingBottom: 140 },
+  divider: { height: 8, backgroundColor: '#fafafa', marginVertical: 4 },
   hero: { width: '100%', height: 300, backgroundColor: '#222' },
   body: { padding: 20 },
   title: { fontSize: 26, fontWeight: '700', marginBottom: 16, color: '#111' },

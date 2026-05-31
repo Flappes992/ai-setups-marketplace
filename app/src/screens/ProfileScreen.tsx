@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,7 +15,7 @@ import { useAuth } from '@/auth/useAuth';
 import { DbProfile } from '@/types/database';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 
-type ProfileNav = NativeStackNavigationProp<MainStackParamList, 'Profile'>;
+type ProfileNav = NativeStackNavigationProp<MainStackParamList, 'Tabs'>;
 
 export function ProfileScreen() {
   const navigation = useNavigation<ProfileNav>();
@@ -34,48 +41,85 @@ export function ProfileScreen() {
     await supabase.auth.signOut();
   }
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.content}>
-        {loading ? (
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.centerState}>
           <ActivityIndicator />
-        ) : profile ? (
-          <>
-            <Text style={styles.displayName}>{profile.display_name}</Text>
-            <Text style={styles.username}>@{profile.username}</Text>
-            {profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
-            <View style={styles.statsRow}>
-              <Stat label="Setups" value={profile.setups_count.toString()} />
-              <Stat label="Rating" value={profile.rating_average.toFixed(1)} />
-            </View>
-          </>
-        ) : (
-          <Text style={styles.error}>Profil nicht gefunden</Text>
-        )}
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-        <TouchableOpacity
-          style={styles.mySetupsButton}
-          onPress={() => navigation.navigate('MySetups')}
-          accessibilityLabel="profile-my-setups"
-        >
-          <Text style={styles.mySetupsText}>Meine Setups</Text>
-        </TouchableOpacity>
+  if (!profile) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.centerState}>
+          <Text style={styles.errorText}>Profil nicht gefunden</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-        <TouchableOpacity
-          style={styles.myPurchasesButton}
-          onPress={() => navigation.navigate('MyPurchases')}
-          accessibilityLabel="profile-my-purchases"
-        >
-          <Text style={styles.myPurchasesText}>Meine Käufe</Text>
-        </TouchableOpacity>
+  const initials = profile.display_name
+    .split(' ')
+    .map((w) => w.charAt(0))
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 
-        <TouchableOpacity
-          style={styles.savedButton}
-          onPress={() => navigation.navigate('Saved')}
-          accessibilityLabel="profile-saved"
-        >
-          <Text style={styles.savedText}>Gespeichert</Text>
-        </TouchableOpacity>
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.header}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarLetter}>{initials || 'U'}</Text>
+          </View>
+          <Text style={styles.displayName}>{profile.display_name}</Text>
+          <Text style={styles.username}>@{profile.username}</Text>
+          {profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
+
+          <View style={styles.statsRow}>
+            <Stat label="Setups" value={profile.setups_count.toString()} />
+            <View style={styles.statSep} />
+            <Stat label="Rating" value={profile.rating_average.toFixed(1)} />
+          </View>
+        </View>
+
+        <View style={styles.grid}>
+          <Card
+            emoji="📤"
+            label="Meine Setups"
+            sub="Eigene hochgeladene Setups"
+            onPress={() => navigation.navigate('MySetups')}
+            color="#111"
+            textColor="#fff"
+          />
+          <Card
+            emoji="💼"
+            label="Meine Käufe"
+            sub="Was du gekauft hast"
+            onPress={() => navigation.navigate('MyPurchases')}
+            color="#16a34a"
+            textColor="#fff"
+          />
+          <Card
+            emoji="★"
+            label="Gespeichert"
+            sub="Lesezeichen für später"
+            onPress={() => navigation.navigate('Saved')}
+            color="#facc15"
+            textColor="#111"
+          />
+          <Card
+            emoji="♥"
+            label="Likes"
+            sub="Setups die du geliked hast"
+            onPress={() => navigation.navigate('Liked')}
+            color="#ef4444"
+            textColor="#fff"
+          />
+        </View>
 
         <TouchableOpacity
           style={styles.logoutButton}
@@ -84,7 +128,7 @@ export function ProfileScreen() {
         >
           <Text style={styles.logoutText}>Abmelden</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -98,47 +142,89 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
+function Card({
+  emoji,
+  label,
+  sub,
+  onPress,
+  color,
+  textColor,
+}: {
+  emoji: string;
+  label: string;
+  sub: string;
+  onPress: () => void;
+  color: string;
+  textColor: string;
+}) {
+  return (
+    <TouchableOpacity
+      style={[styles.card, { backgroundColor: color }]}
+      onPress={onPress}
+      activeOpacity={0.85}
+      accessibilityLabel={`profile-card-${label}`}
+    >
+      <Text style={styles.cardEmoji}>{emoji}</Text>
+      <View>
+        <Text style={[styles.cardLabel, { color: textColor }]}>{label}</Text>
+        <Text style={[styles.cardSub, { color: textColor, opacity: 0.8 }]}>{sub}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  content: { flex: 1, padding: 24, alignItems: 'center', paddingTop: 60 },
-  displayName: { fontSize: 28, fontWeight: '800', color: '#111' },
-  username: { fontSize: 16, color: '#666', marginTop: 4 },
-  bio: { fontSize: 14, color: '#444', marginTop: 16, textAlign: 'center', lineHeight: 20 },
-  statsRow: { flexDirection: 'row', gap: 40, marginTop: 30 },
-  stat: { alignItems: 'center' },
-  statValue: { fontSize: 22, fontWeight: '700', color: '#111' },
-  statLabel: { fontSize: 13, color: '#666', marginTop: 2 },
-  error: { fontSize: 16, color: '#cc0000' },
-  mySetupsButton: {
-    marginTop: 'auto',
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+  scroll: { paddingBottom: 32 },
+  centerState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+  errorText: { color: '#cc0000' },
+  header: { alignItems: 'center', padding: 24, paddingBottom: 20 },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#111',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
   },
-  mySetupsText: { fontSize: 16, fontWeight: '700', color: '#fff' },
-  myPurchasesButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    backgroundColor: '#16a34a',
-    marginBottom: 12,
+  avatarLetter: { fontSize: 30, fontWeight: '800', color: '#fff' },
+  displayName: { fontSize: 24, fontWeight: '800', color: '#111' },
+  username: { fontSize: 15, color: '#666', marginTop: 2 },
+  bio: { fontSize: 14, color: '#444', marginTop: 12, textAlign: 'center', lineHeight: 20 },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 18,
+    gap: 28,
   },
-  myPurchasesText: { fontSize: 16, fontWeight: '700', color: '#fff' },
-  savedButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    backgroundColor: '#facc15',
-    marginBottom: 12,
+  statSep: { width: 1, height: 28, backgroundColor: '#e5e5e5' },
+  stat: { alignItems: 'center' },
+  statValue: { fontSize: 20, fontWeight: '800', color: '#111' },
+  statLabel: { fontSize: 12, color: '#666', marginTop: 2, textTransform: 'uppercase' },
+  grid: {
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
   },
-  savedText: { fontSize: 16, fontWeight: '700', color: '#111' },
+  card: {
+    width: '48%',
+    minHeight: 110,
+    borderRadius: 16,
+    padding: 16,
+    justifyContent: 'space-between',
+  },
+  cardEmoji: { fontSize: 24 },
+  cardLabel: { fontSize: 15, fontWeight: '800' },
+  cardSub: { fontSize: 12, marginTop: 2 },
   logoutButton: {
+    marginTop: 32,
+    marginHorizontal: 20,
     paddingVertical: 14,
-    paddingHorizontal: 32,
     borderRadius: 12,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
   },
-  logoutText: { fontSize: 16, fontWeight: '600', color: '#cc0000' },
+  logoutText: { fontSize: 15, fontWeight: '700', color: '#cc0000' },
 });
