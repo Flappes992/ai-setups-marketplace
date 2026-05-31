@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,40 +6,60 @@ import {
   StyleSheet,
   ActivityIndicator,
   ScrollView,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/auth/useAuth';
 import { DbProfile } from '@/types/database';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
+import { useMySetups } from '@/hooks/useMySetups';
+import { useSavedSetups } from '@/hooks/useSavedSetups';
+import { useLikedSetups } from '@/hooks/useLikedSetups';
+import { useMyPurchases } from '@/hooks/useMyPurchases';
+import { SetupGrid } from '@/components/SetupGrid';
 
 type ProfileNav = NativeStackNavigationProp<MainStackParamList, 'Tabs'>;
+
+type TabKey = 'setups' | 'saved' | 'liked' | 'purchases';
+
+const TABS: { key: TabKey; label: string; emoji: string }[] = [
+  { key: 'setups', label: 'Setups', emoji: '⊞' },
+  { key: 'saved', label: 'Saved', emoji: '★' },
+  { key: 'liked', label: 'Likes', emoji: '♥' },
+  { key: 'purchases', label: 'Käufe', emoji: '✓' },
+];
 
 export function ProfileScreen() {
   const navigation = useNavigation<ProfileNav>();
   const { session } = useAuth();
   const [profile, setProfile] = useState<DbProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabKey>('setups');
+
+  const mySetups = useMySetups();
+  const saved = useSavedSetups();
+  const liked = useLikedSetups();
+  const purchases = useMyPurchases();
+
+  const loadProfile = useCallback(async () => {
+    if (!session?.user.id) return;
+    const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+    setProfile(data as DbProfile | null);
+    setLoading(false);
+  }, [session?.user.id]);
 
   useEffect(() => {
-    async function loadProfile() {
-      if (!session?.user.id) return;
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-      setProfile(data as DbProfile | null);
-      setLoading(false);
-    }
     loadProfile();
-  }, [session]);
+  }, [loadProfile]);
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-  }
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile();
+    }, [loadProfile]),
+  );
 
   if (loading) {
     return (
@@ -68,163 +88,203 @@ export function ProfileScreen() {
     .join('')
     .toUpperCase();
 
+  const tabData = {
+    setups: mySetups.setups,
+    saved: saved.setups,
+    liked: liked.setups,
+    purchases: purchases.items.map((p) => p.setup),
+  };
+
+  const tabEmpty = {
+    setups: 'Du hast noch keine Setups hochgeladen.',
+    saved: 'Noch nichts gespeichert.',
+    liked: 'Noch nichts geliked.',
+    purchases: 'Du hast noch nichts gekauft.',
+  };
+
+  const stats = [
+    { label: 'Setups', value: mySetups.setups.length },
+    { label: 'Likes', value: liked.setups.length },
+    { label: 'Saved', value: saved.setups.length },
+  ];
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <View style={styles.topBar}>
+        <View style={{ width: 32 }} />
+        <Text style={styles.handleTop}>@{profile.username}</Text>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Settings')}
+          accessibilityLabel="open-settings"
+        >
+          <Text style={styles.gearIcon}>⚙</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarLetter}>{initials || 'U'}</Text>
-          </View>
+          {profile.avatar_url ? (
+            <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarLetter}>{initials || 'U'}</Text>
+            </View>
+          )}
           <Text style={styles.displayName}>{profile.display_name}</Text>
           <Text style={styles.username}>@{profile.username}</Text>
-          {profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
+          {profile.bio ? (
+            <Text style={styles.bio}>{profile.bio}</Text>
+          ) : (
+            <Text style={styles.bioPlaceholder}>Noch keine Bio.</Text>
+          )}
 
           <View style={styles.statsRow}>
-            <Stat label="Setups" value={profile.setups_count.toString()} />
-            <View style={styles.statSep} />
-            <Stat label="Rating" value={profile.rating_average.toFixed(1)} />
+            {stats.map((s, i) => (
+              <View key={s.label} style={styles.statContainer}>
+                <View style={styles.stat}>
+                  <Text style={styles.statValue}>{s.value}</Text>
+                  <Text style={styles.statLabel}>{s.label}</Text>
+                </View>
+                {i < stats.length - 1 && <View style={styles.statSep} />}
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.ctaRow}>
+            <TouchableOpacity
+              style={[styles.cta, styles.ctaPrimary]}
+              onPress={() => navigation.navigate('EditProfile')}
+              accessibilityLabel="edit-profile"
+            >
+              <Text style={styles.ctaPrimaryText}>Profil bearbeiten</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.cta, styles.ctaSecondary]}
+              accessibilityLabel="share-profile"
+            >
+              <Text style={styles.ctaSecondaryText}>↗</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        <View style={styles.grid}>
-          <Card
-            emoji="📤"
-            label="Meine Setups"
-            sub="Eigene hochgeladene Setups"
-            onPress={() => navigation.navigate('MySetups')}
-            color="#111"
-            textColor="#fff"
-          />
-          <Card
-            emoji="💼"
-            label="Meine Käufe"
-            sub="Was du gekauft hast"
-            onPress={() => navigation.navigate('MyPurchases')}
-            color="#16a34a"
-            textColor="#fff"
-          />
-          <Card
-            emoji="★"
-            label="Gespeichert"
-            sub="Lesezeichen für später"
-            onPress={() => navigation.navigate('Saved')}
-            color="#facc15"
-            textColor="#111"
-          />
-          <Card
-            emoji="♥"
-            label="Likes"
-            sub="Setups die du geliked hast"
-            onPress={() => navigation.navigate('Liked')}
-            color="#ef4444"
-            textColor="#fff"
-          />
+        <View style={styles.tabsBar}>
+          {TABS.map((t) => (
+            <TouchableOpacity
+              key={t.key}
+              style={[styles.tabBtn, activeTab === t.key && styles.tabBtnActive]}
+              onPress={() => setActiveTab(t.key)}
+              accessibilityLabel={`profile-tab-${t.key}`}
+            >
+              <Text style={[styles.tabIcon, activeTab === t.key && styles.tabIconActive]}>
+                {t.emoji}
+              </Text>
+              <Text style={[styles.tabLabel, activeTab === t.key && styles.tabLabelActive]}>
+                {t.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-          accessibilityLabel="profile-logout"
-        >
-          <Text style={styles.logoutText}>Abmelden</Text>
-        </TouchableOpacity>
+        <View style={styles.tabContent}>
+          <SetupGrid setups={tabData[activeTab]} emptyText={tabEmpty[activeTab]} />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.stat}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
-function Card({
-  emoji,
-  label,
-  sub,
-  onPress,
-  color,
-  textColor,
-}: {
-  emoji: string;
-  label: string;
-  sub: string;
-  onPress: () => void;
-  color: string;
-  textColor: string;
-}) {
-  return (
-    <TouchableOpacity
-      style={[styles.card, { backgroundColor: color }]}
-      onPress={onPress}
-      activeOpacity={0.85}
-      accessibilityLabel={`profile-card-${label}`}
-    >
-      <Text style={styles.cardEmoji}>{emoji}</Text>
-      <View>
-        <Text style={[styles.cardLabel, { color: textColor }]}>{label}</Text>
-        <Text style={[styles.cardSub, { color: textColor, opacity: 0.8 }]}>{sub}</Text>
-      </View>
-    </TouchableOpacity>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  scroll: { paddingBottom: 32 },
+  scroll: { paddingBottom: 100 },
   centerState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
   errorText: { color: '#cc0000' },
-  header: { alignItems: 'center', padding: 24, paddingBottom: 20 },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  handleTop: { fontSize: 17, fontWeight: '800', color: '#111' },
+  gearIcon: { fontSize: 26, color: '#111' },
+  header: { alignItems: 'center', paddingHorizontal: 24, paddingTop: 16, paddingBottom: 12 },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     backgroundColor: '#111',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  avatarLetter: { fontSize: 30, fontWeight: '800', color: '#fff' },
-  displayName: { fontSize: 24, fontWeight: '800', color: '#111' },
-  username: { fontSize: 15, color: '#666', marginTop: 2 },
-  bio: { fontSize: 14, color: '#444', marginTop: 12, textAlign: 'center', lineHeight: 20 },
+  avatarLetter: { fontSize: 36, fontWeight: '800', color: '#fff' },
+  displayName: { fontSize: 22, fontWeight: '800', color: '#111' },
+  username: { fontSize: 14, color: '#666', marginTop: 2 },
+  bio: {
+    fontSize: 14,
+    color: '#333',
+    marginTop: 12,
+    textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: 280,
+  },
+  bioPlaceholder: {
+    fontSize: 13,
+    color: '#bbb',
+    marginTop: 12,
+    fontStyle: 'italic',
+  },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 18,
-    gap: 28,
-  },
-  statSep: { width: 1, height: 28, backgroundColor: '#e5e5e5' },
-  stat: { alignItems: 'center' },
-  statValue: { fontSize: 20, fontWeight: '800', color: '#111' },
-  statLabel: { fontSize: 12, color: '#666', marginTop: 2, textTransform: 'uppercase' },
-  grid: {
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    marginTop: 22,
     gap: 12,
   },
-  card: {
-    width: '48%',
-    minHeight: 110,
-    borderRadius: 16,
-    padding: 16,
-    justifyContent: 'space-between',
+  statContainer: { flexDirection: 'row', alignItems: 'center' },
+  statSep: { width: 1, height: 24, backgroundColor: '#e5e5e5', marginLeft: 12 },
+  stat: { alignItems: 'center', minWidth: 64 },
+  statValue: { fontSize: 18, fontWeight: '800', color: '#111' },
+  statLabel: {
+    fontSize: 11,
+    color: '#888',
+    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  cardEmoji: { fontSize: 24 },
-  cardLabel: { fontSize: 15, fontWeight: '800' },
-  cardSub: { fontSize: 12, marginTop: 2 },
-  logoutButton: {
-    marginTop: 32,
-    marginHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: '#f5f5f5',
+  ctaRow: { flexDirection: 'row', marginTop: 22, gap: 8, width: '100%' },
+  cta: {
+    paddingVertical: 11,
+    borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  logoutText: { fontSize: 15, fontWeight: '700', color: '#cc0000' },
+  ctaPrimary: { flex: 1, backgroundColor: '#111' },
+  ctaPrimaryText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  ctaSecondary: {
+    width: 46,
+    backgroundColor: '#f5f5f5',
+  },
+  ctaSecondaryText: { color: '#111', fontSize: 18, fontWeight: '700' },
+  tabsBar: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    backgroundColor: '#fff',
+    marginTop: 18,
+  },
+  tabBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+    gap: 2,
+  },
+  tabBtnActive: { borderBottomColor: '#111' },
+  tabIcon: { fontSize: 18, color: '#999' },
+  tabIconActive: { color: '#111' },
+  tabLabel: { fontSize: 11, color: '#999', fontWeight: '700', textTransform: 'uppercase' },
+  tabLabelActive: { color: '#111' },
+  tabContent: { paddingTop: 4 },
 });

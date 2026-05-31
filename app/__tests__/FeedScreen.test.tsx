@@ -25,7 +25,7 @@ describe('FeedScreen', () => {
   it('shows loading state', () => {
     mockUseSetups.mockReturnValue({ setups: [], loading: true, error: null, refetch: jest.fn() });
     renderWithNav(<FeedScreen />);
-    expect(screen.getByLabelText('open-upload')).toBeTruthy();
+    expect(screen.getByText(/setiq/i)).toBeTruthy();
   });
 
   it('shows empty state when no setups', () => {

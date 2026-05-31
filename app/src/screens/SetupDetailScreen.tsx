@@ -147,9 +147,9 @@ export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
           </Text>
         </View>
 
-        <View style={styles.divider} />
-
-        <CommentsSection setupId={setup.id} />
+        <View style={styles.commentsBlock}>
+          <CommentsSection setupId={setup.id} />
+        </View>
       </ScrollView>
 
       <View style={styles.purchaseBar}>
@@ -199,8 +199,13 @@ export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  content: { paddingBottom: 140 },
-  divider: { height: 8, backgroundColor: '#fafafa', marginVertical: 4 },
+  content: { paddingBottom: 160 },
+  commentsBlock: {
+    backgroundColor: '#fafafa',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    marginTop: 8,
+  },
   hero: { width: '100%', height: 300, backgroundColor: '#222' },
   body: { padding: 20 },
   title: { fontSize: 26, fontWeight: '700', marginBottom: 16, color: '#111' },

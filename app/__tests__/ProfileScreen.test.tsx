@@ -1,7 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, screen, waitFor } from '@testing-library/react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { ProfileScreen } from '@/screens/ProfileScreen';
-import { supabase } from '@/services/supabase';
 
 function renderWithNav(component: React.ReactElement) {
   return render(<NavigationContainer>{component}</NavigationContainer>);
@@ -41,18 +40,34 @@ jest.mock('@/auth/useAuth', () => ({
   }),
 }));
 
+jest.mock('@/hooks/useMySetups', () => ({
+  useMySetups: () => ({ setups: [], loading: false, error: null, refetch: jest.fn() }),
+}));
+
+jest.mock('@/hooks/useSavedSetups', () => ({
+  useSavedSetups: () => ({ setups: [], loading: false, error: null, refetch: jest.fn() }),
+}));
+
+jest.mock('@/hooks/useLikedSetups', () => ({
+  useLikedSetups: () => ({ setups: [], loading: false, error: null, refetch: jest.fn() }),
+}));
+
+jest.mock('@/hooks/useMyPurchases', () => ({
+  useMyPurchases: () => ({ items: [], loading: false, error: null, refetch: jest.fn() }),
+}));
+
 describe('ProfileScreen', () => {
-  it('renders logout button after profile loads', async () => {
+  it('renders username after profile loads', async () => {
     renderWithNav(<ProfileScreen />);
     await waitFor(() => {
-      expect(screen.getByLabelText('profile-logout')).toBeTruthy();
+      expect(screen.getByLabelText('open-settings')).toBeTruthy();
     });
   });
 
-  it('calls supabase signOut when logout pressed', async () => {
+  it('renders edit-profile button', async () => {
     renderWithNav(<ProfileScreen />);
-    await waitFor(() => screen.getByLabelText('profile-logout'));
-    fireEvent.press(screen.getByLabelText('profile-logout'));
-    expect(supabase.auth.signOut).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.getByLabelText('edit-profile')).toBeTruthy();
+    });
   });
 });

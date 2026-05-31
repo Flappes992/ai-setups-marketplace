@@ -42,13 +42,9 @@ export function FeedScreen() {
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <StatusBar barStyle="light-content" />
 
-      <TouchableOpacity
-        style={styles.uploadFab}
-        onPress={() => navigation.navigate('SetupUpload')}
-        accessibilityLabel="open-upload"
-      >
-        <Text style={styles.uploadFabText}>+</Text>
-      </TouchableOpacity>
+      <View style={styles.topBar} pointerEvents="box-none">
+        <Text style={styles.brandText}>setiq</Text>
+      </View>
 
       {loading ? (
         <SetupCardSkeleton />
@@ -91,43 +87,22 @@ export function FeedScreen() {
 }
 
 const styles = StyleSheet.create({
-  profileBadge: {
+  topBar: {
     position: 'absolute',
     top: 60,
-    right: 16,
+    left: 0,
+    right: 0,
     zIndex: 10,
-    backgroundColor: 'rgba(255,255,255,0.85)',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 18,
-  },
-  profileBadgeText: {
-    color: '#111',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  uploadFab: {
-    position: 'absolute',
-    bottom: 40,
-    right: 20,
-    zIndex: 10,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#fff',
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 6,
   },
-  uploadFabText: {
-    color: '#111',
-    fontSize: 28,
-    fontWeight: '300',
-    marginTop: -2,
+  brandText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   centerState: {
     flex: 1,

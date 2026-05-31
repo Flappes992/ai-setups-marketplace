@@ -1,6 +1,7 @@
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { CustomTabBar } from '@/navigation/CustomTabBar';
 import { FeedScreen } from '@/screens/FeedScreen';
 import { SetupDetailScreen } from '@/screens/SetupDetailScreen';
 import { SignInScreen } from '@/screens/SignInScreen';
@@ -11,6 +12,8 @@ import { MySetupsScreen } from '@/screens/MySetupsScreen';
 import { MyPurchasesScreen } from '@/screens/MyPurchasesScreen';
 import { SavedSetupsScreen } from '@/screens/SavedSetupsScreen';
 import { LikedSetupsScreen } from '@/screens/LikedSetupsScreen';
+import { SettingsScreen } from '@/screens/SettingsScreen';
+import { EditProfileScreen } from '@/screens/EditProfileScreen';
 import { Setup } from '@/types/setup';
 import { useAuth } from '@/auth/useAuth';
 
@@ -32,6 +35,8 @@ export type MainStackParamList = {
   MyPurchases: undefined;
   Saved: undefined;
   Liked: undefined;
+  Settings: undefined;
+  EditProfile: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -57,41 +62,14 @@ function AuthNavigator() {
   );
 }
 
-function TabIcon({ focused, emoji }: { focused: boolean; emoji: string }) {
-  return <Text style={{ fontSize: 24, opacity: focused ? 1 : 0.45 }}>{emoji}</Text>;
-}
-
 function MainTabs() {
   return (
     <Tabs.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
-        tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopColor: '#eee',
-          height: 72,
-          paddingTop: 10,
-          paddingBottom: 18,
-        },
-      }}
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
-      <Tabs.Screen
-        name="FeedTab"
-        component={FeedScreen}
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} emoji="🏠" />,
-          tabBarAccessibilityLabel: 'tab-feed',
-        }}
-      />
-      <Tabs.Screen
-        name="ProfileTab"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} emoji="👤" />,
-          tabBarAccessibilityLabel: 'tab-profile',
-        }}
-      />
+      <Tabs.Screen name="FeedTab" component={FeedScreen} />
+      <Tabs.Screen name="ProfileTab" component={ProfileScreen} />
     </Tabs.Navigator>
   );
 }
@@ -117,6 +95,8 @@ function MainNavigator() {
       <MainStack.Screen name="MyPurchases" component={MyPurchasesScreen} />
       <MainStack.Screen name="Saved" component={SavedSetupsScreen} />
       <MainStack.Screen name="Liked" component={LikedSetupsScreen} />
+      <MainStack.Screen name="Settings" component={SettingsScreen} />
+      <MainStack.Screen name="EditProfile" component={EditProfileScreen} />
     </MainStack.Navigator>
   );
 }
