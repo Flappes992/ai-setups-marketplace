@@ -20,6 +20,7 @@ import { useSavedSetups } from '@/hooks/useSavedSetups';
 import { useLikedSetups } from '@/hooks/useLikedSetups';
 import { useMyPurchases } from '@/hooks/useMyPurchases';
 import { SetupGrid } from '@/components/SetupGrid';
+import { useTheme } from '@/theme/ThemeProvider';
 
 type ProfileNav = NativeStackNavigationProp<MainStackParamList, 'Tabs'>;
 
@@ -35,6 +36,7 @@ const TABS: { key: TabKey; label: string; emoji: string }[] = [
 export function ProfileScreen() {
   const navigation = useNavigation<ProfileNav>();
   const { session } = useAuth();
+  const { palette } = useTheme();
   const [profile, setProfile] = useState<DbProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>('setups');
@@ -58,12 +60,16 @@ export function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       loadProfile();
-    }, [loadProfile]),
+      mySetups.refetch();
+      saved.refetch();
+      liked.refetch();
+      purchases.refetch();
+    }, [loadProfile, mySetups, saved, liked, purchases]),
   );
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
         <View style={styles.centerState}>
           <ActivityIndicator />
         </View>
@@ -73,7 +79,7 @@ export function ProfileScreen() {
 
   if (!profile) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
         <View style={styles.centerState}>
           <Text style={styles.errorText}>Profil nicht gefunden</Text>
         </View>
@@ -109,7 +115,7 @@ export function ProfileScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
       <View style={styles.topBar}>
         <TouchableOpacity
           onPress={() => navigation.navigate('Notifications')}

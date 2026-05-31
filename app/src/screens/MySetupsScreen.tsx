@@ -122,6 +122,7 @@ export function MySetupsScreen() {
               setup={item}
               onTap={() => navigation.navigate('SetupDetail', { setup: item })}
               onLongPress={() => openSheet(item)}
+              onActionsPress={() => openSheet(item)}
             />
           )}
         />
@@ -165,18 +166,15 @@ function SetupRow({
   setup,
   onTap,
   onLongPress,
+  onActionsPress,
 }: {
   setup: RowSetup;
   onTap: () => void;
   onLongPress: () => void;
+  onActionsPress: () => void;
 }) {
   return (
-    <TouchableOpacity
-      style={styles.row}
-      onPress={onTap}
-      onLongPress={onLongPress}
-      delayLongPress={400}
-    >
+    <Pressable style={styles.row} onPress={onTap} onLongPress={onLongPress} delayLongPress={350}>
       <Image source={{ uri: setup.videoThumbnail }} style={styles.thumb} />
       <View style={styles.rowBody}>
         <Text style={styles.rowTitle} numberOfLines={1}>
@@ -189,8 +187,14 @@ function SetupRow({
           </Text>
         </Text>
       </View>
-      <Text style={styles.chevron}>›</Text>
-    </TouchableOpacity>
+      <TouchableOpacity
+        onPress={onActionsPress}
+        hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
+        accessibilityLabel="setup-actions"
+      >
+        <Text style={styles.menuDots}>⋯</Text>
+      </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -242,6 +246,7 @@ const styles = StyleSheet.create({
   statusLive: { color: '#16a34a', fontWeight: '700' },
   statusOther: { color: '#888', fontWeight: '700' },
   chevron: { fontSize: 22, color: '#bbb' },
+  menuDots: { fontSize: 26, color: '#888', paddingHorizontal: 8, fontWeight: '800' },
   uploadButton: {
     backgroundColor: '#111',
     paddingVertical: 14,

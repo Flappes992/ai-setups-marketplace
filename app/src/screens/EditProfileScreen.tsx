@@ -10,14 +10,18 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as ImagePicker from 'expo-image-picker';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/auth/useAuth';
 import { DbProfile } from '@/types/database';
+import { uploadAvatar } from '@/services/avatarUpload';
+import { useToast } from '@/components/Toast';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'EditProfile'>;
 
@@ -28,8 +32,11 @@ export function EditProfileScreen() {
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [pickingAvatar, setPickingAvatar] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     async function load() {
@@ -45,11 +52,39 @@ export function EditProfileScreen() {
         setDisplayName(p.display_name);
         setUsername(p.username);
         setBio(p.bio ?? '');
+        setAvatarUrl(p.avatar_url);
       }
       setLoading(false);
     }
     load();
   }, [session?.user.id]);
+
+  async function handlePickAvatar() {
+    if (!session?.user.id) return;
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Fotozugriff nötig', 'Erlaube Setiq Zugriff auf deine Fotos.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: 'images',
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    setPickingAvatar(true);
+    try {
+      const url = await uploadAvatar(result.assets[0].uri, session.user.id);
+      setAvatarUrl(url);
+      toast.show('Avatar aktualisiert', 'success');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Upload fehlgeschlagen';
+      toast.show(msg, 'error');
+    } finally {
+      setPickingAvatar(false);
+    }
+  }
 
   async function handleSave() {
     if (!session?.user.id) return;
@@ -68,6 +103,7 @@ export function EditProfileScreen() {
         display_name: displayName.trim(),
         username: username.trim().toLowerCase(),
         bio: bio.trim() || null,
+        avatar_url: avatarUrl,
       })
       .eq('id', session.user.id);
     setSaving(false);
@@ -75,6 +111,7 @@ export function EditProfileScreen() {
       Alert.alert('Fehler', error.message);
       return;
     }
+    toast.show('Profil gespeichert', 'success');
     navigation.goBack();
   }
 
@@ -113,10 +150,28 @@ export function EditProfileScreen() {
       >
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.avatarSection}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarLetter}>{initials || 'U'}</Text>
-            </View>
-            <TouchableOpacity style={styles.avatarChange}>
+            <TouchableOpacity
+              onPress={handlePickAvatar}
+              disabled={pickingAvatar}
+              accessibilityLabel="pick-avatar"
+              style={styles.avatarWrap}
+            >
+              {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={styles.avatarImg} />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarLetter}>{initials || 'U'}</Text>
+                </View>
+              )}
+              <View style={styles.avatarBadge}>
+                {pickingAvatar ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.avatarBadgeText}>📷</Text>
+                )}
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.avatarChange} onPress={handlePickAvatar}>
               <Text style={styles.avatarChangeText}>Avatar ändern</Text>
             </TouchableOpacity>
           </View>
@@ -184,15 +239,31 @@ const styles = StyleSheet.create({
   saveBtn: { fontSize: 15, fontWeight: '700', color: '#facc15' },
   scroll: { paddingBottom: 32 },
   avatarSection: { alignItems: 'center', paddingVertical: 28 },
+  avatarWrap: { position: 'relative' },
   avatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     backgroundColor: '#111',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarLetter: { color: '#fff', fontSize: 34, fontWeight: '800' },
+  avatarImg: { width: 96, height: 96, borderRadius: 48, backgroundColor: '#eee' },
+  avatarLetter: { color: '#fff', fontSize: 38, fontWeight: '800' },
+  avatarBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#facc15',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  avatarBadgeText: { fontSize: 14 },
   avatarChange: { marginTop: 12 },
   avatarChangeText: { color: '#666', fontSize: 13, fontWeight: '600' },
   formSection: { paddingHorizontal: 20, gap: 0 },

@@ -56,6 +56,28 @@ jest.mock('@/hooks/useMyPurchases', () => ({
   useMyPurchases: () => ({ items: [], loading: false, error: null, refetch: jest.fn() }),
 }));
 
+jest.mock('@/theme/ThemeProvider', () => ({
+  useTheme: () => ({
+    mode: 'light',
+    setMode: jest.fn(),
+    isDark: false,
+    palette: {
+      bg: '#fff',
+      bgSecondary: '#f7f7f7',
+      surface: '#f5f5f5',
+      text: '#111',
+      textSecondary: '#666',
+      border: '#eee',
+      accent: '#facc15',
+    },
+  }),
+}));
+
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: { getItem: jest.fn(), setItem: jest.fn(), removeItem: jest.fn() },
+}));
+
 describe('ProfileScreen', () => {
   it('renders username after profile loads', async () => {
     renderWithNav(<ProfileScreen />);

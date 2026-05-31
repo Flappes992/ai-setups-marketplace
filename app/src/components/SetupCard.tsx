@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Animated,
   Pressable,
+  Share,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Setup } from '@/types/setup';
@@ -147,10 +148,24 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
           <Text style={styles.actionLabel}>Save</Text>
         </TouchableOpacity>
 
-        <View style={styles.actionButton}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={async () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            try {
+              await Share.share({
+                message: `Schau dir „${setup.title}" auf Setiq an — von @${setup.creator.username}`,
+                url: `https://setiq.net/setup/${setup.id}`,
+              });
+            } catch {
+              // user cancelled
+            }
+          }}
+          accessibilityLabel="share-setup"
+        >
           <Text style={styles.actionIcon}>↗</Text>
           <Text style={styles.actionLabel}>Teilen</Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.overlay}>

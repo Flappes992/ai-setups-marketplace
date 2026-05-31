@@ -169,7 +169,8 @@ const styles = StyleSheet.create({
   },
   iconBtnText: {
     color: '#fff',
-    fontSize: 22,
+    fontSize: 28,
+    fontWeight: '700',
     textShadowColor: 'rgba(0,0,0,0.4)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
