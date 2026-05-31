@@ -23,7 +23,7 @@ type Nav = NativeStackNavigationProp<MainStackParamList, 'Settings'>;
 export function SettingsScreen() {
   const navigation = useNavigation<Nav>();
   const { session } = useAuth();
-  const { mode, setMode } = useTheme();
+  const { mode, setMode, palette } = useTheme();
   const toast = useToast();
   const [pushNotifs, setPushNotifs] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
@@ -62,12 +62,17 @@ export function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: palette.bgSecondary }]}
+      edges={['top', 'bottom']}
+    >
+      <View
+        style={[styles.topBar, { backgroundColor: palette.bg, borderBottomColor: palette.border }]}
+      >
         <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back">
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Einstellungen</Text>
+        <Text style={[styles.title, { color: palette.text }]}>Einstellungen</Text>
         <View style={{ width: 28 }} />
       </View>
 

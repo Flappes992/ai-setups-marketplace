@@ -123,12 +123,12 @@ export function ProfileScreen() {
         >
           <Text style={styles.bellIcon}>🔔</Text>
         </TouchableOpacity>
-        <Text style={styles.handleTop}>@{profile.username}</Text>
+        <Text style={[styles.handleTop, { color: palette.text }]}>@{profile.username}</Text>
         <TouchableOpacity
           onPress={() => navigation.navigate('Settings')}
           accessibilityLabel="open-settings"
         >
-          <Text style={styles.gearIcon}>⚙</Text>
+          <Text style={[styles.gearIcon, { color: palette.text }]}>⚙</Text>
         </TouchableOpacity>
       </View>
 
@@ -141,10 +141,12 @@ export function ProfileScreen() {
               <Text style={styles.avatarLetter}>{initials || 'U'}</Text>
             </View>
           )}
-          <Text style={styles.displayName}>{profile.display_name}</Text>
-          <Text style={styles.username}>@{profile.username}</Text>
+          <Text style={[styles.displayName, { color: palette.text }]}>{profile.display_name}</Text>
+          <Text style={[styles.username, { color: palette.textSecondary }]}>
+            @{profile.username}
+          </Text>
           {profile.bio ? (
-            <Text style={styles.bio}>{profile.bio}</Text>
+            <Text style={[styles.bio, { color: palette.text }]}>{profile.bio}</Text>
           ) : (
             <Text style={styles.bioPlaceholder}>Noch keine Bio.</Text>
           )}
@@ -153,43 +155,75 @@ export function ProfileScreen() {
             {stats.map((s, i) => (
               <View key={s.label} style={styles.statContainer}>
                 <View style={styles.stat}>
-                  <Text style={styles.statValue}>{s.value}</Text>
-                  <Text style={styles.statLabel}>{s.label}</Text>
+                  <Text style={[styles.statValue, { color: palette.text }]}>{s.value}</Text>
+                  <Text style={[styles.statLabel, { color: palette.textSecondary }]}>
+                    {s.label}
+                  </Text>
                 </View>
-                {i < stats.length - 1 && <View style={styles.statSep} />}
+                {i < stats.length - 1 && (
+                  <View style={[styles.statSep, { backgroundColor: palette.border }]} />
+                )}
               </View>
             ))}
           </View>
 
           <View style={styles.ctaRow}>
             <TouchableOpacity
-              style={[styles.cta, styles.ctaPrimary]}
+              style={[styles.cta, styles.ctaPrimary, { backgroundColor: palette.text }]}
               onPress={() => navigation.navigate('EditProfile')}
               accessibilityLabel="edit-profile"
             >
-              <Text style={styles.ctaPrimaryText}>Profil bearbeiten</Text>
+              <Text style={[styles.ctaPrimaryText, { color: palette.bg }]}>Profil bearbeiten</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.cta, styles.ctaSecondary]}
+              style={[styles.cta, styles.ctaSecondary, { backgroundColor: palette.surface }]}
               accessibilityLabel="share-profile"
+              onPress={async () => {
+                try {
+                  const { Share } = await import('react-native');
+                  await Share.share({
+                    message: `Schau dir @${profile.username} auf Setiq an`,
+                    url: `https://setiq.net/@${profile.username}`,
+                  });
+                } catch {
+                  // cancelled
+                }
+              }}
             >
-              <Text style={styles.ctaSecondaryText}>↗</Text>
+              <Text style={[styles.ctaSecondaryText, { color: palette.text }]}>↗</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <View style={styles.tabsBar}>
+        <View
+          style={[styles.tabsBar, { borderTopColor: palette.border, backgroundColor: palette.bg }]}
+        >
           {TABS.map((t) => (
             <TouchableOpacity
               key={t.key}
-              style={[styles.tabBtn, activeTab === t.key && styles.tabBtnActive]}
+              style={[
+                styles.tabBtn,
+                {
+                  borderBottomColor: activeTab === t.key ? palette.text : 'transparent',
+                },
+              ]}
               onPress={() => setActiveTab(t.key)}
               accessibilityLabel={`profile-tab-${t.key}`}
             >
-              <Text style={[styles.tabIcon, activeTab === t.key && styles.tabIconActive]}>
+              <Text
+                style={[
+                  styles.tabIcon,
+                  { color: activeTab === t.key ? palette.text : palette.textSecondary },
+                ]}
+              >
                 {t.emoji}
               </Text>
-              <Text style={[styles.tabLabel, activeTab === t.key && styles.tabLabelActive]}>
+              <Text
+                style={[
+                  styles.tabLabel,
+                  { color: activeTab === t.key ? palette.text : palette.textSecondary },
+                ]}
+              >
                 {t.label}
               </Text>
             </TouchableOpacity>
