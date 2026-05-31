@@ -8,6 +8,7 @@ import { ProfileScreen } from '@/screens/ProfileScreen';
 import { SetupUploadScreen } from '@/screens/SetupUploadScreen';
 import { MySetupsScreen } from '@/screens/MySetupsScreen';
 import { MyPurchasesScreen } from '@/screens/MyPurchasesScreen';
+import { SavedSetupsScreen } from '@/screens/SavedSetupsScreen';
 import { Setup } from '@/types/setup';
 import { useAuth } from '@/auth/useAuth';
 
@@ -23,6 +24,7 @@ export type MainStackParamList = {
   SetupUpload: undefined;
   MySetups: undefined;
   MyPurchases: undefined;
+  Saved: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -63,6 +65,7 @@ function MainNavigator() {
       <MainStack.Screen name="SetupUpload" component={SetupUploadScreen} />
       <MainStack.Screen name="MySetups" component={MySetupsScreen} />
       <MainStack.Screen name="MyPurchases" component={MyPurchasesScreen} />
+      <MainStack.Screen name="Saved" component={SavedSetupsScreen} />
     </MainStack.Navigator>
   );
 }

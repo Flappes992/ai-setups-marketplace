@@ -2,6 +2,14 @@ import { render, screen } from '@testing-library/react-native';
 import { SetupCard } from '@/components/SetupCard';
 import { mockSetups } from '@/mocks/setups';
 
+jest.mock('@/hooks/useToggleLike', () => ({
+  useToggleLike: () => ({ liked: false, count: 0, loading: false, toggle: jest.fn() }),
+}));
+
+jest.mock('@/hooks/useToggleSave', () => ({
+  useToggleSave: () => ({ saved: false, loading: false, toggle: jest.fn() }),
+}));
+
 describe('SetupCard', () => {
   it('renders setup title', () => {
     render(<SetupCard setup={mockSetups[0]} />);

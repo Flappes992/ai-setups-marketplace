@@ -70,6 +70,14 @@ export function ProfileScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={styles.savedButton}
+          onPress={() => navigation.navigate('Saved')}
+          accessibilityLabel="profile-saved"
+        >
+          <Text style={styles.savedText}>Gespeichert</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={styles.logoutButton}
           onPress={handleLogout}
           accessibilityLabel="profile-logout"
@@ -118,6 +126,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   myPurchasesText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  savedButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    backgroundColor: '#facc15',
+    marginBottom: 12,
+  },
+  savedText: { fontSize: 16, fontWeight: '700', color: '#111' },
   logoutButton: {
     paddingVertical: 14,
     paddingHorizontal: 32,

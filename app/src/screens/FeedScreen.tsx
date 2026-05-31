@@ -6,12 +6,13 @@ import {
   TouchableOpacity,
   Text,
   StyleSheet,
-  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SetupCard } from '@/components/SetupCard';
+import { SetupCardSkeleton } from '@/components/SetupCardSkeleton';
 import { Setup } from '@/types/setup';
 import { MainStackParamList } from '@/navigation/RootNavigator';
 import { useSetups } from '@/hooks/useSetups';
@@ -23,12 +24,19 @@ type FeedNav = NativeStackNavigationProp<MainStackParamList, 'Feed'>;
 export function FeedScreen() {
   const navigation = useNavigation<FeedNav>();
   const { setups, loading, error, refetch } = useSetups();
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       refetch();
     }, [refetch]),
   );
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
@@ -50,9 +58,7 @@ export function FeedScreen() {
       </TouchableOpacity>
 
       {loading ? (
-        <View style={styles.centerState}>
-          <ActivityIndicator color="#fff" size="large" />
-        </View>
+        <SetupCardSkeleton />
       ) : error ? (
         <View style={styles.centerState}>
           <Text style={styles.stateText}>Konnte Setups nicht laden</Text>
@@ -82,6 +88,9 @@ export function FeedScreen() {
           snapToAlignment="start"
           decelerationRate="fast"
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#fff" />
+          }
         />
       )}
     </View>

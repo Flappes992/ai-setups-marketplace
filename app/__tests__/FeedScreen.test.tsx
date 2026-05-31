@@ -7,6 +7,14 @@ jest.mock('@/hooks/useSetups', () => ({
   useSetups: jest.fn(),
 }));
 
+jest.mock('@/hooks/useToggleLike', () => ({
+  useToggleLike: () => ({ liked: false, count: 0, loading: false, toggle: jest.fn() }),
+}));
+
+jest.mock('@/hooks/useToggleSave', () => ({
+  useToggleSave: () => ({ saved: false, loading: false, toggle: jest.fn() }),
+}));
+
 const mockUseSetups = useSetups as jest.Mock;
 
 function renderWithNav(component: React.ReactElement) {

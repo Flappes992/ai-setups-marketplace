@@ -1,5 +1,7 @@
-import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { Setup } from '@/types/setup';
+import { useToggleLike } from '@/hooks/useToggleLike';
+import { useToggleSave } from '@/hooks/useToggleSave';
 
 const { width, height } = Dimensions.get('window');
 
@@ -14,10 +16,44 @@ function formatPriceEur(cents: number): string {
   }).format(cents / 100);
 }
 
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return n.toString();
+}
+
 export function SetupCard({ setup }: SetupCardProps) {
+  const { liked, count, toggle: toggleLike } = useToggleLike(setup.id);
+  const { saved, toggle: toggleSave } = useToggleSave(setup.id);
+
   return (
     <View style={styles.container}>
       <Image source={{ uri: setup.videoThumbnail }} style={styles.thumbnail} resizeMode="cover" />
+
+      <View style={styles.actionRail}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={toggleLike}
+          accessibilityLabel={liked ? 'unlike' : 'like'}
+        >
+          <Text style={[styles.actionIcon, liked && styles.actionIconActive]}>
+            {liked ? '♥' : '♡'}
+          </Text>
+          <Text style={styles.actionLabel}>{formatCount(count)}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={toggleSave}
+          accessibilityLabel={saved ? 'unsave' : 'save'}
+        >
+          <Text style={[styles.actionIcon, saved && styles.actionIconActiveBlue]}>
+            {saved ? '★' : '☆'}
+          </Text>
+          <Text style={styles.actionLabel}>Save</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.overlay}>
         <View style={styles.creatorRow}>
           <Image source={{ uri: setup.creator.avatarUrl }} style={styles.avatar} />
@@ -52,7 +88,41 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 80,
     left: 16,
-    right: 80,
+    right: 100,
+  },
+  actionRail: {
+    position: 'absolute',
+    right: 12,
+    bottom: 140,
+    alignItems: 'center',
+    gap: 20,
+  },
+  actionButton: {
+    alignItems: 'center',
+    padding: 4,
+  },
+  actionIcon: {
+    color: '#fff',
+    fontSize: 38,
+    lineHeight: 42,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  actionIconActive: {
+    color: '#ef4444',
+  },
+  actionIconActiveBlue: {
+    color: '#facc15',
+  },
+  actionLabel: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 2,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   creatorRow: {
     flexDirection: 'row',
