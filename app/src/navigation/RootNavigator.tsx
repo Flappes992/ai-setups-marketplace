@@ -19,7 +19,7 @@ import { SearchScreen } from '@/screens/SearchScreen';
 import { TagFeedScreen } from '@/screens/TagFeedScreen';
 import { NotificationsScreen } from '@/screens/NotificationsScreen';
 import { TrendingScreen } from '@/screens/TrendingScreen';
-import { FollowingListScreen } from '@/screens/FollowingListScreen';
+import { UserListScreen } from '@/screens/UserListScreen';
 import { CreatorProfileScreen } from '@/screens/CreatorProfileScreen';
 import { Setup } from '@/types/setup';
 import { useAuth } from '@/auth/useAuth';
@@ -48,7 +48,7 @@ export type MainStackParamList = {
   TagFeed: { tag: string };
   Notifications: undefined;
   Trending: undefined;
-  FollowingList: undefined;
+  UserList: { userId: string; mode: 'followers' | 'following' };
   CreatorProfile: { creatorId: string };
 };
 
@@ -118,7 +118,7 @@ function MainNavigator() {
       <MainStack.Screen name="TagFeed" component={TagFeedScreen} />
       <MainStack.Screen name="Notifications" component={NotificationsScreen} />
       <MainStack.Screen name="Trending" component={TrendingScreen} />
-      <MainStack.Screen name="FollowingList" component={FollowingListScreen} />
+      <MainStack.Screen name="UserList" component={UserListScreen} />
       <MainStack.Screen name="CreatorProfile" component={CreatorProfileScreen} />
     </MainStack.Navigator>
   );

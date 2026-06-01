@@ -18,6 +18,7 @@ import { useToggleLike } from '@/hooks/useToggleLike';
 import { useToggleSave } from '@/hooks/useToggleSave';
 import { useComments } from '@/hooks/useComments';
 import { useFollow } from '@/hooks/useFollow';
+import { useAuth } from '@/auth/useAuth';
 import { BRAND } from '@/theme/ThemeProvider';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 
@@ -54,6 +55,8 @@ function assetTypeLabel(t: string): { icon: string; label: string } {
 
 export function SetupCard({ setup, onTagPress }: SetupCardProps) {
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
+  const { session } = useAuth();
+  const isOwnSetup = session?.user?.id === setup.creator.id;
   const { liked, count, toggle: toggleLike } = useToggleLike(setup.id);
   const { saved, toggle: toggleSave } = useToggleSave(setup.id);
   const { comments } = useComments(setup.id);
@@ -152,14 +155,6 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
 
       <View style={styles.bottomGradient} pointerEvents="none" />
 
-      {isNew && (
-        <View style={styles.topBadges} pointerEvents="none">
-          <View style={styles.newBadge}>
-            <Text style={styles.newBadgeText}>NEU</Text>
-          </View>
-        </View>
-      )}
-
       <Animated.View style={[styles.heartBurst, heartBurstStyle]} pointerEvents="none">
         <Text style={styles.heartBurstText}>♥</Text>
       </Animated.View>
@@ -246,18 +241,20 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
             <Image source={{ uri: setup.creator.avatarUrl }} style={styles.avatar} />
             <Text style={styles.creatorName}>@{setup.creator.username}</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={async () => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              await toggleFollow();
-            }}
-            style={[styles.followBtn, following && styles.followBtnActive]}
-            accessibilityLabel={following ? 'unfollow' : 'follow'}
-          >
-            <Text style={[styles.followText, following && styles.followTextActive]}>
-              {following ? '✓ Folgst du' : '+ Folgen'}
-            </Text>
-          </TouchableOpacity>
+          {!isOwnSetup && (
+            <TouchableOpacity
+              onPress={async () => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                await toggleFollow();
+              }}
+              style={[styles.followBtn, following && styles.followBtnActive]}
+              accessibilityLabel={following ? 'unfollow' : 'follow'}
+            >
+              <Text style={[styles.followText, following && styles.followTextActive]}>
+                {following ? '✓ Folgst du' : '+ Folgen'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
         <Text style={styles.title}>{setup.title}</Text>
         <Text style={styles.description} numberOfLines={2}>
@@ -276,6 +273,11 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
             <Text style={styles.typeBadgeIcon}>{typeMeta.icon}</Text>
             <Text style={styles.typeBadgeLabel}>{typeMeta.label}</Text>
           </View>
+          {isNew && (
+            <View style={styles.newBadgeInline}>
+              <Text style={styles.newBadgeText}>NEU</Text>
+            </View>
+          )}
         </View>
       </View>
     </Pressable>
@@ -371,23 +373,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.45)',
   },
-  topBadges: {
-    position: 'absolute',
-    top: 70,
-    left: 14,
-    flexDirection: 'row',
-    gap: 6,
-    zIndex: 5,
-  },
-  newBadge: {
-    backgroundColor: BRAND.like,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.6)',
-  },
   newBadgeText: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
+  newBadgeInline: {
+    backgroundColor: BRAND.like,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   typeBadge: {
     flexDirection: 'row',
     alignItems: 'center',

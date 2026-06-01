@@ -190,10 +190,17 @@ export function CreatorProfileScreen() {
 
           <Text style={styles.displayName}>{profile.display_name}</Text>
           <Text style={styles.username}>@{profile.username}</Text>
-          <Text style={styles.followerLine}>
-            <Text style={styles.followerCount}>{followerCount}</Text>
-            <Text style={styles.followerLabel}> Follower</Text>
-          </Text>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('UserList', { userId: creatorId, mode: 'followers' })
+            }
+            accessibilityLabel="open-creator-followers"
+          >
+            <Text style={styles.followerLine}>
+              <Text style={styles.followerCount}>{followerCount}</Text>
+              <Text style={styles.followerLabel}> Follower</Text>
+            </Text>
+          </TouchableOpacity>
 
           {profile.bio ? (
             <Text style={styles.bio}>{profile.bio}</Text>

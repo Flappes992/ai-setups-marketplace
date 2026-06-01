@@ -122,7 +122,9 @@ export function ProfileScreen() {
     {
       label: 'Folge ich',
       value: followingCount,
-      onPress: () => navigation.navigate('FollowingList'),
+      onPress: () =>
+        session?.user?.id &&
+        navigation.navigate('UserList', { userId: session.user.id, mode: 'following' }),
     },
     { label: 'Likes', value: liked.setups.length },
     { label: 'Saved', value: saved.setups.length },
@@ -184,10 +186,18 @@ export function ProfileScreen() {
           <Text style={[styles.username, { color: palette.textSecondary }]}>
             @{profile.username}
           </Text>
-          <Text style={[styles.followerLine, { color: palette.text }]}>
-            <Text style={styles.followerCount}>{followerCount}</Text>
-            <Text style={{ color: palette.textSecondary }}> Follower</Text>
-          </Text>
+          <TouchableOpacity
+            onPress={() =>
+              session?.user?.id &&
+              navigation.navigate('UserList', { userId: session.user.id, mode: 'followers' })
+            }
+            accessibilityLabel="open-followers"
+          >
+            <Text style={[styles.followerLine, { color: palette.text }]}>
+              <Text style={styles.followerCount}>{followerCount}</Text>
+              <Text style={{ color: palette.textSecondary }}> Follower</Text>
+            </Text>
+          </TouchableOpacity>
           {profile.bio ? (
             <Text style={[styles.bio, { color: palette.text }]}>{profile.bio}</Text>
           ) : (

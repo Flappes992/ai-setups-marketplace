@@ -7,6 +7,7 @@ import {
   Text,
   StyleSheet,
   RefreshControl,
+  PanResponder,
   type NativeSyntheticEvent,
   type NativeScrollEvent,
 } from 'react-native';
@@ -24,6 +25,40 @@ import { getFollowingIds } from '@/hooks/useFollow';
 import { useAuth } from '@/auth/useAuth';
 
 const { height } = Dimensions.get('window');
+
+function SwipeableCard({
+  setup,
+  onOpen,
+  onTagPress,
+}: {
+  setup: Setup;
+  onOpen: () => void;
+  onTagPress: (t: string) => void;
+}) {
+  const responder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, g) =>
+        Math.abs(g.dx) > 14 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+      onPanResponderRelease: (_, g) => {
+        if (g.dx < -60 || g.vx < -0.6) onOpen();
+      },
+    }),
+  ).current;
+
+  return (
+    <View {...responder.panHandlers}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={onOpen}
+        accessibilityRole="button"
+        accessibilityLabel={`Setup öffnen: ${setup.title}`}
+      >
+        <SetupCard setup={setup} onTagPress={onTagPress} />
+      </TouchableOpacity>
+    </View>
+  );
+}
 
 type FeedNav = NativeStackNavigationProp<MainStackParamList, 'Tabs'>;
 type FeedMode = 'foryou' | 'following';
@@ -170,14 +205,11 @@ export function FeedScreen() {
             data={visibleSetups}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                activeOpacity={1}
-                onPress={() => navigation.navigate('SetupDetail', { setup: item })}
-                accessibilityRole="button"
-                accessibilityLabel={`Setup öffnen: ${item.title}`}
-              >
-                <SetupCard setup={item} onTagPress={handleTagPress} />
-              </TouchableOpacity>
+              <SwipeableCard
+                setup={item}
+                onOpen={() => navigation.navigate('SetupDetail', { setup: item })}
+                onTagPress={handleTagPress}
+              />
             )}
             pagingEnabled
             snapToInterval={height}

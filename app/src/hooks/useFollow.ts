@@ -78,6 +78,11 @@ export async function getFollowingIds(userId: string): Promise<string[]> {
   return ((data as { following_id: string }[] | null) ?? []).map((r) => r.following_id);
 }
 
+export async function getFollowerIds(userId: string): Promise<string[]> {
+  const { data } = await supabase.from('follows').select('follower_id').eq('following_id', userId);
+  return ((data as { follower_id: string }[] | null) ?? []).map((r) => r.follower_id);
+}
+
 export async function getFollowerCount(userId: string): Promise<number> {
   const { count } = await supabase
     .from('follows')

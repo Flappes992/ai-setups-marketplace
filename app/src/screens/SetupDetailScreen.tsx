@@ -10,6 +10,9 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import * as WebBrowser from 'expo-web-browser';
@@ -57,11 +60,18 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
   useEffect(() => {
     if (!focusComment) return;
     const t = setTimeout(() => {
-      scrollRef.current?.scrollTo({ y: commentsY, animated: true });
+      scrollRef.current?.scrollToEnd({ animated: true });
       commentInputRef.current?.focus();
     }, 350);
     return () => clearTimeout(t);
   }, [focusComment, commentsY]);
+
+  useEffect(() => {
+    const sub = Keyboard.addListener('keyboardDidShow', () => {
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
+    });
+    return () => sub.remove();
+  }, []);
   const { session } = useAuth();
   const userId = session?.user?.id;
   const isOwner = userId === setup.creator.id;
@@ -139,106 +149,120 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
-        {hasVideo ? (
-          <VideoView player={player} style={styles.hero} nativeControls contentFit="cover" />
-        ) : (
-          <Image source={{ uri: setup.videoThumbnail }} style={styles.hero} resizeMode="cover" />
-        )}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          {hasVideo ? (
+            <VideoView player={player} style={styles.hero} nativeControls contentFit="cover" />
+          ) : (
+            <Image source={{ uri: setup.videoThumbnail }} style={styles.hero} resizeMode="cover" />
+          )}
 
-        <View style={styles.body}>
-          <Text style={styles.title}>{setup.title}</Text>
+          <View style={styles.body}>
+            <Text style={styles.title}>{setup.title}</Text>
 
-          <View style={styles.creatorRow}>
-            <TouchableOpacity
-              style={styles.creatorTap}
-              onPress={() => navigation.navigate('CreatorProfile', { creatorId: setup.creator.id })}
-              accessibilityLabel={`open-creator-${setup.creator.username}`}
-            >
-              <Image source={{ uri: setup.creator.avatarUrl }} style={styles.avatar} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.creatorName}>{setup.creator.displayName}</Text>
-                <Text style={styles.creatorMeta}>
-                  ★ {setup.creator.ratingAverage.toFixed(1)} · {setup.creator.setupsCount} Setups
-                </Text>
-              </View>
-            </TouchableOpacity>
-            {!isOwner && (
+            <View style={styles.creatorRow}>
               <TouchableOpacity
-                onPress={toggleFollow}
-                style={[styles.detailFollowBtn, following && styles.detailFollowBtnActive]}
-                accessibilityLabel={following ? 'unfollow-detail' : 'follow-detail'}
+                style={styles.creatorTap}
+                onPress={() =>
+                  navigation.navigate('CreatorProfile', { creatorId: setup.creator.id })
+                }
+                accessibilityLabel={`open-creator-${setup.creator.username}`}
               >
-                <Text style={[styles.detailFollowText, following && styles.detailFollowTextActive]}>
-                  {following ? '✓ Folgst du' : '+ Folgen'}
-                </Text>
+                <Image source={{ uri: setup.creator.avatarUrl }} style={styles.avatar} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.creatorName}>{setup.creator.displayName}</Text>
+                  <Text style={styles.creatorMeta}>
+                    ★ {setup.creator.ratingAverage.toFixed(1)} · {setup.creator.setupsCount} Setups
+                  </Text>
+                </View>
               </TouchableOpacity>
+              {!isOwner && (
+                <TouchableOpacity
+                  onPress={toggleFollow}
+                  style={[styles.detailFollowBtn, following && styles.detailFollowBtnActive]}
+                  accessibilityLabel={following ? 'unfollow-detail' : 'follow-detail'}
+                >
+                  <Text
+                    style={[styles.detailFollowText, following && styles.detailFollowTextActive]}
+                  >
+                    {following ? '✓ Folgst du' : '+ Folgen'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <View style={styles.statsRow}>
+              <Stat icon="♥" value={likeCount} label="Likes" tint={BRAND.like} />
+              <Stat icon="★" value={saveCount} label="Saves" tint={BRAND.teal} />
+              <Stat icon="💬" value={comments.length} label="Kommentare" />
+            </View>
+
+            <Text style={styles.sectionTitle}>Über das Setup</Text>
+            <Text style={styles.description}>{setup.description}</Text>
+
+            <Text style={styles.sectionTitle}>Über {setup.creator.displayName}</Text>
+            <Text style={styles.description}>{setup.creator.bio}</Text>
+
+            <Text style={styles.sectionTitle}>Tags</Text>
+            <View style={styles.tagRow}>
+              {setup.tags.map((tag) => (
+                <TouchableOpacity
+                  key={tag}
+                  style={styles.tag}
+                  onPress={() => navigation.navigate('TagFeed', { tag })}
+                  accessibilityLabel={`tag-${tag}`}
+                >
+                  <Text style={styles.tagText}>#{tag}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.sectionTitle}>Asset-Typ</Text>
+            <Text style={styles.description}>
+              {setup.assetType === 'clonable'
+                ? 'Klonbares Template — sofort verfügbar nach Kauf'
+                : 'PDF + Video-Tutorial Bundle'}
+            </Text>
+
+            {otherSetups.length > 0 && (
+              <>
+                <Text style={styles.sectionTitle}>Mehr von {setup.creator.displayName}</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.carousel}
+                >
+                  {otherSetups.map((s) => (
+                    <TouchableOpacity
+                      key={s.id}
+                      style={styles.otherCard}
+                      onPress={() => navigation.push('SetupDetail', { setup: s })}
+                      accessibilityLabel={`other-setup-${s.id}`}
+                    >
+                      <Image source={{ uri: s.videoThumbnail }} style={styles.otherThumb} />
+                      <Text numberOfLines={2} style={styles.otherTitle}>
+                        {s.title}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </>
             )}
           </View>
 
-          <View style={styles.statsRow}>
-            <Stat icon="♥" value={likeCount} label="Likes" tint={BRAND.like} />
-            <Stat icon="★" value={saveCount} label="Saves" tint={BRAND.teal} />
-            <Stat icon="💬" value={comments.length} label="Kommentare" />
+          <View style={styles.commentsBlock} onLayout={(e) => setCommentsY(e.nativeEvent.layout.y)}>
+            <CommentsSection setupId={setup.id} inputRef={commentInputRef} />
           </View>
-
-          <Text style={styles.sectionTitle}>Über das Setup</Text>
-          <Text style={styles.description}>{setup.description}</Text>
-
-          <Text style={styles.sectionTitle}>Über {setup.creator.displayName}</Text>
-          <Text style={styles.description}>{setup.creator.bio}</Text>
-
-          <Text style={styles.sectionTitle}>Tags</Text>
-          <View style={styles.tagRow}>
-            {setup.tags.map((tag) => (
-              <TouchableOpacity
-                key={tag}
-                style={styles.tag}
-                onPress={() => navigation.navigate('TagFeed', { tag })}
-                accessibilityLabel={`tag-${tag}`}
-              >
-                <Text style={styles.tagText}>#{tag}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <Text style={styles.sectionTitle}>Asset-Typ</Text>
-          <Text style={styles.description}>
-            {setup.assetType === 'clonable'
-              ? 'Klonbares Template — sofort verfügbar nach Kauf'
-              : 'PDF + Video-Tutorial Bundle'}
-          </Text>
-
-          {otherSetups.length > 0 && (
-            <>
-              <Text style={styles.sectionTitle}>Mehr von {setup.creator.displayName}</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.carousel}
-              >
-                {otherSetups.map((s) => (
-                  <TouchableOpacity
-                    key={s.id}
-                    style={styles.otherCard}
-                    onPress={() => navigation.push('SetupDetail', { setup: s })}
-                    accessibilityLabel={`other-setup-${s.id}`}
-                  >
-                    <Image source={{ uri: s.videoThumbnail }} style={styles.otherThumb} />
-                    <Text numberOfLines={2} style={styles.otherTitle}>
-                      {s.title}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </>
-          )}
-        </View>
-
-        <View style={styles.commentsBlock} onLayout={(e) => setCommentsY(e.nativeEvent.layout.y)}>
-          <CommentsSection setupId={setup.id} inputRef={commentInputRef} />
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <View style={styles.purchaseBar}>
         {buttonState === 'owner' && (
