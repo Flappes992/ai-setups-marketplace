@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,9 @@ import {
 } from 'react-native';
 import { useAuth } from '@/auth/useAuth';
 import { useComments, Comment } from '@/hooks/useComments';
+
+const MAX_COMMENT_LEN = 500;
+type SortMode = 'newest' | 'oldest';
 
 function timeAgo(iso: string): string {
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
@@ -34,6 +37,20 @@ export function CommentsSection({ setupId }: Props) {
   const { comments, loading, add, remove } = useComments(setupId);
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [sort, setSort] = useState<SortMode>('newest');
+
+  const sortedComments = useMemo(() => {
+    const arr = [...comments];
+    arr.sort((a, b) => {
+      const ta = Date.parse(a.createdAt);
+      const tb = Date.parse(b.createdAt);
+      return sort === 'newest' ? tb - ta : ta - tb;
+    });
+    return arr;
+  }, [comments, sort]);
+
+  const remaining = MAX_COMMENT_LEN - input.length;
+  const nearLimit = remaining <= 50;
 
   async function handleSubmit() {
     if (!input.trim()) return;
@@ -45,21 +62,45 @@ export function CommentsSection({ setupId }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>
-        Kommentare {comments.length > 0 && <Text style={styles.count}>· {comments.length}</Text>}
-      </Text>
+      <View style={styles.headRow}>
+        <Text style={styles.heading}>
+          Kommentare {comments.length > 0 && <Text style={styles.count}>· {comments.length}</Text>}
+        </Text>
+        {comments.length > 1 && (
+          <View style={styles.sortRow}>
+            {(['newest', 'oldest'] as const).map((m) => (
+              <TouchableOpacity
+                key={m}
+                onPress={() => setSort(m)}
+                style={[styles.sortChip, sort === m && styles.sortChipActive]}
+                accessibilityLabel={`sort-${m}`}
+              >
+                <Text style={[styles.sortText, sort === m && styles.sortTextActive]}>
+                  {m === 'newest' ? 'Neuste' : 'Älteste'}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
 
       <View style={styles.composer}>
-        <TextInput
-          selectionColor="#2DD4BF"
-          placeholder="Was denkst du dazu?"
-          value={input}
-          onChangeText={setInput}
-          style={styles.input}
-          maxLength={500}
-          editable={!!userId && !submitting}
-          accessibilityLabel="comment-input"
-        />
+        <View style={{ flex: 1 }}>
+          <TextInput
+            selectionColor="#2DD4BF"
+            placeholder="Was denkst du dazu?"
+            value={input}
+            onChangeText={setInput}
+            style={styles.input}
+            maxLength={MAX_COMMENT_LEN}
+            editable={!!userId && !submitting}
+            accessibilityLabel="comment-input"
+            multiline
+          />
+          {input.length > 0 && (
+            <Text style={[styles.charCount, nearLimit && styles.charCountWarn]}>{remaining}</Text>
+          )}
+        </View>
         <TouchableOpacity
           style={[styles.submit, (!input.trim() || submitting) && styles.submitDisabled]}
           onPress={handleSubmit}
@@ -76,10 +117,10 @@ export function CommentsSection({ setupId }: Props) {
 
       {loading ? (
         <ActivityIndicator style={{ marginTop: 12 }} />
-      ) : comments.length === 0 ? (
+      ) : sortedComments.length === 0 ? (
         <Text style={styles.empty}>Noch keine Kommentare. Sei der erste.</Text>
       ) : (
-        comments.map((c) => (
+        sortedComments.map((c) => (
           <CommentRow key={c.id} comment={c} ownerId={userId} onDelete={remove} />
         ))
       )}
@@ -159,4 +200,24 @@ const styles = StyleSheet.create({
   body: { fontSize: 14, color: '#333', lineHeight: 19 },
   deleteBtn: { alignSelf: 'flex-start', marginTop: 4 },
   deleteText: { fontSize: 12, color: '#cc0000', fontWeight: '600' },
+  headRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  sortRow: { flexDirection: 'row', gap: 4 },
+  sortChip: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+  },
+  sortChipActive: { backgroundColor: '#2DD4BF' },
+  sortText: { fontSize: 11, color: '#666', fontWeight: '700' },
+  sortTextActive: { color: '#0b3b35' },
+  charCount: {
+    position: 'absolute',
+    bottom: 6,
+    right: 10,
+    fontSize: 11,
+    color: '#999',
+    fontWeight: '600',
+  },
+  charCountWarn: { color: '#ef4444' },
 });

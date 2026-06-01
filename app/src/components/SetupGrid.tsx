@@ -22,12 +22,14 @@ const ITEM = (width - GAP * (COLS - 1)) / COLS;
 interface Props {
   setups: Setup[];
   emptyText: string;
+  emptyView?: React.ReactNode;
 }
 
-export function SetupGrid({ setups, emptyText }: Props) {
+export function SetupGrid({ setups, emptyText, emptyView }: Props) {
   const navigation = useNavigation<Nav>();
 
   if (setups.length === 0) {
+    if (emptyView) return <>{emptyView}</>;
     return (
       <View style={styles.empty}>
         <Text style={styles.emptyText}>{emptyText}</Text>

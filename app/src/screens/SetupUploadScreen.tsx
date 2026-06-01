@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
   Text,
@@ -23,12 +24,24 @@ import type { MainStackParamList } from '@/navigation/RootNavigator';
 import { useAuth } from '@/auth/useAuth';
 import { supabase } from '@/services/supabase';
 import { uploadFileToStorage } from '@/services/storage';
+import { useSetups } from '@/hooks/useSetups';
+
+const DRAFT_KEY = 'setiq.upload.draft.v1';
+interface UploadDraft {
+  title: string;
+  description: string;
+  tagsInput: string;
+  priceEur: string;
+  assetType: AssetType;
+  assetUrl: string;
+}
 
 type UploadNav = NativeStackNavigationProp<MainStackParamList, 'SetupUpload'>;
 
 export function SetupUploadScreen() {
   const navigation = useNavigation<UploadNav>();
   const { session } = useAuth();
+  const { setups: allSetups } = useSetups();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -39,6 +52,57 @@ export function SetupUploadScreen() {
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [bundleUri, setBundleUri] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const draftLoaded = useRef(false);
+
+  const topTags = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const s of allSetups) for (const t of s.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map((e) => e[0])
+      .slice(0, 12);
+  }, [allSetups]);
+
+  useEffect(() => {
+    AsyncStorage.getItem(DRAFT_KEY)
+      .then((raw) => {
+        if (!raw) {
+          draftLoaded.current = true;
+          return;
+        }
+        try {
+          const d = JSON.parse(raw) as UploadDraft;
+          if (d.title) setTitle(d.title);
+          if (d.description) setDescription(d.description);
+          if (d.tagsInput) setTagsInput(d.tagsInput);
+          if (d.priceEur) setPriceEur(d.priceEur);
+          if (d.assetType) setAssetType(d.assetType);
+          if (d.assetUrl) setAssetUrl(d.assetUrl);
+        } catch {
+          // ignore
+        }
+        draftLoaded.current = true;
+      })
+      .catch(() => {
+        draftLoaded.current = true;
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!draftLoaded.current) return;
+    const draft: UploadDraft = { title, description, tagsInput, priceEur, assetType, assetUrl };
+    AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(draft)).catch(() => {});
+  }, [title, description, tagsInput, priceEur, assetType, assetUrl]);
+
+  function addTagSuggestion(tag: string) {
+    const existing = tagsInput
+      .split(',')
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
+    if (existing.includes(tag)) return;
+    const next = [...existing, tag].join(', ');
+    setTagsInput(next);
+  }
 
   const videoPlayer = useVideoPlayer(videoUri ?? '', (player) => {
     player.loop = true;
@@ -132,6 +196,7 @@ export function SetupUploadScreen() {
       });
       if (insertError) throw new Error(insertError.message);
 
+      await AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
       Alert.alert('Live!', 'Dein Setup ist veröffentlicht.', [
         { text: 'OK', onPress: () => navigation.popToTop() },
       ]);
@@ -214,6 +279,27 @@ export function SetupUploadScreen() {
               style={styles.input}
               accessibilityLabel="upload-tags"
             />
+            {topTags.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.suggestRow}
+                keyboardShouldPersistTaps="handled"
+              >
+                {topTags
+                  .filter((t) => !tagsArray.includes(t))
+                  .map((t) => (
+                    <TouchableOpacity
+                      key={t}
+                      onPress={() => addTagSuggestion(t)}
+                      style={styles.suggestChip}
+                      accessibilityLabel={`suggest-${t}`}
+                    >
+                      <Text style={styles.suggestText}>+ #{t}</Text>
+                    </TouchableOpacity>
+                  ))}
+              </ScrollView>
+            )}
             {tagsArray.length > 0 && (
               <View style={styles.tagPreview}>
                 {tagsArray.map((t) => (
@@ -373,6 +459,16 @@ const styles = StyleSheet.create({
   },
   secondaryButton: { marginTop: 8, alignItems: 'center' },
   secondaryText: { color: '#666', fontSize: 14 },
+  suggestRow: { gap: 6, paddingVertical: 8, paddingRight: 8 },
+  suggestChip: {
+    backgroundColor: 'rgba(45,212,191,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(45,212,191,0.5)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+  },
+  suggestText: { fontSize: 12, color: '#0b3b35', fontWeight: '700' },
   tagPreview: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
   tagChip: {
     backgroundColor: '#f0f0f0',

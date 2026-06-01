@@ -13,11 +13,21 @@ import {
 } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import * as WebBrowser from 'expo-web-browser';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Setup } from '@/types/setup';
 import { useAuth } from '@/auth/useAuth';
 import { usePurchase } from '@/hooks/usePurchase';
 import { CommentsSection } from '@/components/CommentsSection';
 import { TealGradient } from '@/components/TealGradient';
+import { useToggleLike } from '@/hooks/useToggleLike';
+import { useToggleSave } from '@/hooks/useToggleSave';
+import { useComments } from '@/hooks/useComments';
+import { useSetups } from '@/hooks/useSetups';
+import { BRAND } from '@/theme/ThemeProvider';
+import type { MainStackParamList } from '@/navigation/RootNavigator';
+
+type Nav = NativeStackNavigationProp<MainStackParamList, 'SetupDetail'>;
 
 const WEB_CHECKOUT_BASE = 'https://web-checkout-sicci-s-projects.vercel.app';
 
@@ -37,12 +47,21 @@ interface SetupDetailScreenProps {
 }
 
 export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
+  const navigation = useNavigation<Nav>();
   const { session } = useAuth();
   const userId = session?.user?.id;
   const isOwner = userId === setup.creator.id;
   const { purchase, refetch } = usePurchase(setup.id, userId);
+  const { count: likeCount } = useToggleLike(setup.id);
+  const { count: saveCount } = useToggleSave(setup.id);
+  const { comments } = useComments(setup.id);
+  const { setups: allSetups } = useSetups();
   const [busy, setBusy] = useState(false);
   const [polling, setPolling] = useState(false);
+
+  const otherSetups = allSetups
+    .filter((s) => s.creator.id === setup.creator.id && s.id !== setup.id)
+    .slice(0, 6);
 
   const heroUrl = setup.videoUrl || setup.videoThumbnail;
   const hasVideo = isVideoUrl(heroUrl);
@@ -125,6 +144,12 @@ export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
             </View>
           </View>
 
+          <View style={styles.statsRow}>
+            <Stat icon="♥" value={likeCount} label="Likes" tint={BRAND.like} />
+            <Stat icon="★" value={saveCount} label="Saves" tint={BRAND.teal} />
+            <Stat icon="💬" value={comments.length} label="Kommentare" />
+          </View>
+
           <Text style={styles.sectionTitle}>Über das Setup</Text>
           <Text style={styles.description}>{setup.description}</Text>
 
@@ -134,9 +159,14 @@ export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
           <Text style={styles.sectionTitle}>Tags</Text>
           <View style={styles.tagRow}>
             {setup.tags.map((tag) => (
-              <View key={tag} style={styles.tag}>
+              <TouchableOpacity
+                key={tag}
+                style={styles.tag}
+                onPress={() => navigation.navigate('TagFeed', { tag })}
+                accessibilityLabel={`tag-${tag}`}
+              >
                 <Text style={styles.tagText}>#{tag}</Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
 
@@ -146,6 +176,31 @@ export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
               ? 'Klonbares Template — sofort verfügbar nach Kauf'
               : 'PDF + Video-Tutorial Bundle'}
           </Text>
+
+          {otherSetups.length > 0 && (
+            <>
+              <Text style={styles.sectionTitle}>Mehr von {setup.creator.displayName}</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.carousel}
+              >
+                {otherSetups.map((s) => (
+                  <TouchableOpacity
+                    key={s.id}
+                    style={styles.otherCard}
+                    onPress={() => navigation.push('SetupDetail', { setup: s })}
+                    accessibilityLabel={`other-setup-${s.id}`}
+                  >
+                    <Image source={{ uri: s.videoThumbnail }} style={styles.otherThumb} />
+                    <Text numberOfLines={2} style={styles.otherTitle}>
+                      {s.title}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </>
+          )}
         </View>
 
         <View style={styles.commentsBlock}>
@@ -197,6 +252,26 @@ export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
         )}
       </View>
     </SafeAreaView>
+  );
+}
+
+function Stat({
+  icon,
+  value,
+  label,
+  tint,
+}: {
+  icon: string;
+  value: number;
+  label: string;
+  tint?: string;
+}) {
+  return (
+    <View style={styles.statBox}>
+      <Text style={[styles.statIcon, tint ? { color: tint } : null]}>{icon}</Text>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
   );
 }
 
@@ -278,4 +353,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   purchaseGradientText: { color: '#0b3b35', fontSize: 16, fontWeight: '800' },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 20,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: '#f7f7f7',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  statIcon: { fontSize: 20, marginBottom: 2 },
+  statValue: { fontSize: 17, fontWeight: '800', color: '#111' },
+  statLabel: { fontSize: 11, color: '#666', marginTop: 2 },
+  carousel: { gap: 10, paddingVertical: 4, paddingRight: 16 },
+  otherCard: { width: 130 },
+  otherThumb: {
+    width: 130,
+    height: 180,
+    borderRadius: 10,
+    backgroundColor: '#eee',
+  },
+  otherTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#111',
+    marginTop: 6,
+    lineHeight: 16,
+  },
 });

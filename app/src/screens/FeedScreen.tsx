@@ -7,11 +7,14 @@ import {
   Text,
   StyleSheet,
   RefreshControl,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
 } from 'react-native';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown, FadeIn, FadeOut } from 'react-native-reanimated';
 import { SetupCard } from '@/components/SetupCard';
 import { SetupCardSkeleton } from '@/components/SetupCardSkeleton';
 import { Setup } from '@/types/setup';
@@ -28,6 +31,8 @@ export function FeedScreen() {
   const { setups, loading, error, refetch } = useSetups();
   const [refreshing, setRefreshing] = useState(false);
   const [mode, setMode] = useState<FeedMode>('foryou');
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const listRef = useRef<FlatList<Setup>>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -50,6 +55,17 @@ export function FeedScreen() {
     if (next === mode) return;
     Haptics.selectionAsync();
     setMode(next);
+  }
+
+  function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
+    const cardIdx = Math.round(e.nativeEvent.contentOffset.y / height);
+    const visible = cardIdx >= 5;
+    if (visible !== showScrollTop) setShowScrollTop(visible);
+  }
+
+  function scrollToTop() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
   }
 
   return (
@@ -119,33 +135,57 @@ export function FeedScreen() {
           <Text style={styles.stateSubtext}>Geh zu For You und such dir welche aus.</Text>
         </View>
       ) : (
-        <FlatList<Setup>
-          data={setups}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={() => navigation.navigate('SetupDetail', { setup: item })}
-              accessibilityRole="button"
-              accessibilityLabel={`Setup öffnen: ${item.title}`}
+        <>
+          <FlatList<Setup>
+            ref={listRef}
+            data={setups}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item, index }) => (
+              <Animated.View entering={FadeInDown.duration(380).delay(Math.min(index, 4) * 70)}>
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={() => navigation.navigate('SetupDetail', { setup: item })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Setup öffnen: ${item.title}`}
+                >
+                  <SetupCard setup={item} onTagPress={handleTagPress} />
+                </TouchableOpacity>
+              </Animated.View>
+            )}
+            pagingEnabled
+            snapToInterval={height}
+            snapToAlignment="start"
+            decelerationRate="fast"
+            showsVerticalScrollIndicator={false}
+            onScroll={onScroll}
+            scrollEventThrottle={16}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor="#2DD4BF"
+                colors={['#2DD4BF']}
+              />
+            }
+          />
+          {showScrollTop && (
+            <Animated.View
+              entering={FadeIn.duration(180)}
+              exiting={FadeOut.duration(150)}
+              style={styles.scrollTopWrap}
+              pointerEvents="box-none"
             >
-              <SetupCard setup={item} onTagPress={handleTagPress} />
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={scrollToTop}
+                style={styles.scrollTopBtn}
+                accessibilityLabel="scroll-to-top"
+                activeOpacity={0.85}
+              >
+                <Text style={styles.scrollTopIcon}>↑</Text>
+              </TouchableOpacity>
+            </Animated.View>
           )}
-          pagingEnabled
-          snapToInterval={height}
-          snapToAlignment="start"
-          decelerationRate="fast"
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor="#2DD4BF"
-              colors={['#2DD4BF']}
-            />
-          }
-        />
+        </>
       )}
     </View>
   );
@@ -219,5 +259,28 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.7)',
     fontSize: 14,
     textAlign: 'center',
+  },
+  scrollTopWrap: {
+    position: 'absolute',
+    bottom: 110,
+    right: 16,
+  },
+  scrollTopBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#2DD4BF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#14B8A6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  scrollTopIcon: {
+    color: '#0b3b35',
+    fontSize: 22,
+    fontWeight: '900',
   },
 });

@@ -20,7 +20,8 @@ import { useSavedSetups } from '@/hooks/useSavedSetups';
 import { useLikedSetups } from '@/hooks/useLikedSetups';
 import { useMyPurchases } from '@/hooks/useMyPurchases';
 import { SetupGrid } from '@/components/SetupGrid';
-import { useTheme } from '@/theme/ThemeProvider';
+import { EmptyState } from '@/components/EmptyState';
+import { useTheme, BRAND } from '@/theme/ThemeProvider';
 
 type ProfileNav = NativeStackNavigationProp<MainStackParamList, 'Tabs'>;
 
@@ -108,11 +109,24 @@ export function ProfileScreen() {
     purchases: 'Du hast noch nichts gekauft.',
   };
 
+  const setupsCount = mySetups.setups.length;
   const stats = [
-    { label: 'Setups', value: mySetups.setups.length },
+    { label: 'Setups', value: setupsCount },
     { label: 'Likes', value: liked.setups.length },
     { label: 'Saved', value: saved.setups.length },
+    { label: 'Käufe', value: purchases.items.length },
   ];
+
+  const creatorTier = setupsCount >= 20 ? 'gold' : setupsCount >= 5 ? 'silver' : null;
+  const tierColor =
+    creatorTier === 'gold' ? '#fbbf24' : creatorTier === 'silver' ? '#cbd5e1' : null;
+
+  const joinedDate = (() => {
+    const t = Date.parse(profile.created_at);
+    if (Number.isNaN(t)) return null;
+    const d = new Date(t);
+    return d.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+  })();
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
@@ -134,17 +148,34 @@ export function ProfileScreen() {
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          {profile.avatar_url ? (
-            <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
-          ) : (
-            <View style={styles.avatar}>
-              <Text style={styles.avatarLetter}>{initials || 'U'}</Text>
-            </View>
-          )}
+          <View
+            style={[
+              styles.avatarRing,
+              tierColor ? { borderColor: tierColor } : { borderColor: BRAND.teal },
+            ]}
+          >
+            {profile.avatar_url ? (
+              <Image source={{ uri: profile.avatar_url }} style={styles.avatarImg} />
+            ) : (
+              <View style={styles.avatarFallback}>
+                <Text style={styles.avatarLetter}>{initials || 'U'}</Text>
+              </View>
+            )}
+            {creatorTier && (
+              <View style={[styles.tierBadge, { backgroundColor: tierColor ?? BRAND.teal }]}>
+                <Text style={styles.tierBadgeText}>{creatorTier === 'gold' ? '★' : '◆'}</Text>
+              </View>
+            )}
+          </View>
           <Text style={[styles.displayName, { color: palette.text }]}>{profile.display_name}</Text>
           <Text style={[styles.username, { color: palette.textSecondary }]}>
             @{profile.username}
           </Text>
+          {joinedDate && (
+            <Text style={[styles.joined, { color: palette.textSecondary }]}>
+              Setiq seit {joinedDate}
+            </Text>
+          )}
           {profile.bio ? (
             <Text style={[styles.bio, { color: palette.text }]}>{profile.bio}</Text>
           ) : (
@@ -231,7 +262,45 @@ export function ProfileScreen() {
         </View>
 
         <View style={styles.tabContent}>
-          <SetupGrid setups={tabData[activeTab]} emptyText={tabEmpty[activeTab]} />
+          <SetupGrid
+            setups={tabData[activeTab]}
+            emptyText={tabEmpty[activeTab]}
+            emptyView={
+              activeTab === 'setups' ? (
+                <EmptyState
+                  icon="🚀"
+                  title="Lade dein erstes Setup hoch"
+                  subtitle="Custom GPT, Prompt-Stack, n8n-Workflow oder Tutorial — bau dir Cashflow auf."
+                  ctaLabel="Setup hochladen"
+                  onCta={() => navigation.navigate('SetupUpload')}
+                />
+              ) : activeTab === 'saved' ? (
+                <EmptyState
+                  icon="★"
+                  title="Noch nichts gespeichert"
+                  subtitle="Tippe das Sternchen auf einem Setup, um es hier zu sammeln."
+                  ctaLabel="Setups entdecken"
+                  onCta={() => navigation.navigate('Tabs', { screen: 'FeedTab' })}
+                />
+              ) : activeTab === 'liked' ? (
+                <EmptyState
+                  icon="♥"
+                  title="Noch keine Likes"
+                  subtitle="Doppel-tap auf Setups die du feierst — die landen hier."
+                  ctaLabel="Zum Feed"
+                  onCta={() => navigation.navigate('Tabs', { screen: 'FeedTab' })}
+                />
+              ) : (
+                <EmptyState
+                  icon="🛒"
+                  title="Du hast noch nichts gekauft"
+                  subtitle="Im Marketplace findest du sofort einsetzbare AI-Setups von echten Creators."
+                  ctaLabel="Marketplace öffnen"
+                  onCta={() => navigation.navigate('Tabs', { screen: 'FeedTab' })}
+                />
+              )
+            }
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -255,16 +324,40 @@ const styles = StyleSheet.create({
   gearIcon: { fontSize: 26, color: '#111' },
   bellIcon: { fontSize: 22 },
   header: { alignItems: 'center', paddingHorizontal: 24, paddingTop: 16, paddingBottom: 12 },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#111',
+  avatarRing: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    borderWidth: 3,
+    padding: 3,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
   },
+  avatarImg: { width: 92, height: 92, borderRadius: 46, backgroundColor: '#eee' },
+  avatarFallback: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    backgroundColor: '#111',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarLetter: { fontSize: 36, fontWeight: '800', color: '#fff' },
+  tierBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  tierBadgeText: { color: '#fff', fontSize: 12, fontWeight: '900' },
+  joined: { fontSize: 12, marginTop: 4, fontStyle: 'italic' },
   displayName: { fontSize: 22, fontWeight: '800', color: '#111' },
   username: { fontSize: 14, color: '#666', marginTop: 2 },
   bio: {

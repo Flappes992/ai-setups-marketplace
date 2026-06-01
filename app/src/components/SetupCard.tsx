@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -36,13 +36,36 @@ function formatCount(n: number): string {
   return n.toString();
 }
 
+function isNewSetup(createdAt: string): boolean {
+  const created = Date.parse(createdAt);
+  if (Number.isNaN(created)) return false;
+  return Date.now() - created < 24 * 60 * 60 * 1000;
+}
+
+function assetTypeLabel(t: string): { icon: string; label: string } {
+  if (t === 'tutorial_bundle') return { icon: '📚', label: 'Bundle' };
+  return { icon: '⚡', label: 'Setup' };
+}
+
 export function SetupCard({ setup, onTagPress }: SetupCardProps) {
   const { liked, count, toggle: toggleLike } = useToggleLike(setup.id);
   const { saved, toggle: toggleSave } = useToggleSave(setup.id);
   const likeScale = useRef(new Animated.Value(1)).current;
   const saveScale = useRef(new Animated.Value(1)).current;
+  const countScale = useRef(new Animated.Value(1)).current;
   const heartBurst = useRef(new Animated.Value(0)).current;
   const lastTap = useRef(0);
+  const prevCount = useRef(count);
+
+  useEffect(() => {
+    if (count !== prevCount.current) {
+      Animated.sequence([
+        Animated.spring(countScale, { toValue: 1.4, useNativeDriver: true, friction: 4 }),
+        Animated.spring(countScale, { toValue: 1, useNativeDriver: true, friction: 4 }),
+      ]).start();
+      prevCount.current = count;
+    }
+  }, [count, countScale]);
 
   function bounce(value: Animated.Value) {
     Animated.sequence([
@@ -54,14 +77,16 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
   function showHeartBurst() {
     heartBurst.setValue(0);
     Animated.sequence([
-      Animated.timing(heartBurst, {
+      Animated.spring(heartBurst, {
         toValue: 1,
-        duration: 200,
         useNativeDriver: true,
+        friction: 5,
+        tension: 90,
       }),
       Animated.timing(heartBurst, {
         toValue: 0,
-        duration: 600,
+        duration: 700,
+        delay: 250,
         useNativeDriver: true,
       }),
     ]).start();
@@ -93,22 +118,43 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
   }
 
   const heartBurstStyle = {
-    opacity: heartBurst.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+    opacity: heartBurst.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1] }),
     transform: [
       {
         scale: heartBurst.interpolate({
           inputRange: [0, 1],
-          outputRange: [0.4, 1.6],
+          outputRange: [0.3, 2.0],
+        }),
+      },
+      {
+        rotate: heartBurst.interpolate({
+          inputRange: [0, 1],
+          outputRange: ['-10deg', '0deg'],
         }),
       },
     ],
   };
+
+  const isNew = isNewSetup(setup.createdAt);
+  const typeMeta = assetTypeLabel(setup.assetType);
 
   return (
     <Pressable style={styles.container} onPress={handleCardTap}>
       <Image source={{ uri: setup.videoThumbnail }} style={styles.thumbnail} resizeMode="cover" />
 
       <View style={styles.bottomGradient} pointerEvents="none" />
+
+      <View style={styles.topBadges} pointerEvents="none">
+        {isNew && (
+          <View style={styles.newBadge}>
+            <Text style={styles.newBadgeText}>NEU</Text>
+          </View>
+        )}
+        <View style={styles.typeBadge}>
+          <Text style={styles.typeBadgeIcon}>{typeMeta.icon}</Text>
+          <Text style={styles.typeBadgeLabel}>{typeMeta.label}</Text>
+        </View>
+      </View>
 
       <Animated.View style={[styles.heartBurst, heartBurstStyle]} pointerEvents="none">
         <Text style={styles.heartBurstText}>♥</Text>
@@ -129,7 +175,9 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
           >
             {liked ? '♥' : '♡'}
           </Animated.Text>
-          <Text style={styles.actionLabel}>{formatCount(count)}</Text>
+          <Animated.Text style={[styles.actionLabel, { transform: [{ scale: countScale }] }]}>
+            {formatCount(count)}
+          </Animated.Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -206,14 +254,20 @@ const styles = StyleSheet.create({
   },
   heartBurst: {
     position: 'absolute',
-    top: height / 2 - 70,
-    left: width / 2 - 50,
-    width: 100,
-    height: 100,
+    top: height / 2 - 80,
+    left: width / 2 - 60,
+    width: 120,
+    height: 120,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heartBurstText: { fontSize: 110, color: BRAND.like },
+  heartBurstText: {
+    fontSize: 130,
+    color: BRAND.like,
+    textShadowColor: 'rgba(239,68,68,0.55)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
+  },
   overlay: { position: 'absolute', bottom: 100, left: 16, right: 96 },
   actionRail: { position: 'absolute', right: 12, bottom: 160, alignItems: 'center', gap: 18 },
   actionButton: { alignItems: 'center', padding: 2 },
@@ -267,10 +321,42 @@ const styles = StyleSheet.create({
     backgroundColor: BRAND.teal,
     color: '#0b3b35',
     paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingVertical: 8,
     borderRadius: 14,
     fontWeight: '800',
     fontSize: 14,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.45)',
   },
+  topBadges: {
+    position: 'absolute',
+    top: 70,
+    left: 14,
+    flexDirection: 'row',
+    gap: 6,
+    zIndex: 5,
+  },
+  newBadge: {
+    backgroundColor: BRAND.like,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
+  },
+  newBadgeText: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
+  typeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+  typeBadgeIcon: { fontSize: 11 },
+  typeBadgeLabel: { color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.4 },
 });
