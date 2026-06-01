@@ -11,10 +11,15 @@ import {
   Share,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Setup } from '@/types/setup';
 import { useToggleLike } from '@/hooks/useToggleLike';
 import { useToggleSave } from '@/hooks/useToggleSave';
+import { useComments } from '@/hooks/useComments';
+import { useFollow } from '@/hooks/useFollow';
 import { BRAND } from '@/theme/ThemeProvider';
+import type { MainStackParamList } from '@/navigation/RootNavigator';
 
 const { width, height } = Dimensions.get('window');
 
@@ -48,8 +53,11 @@ function assetTypeLabel(t: string): { icon: string; label: string } {
 }
 
 export function SetupCard({ setup, onTagPress }: SetupCardProps) {
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const { liked, count, toggle: toggleLike } = useToggleLike(setup.id);
   const { saved, toggle: toggleSave } = useToggleSave(setup.id);
+  const { comments } = useComments(setup.id);
+  const { following, toggle: toggleFollow } = useFollow(setup.creator.id);
   const likeScale = useRef(new Animated.Value(1)).current;
   const saveScale = useRef(new Animated.Value(1)).current;
   const countScale = useRef(new Animated.Value(1)).current;
@@ -144,17 +152,13 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
 
       <View style={styles.bottomGradient} pointerEvents="none" />
 
-      <View style={styles.topBadges} pointerEvents="none">
-        {isNew && (
+      {isNew && (
+        <View style={styles.topBadges} pointerEvents="none">
           <View style={styles.newBadge}>
             <Text style={styles.newBadgeText}>NEU</Text>
           </View>
-        )}
-        <View style={styles.typeBadge}>
-          <Text style={styles.typeBadgeIcon}>{typeMeta.icon}</Text>
-          <Text style={styles.typeBadgeLabel}>{typeMeta.label}</Text>
         </View>
-      </View>
+      )}
 
       <Animated.View style={[styles.heartBurst, heartBurstStyle]} pointerEvents="none">
         <Text style={styles.heartBurstText}>♥</Text>
@@ -178,6 +182,18 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
           <Animated.Text style={[styles.actionLabel, { transform: [{ scale: countScale }] }]}>
             {formatCount(count)}
           </Animated.Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => {
+            Haptics.selectionAsync();
+            navigation.navigate('SetupDetail', { setup, focusComment: true });
+          }}
+          accessibilityLabel="open-comments"
+        >
+          <Text style={styles.actionIcon}>💬</Text>
+          <Text style={styles.actionLabel}>{formatCount(comments.length)}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -219,8 +235,29 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
 
       <View style={styles.overlay}>
         <View style={styles.creatorRow}>
-          <Image source={{ uri: setup.creator.avatarUrl }} style={styles.avatar} />
-          <Text style={styles.creatorName}>@{setup.creator.username}</Text>
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.selectionAsync();
+              navigation.navigate('CreatorProfile', { creatorId: setup.creator.id });
+            }}
+            style={styles.creatorTap}
+            accessibilityLabel={`open-creator-${setup.creator.username}`}
+          >
+            <Image source={{ uri: setup.creator.avatarUrl }} style={styles.avatar} />
+            <Text style={styles.creatorName}>@{setup.creator.username}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={async () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              await toggleFollow();
+            }}
+            style={[styles.followBtn, following && styles.followBtnActive]}
+            accessibilityLabel={following ? 'unfollow' : 'follow'}
+          >
+            <Text style={[styles.followText, following && styles.followTextActive]}>
+              {following ? '✓ Folgst du' : '+ Folgen'}
+            </Text>
+          </TouchableOpacity>
         </View>
         <Text style={styles.title}>{setup.title}</Text>
         <Text style={styles.description} numberOfLines={2}>
@@ -235,6 +272,10 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
         </View>
         <View style={styles.priceRow}>
           <Text style={styles.price}>{formatPriceEur(setup.priceCents)}</Text>
+          <View style={styles.typeBadge}>
+            <Text style={styles.typeBadgeIcon}>{typeMeta.icon}</Text>
+            <Text style={styles.typeBadgeLabel}>{typeMeta.label}</Text>
+          </View>
         </View>
       </View>
     </Pressable>
@@ -291,6 +332,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   creatorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  creatorTap: { flexDirection: 'row', alignItems: 'center' },
   avatar: {
     width: 32,
     height: 32,
@@ -316,7 +358,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   tagText: { color: '#fff', fontSize: 11, fontWeight: '600' },
-  priceRow: { flexDirection: 'row', alignItems: 'center' },
+  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   price: {
     backgroundColor: BRAND.teal,
     color: '#0b3b35',
@@ -349,14 +391,29 @@ const styles = StyleSheet.create({
   typeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 8,
+    gap: 5,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.25)',
   },
-  typeBadgeIcon: { fontSize: 11 },
-  typeBadgeLabel: { color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.4 },
+  typeBadgeIcon: { fontSize: 13 },
+  typeBadgeLabel: { color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.4 },
+  followBtn: {
+    marginLeft: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    backgroundColor: BRAND.teal,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
+  },
+  followBtnActive: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderColor: 'rgba(255,255,255,0.35)',
+  },
+  followText: { color: '#0b3b35', fontSize: 11, fontWeight: '800' },
+  followTextActive: { color: '#fff' },
 });

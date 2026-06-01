@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { useToggleLike } from '@/hooks/useToggleLike';
 import { useToggleSave } from '@/hooks/useToggleSave';
 import { useComments } from '@/hooks/useComments';
 import { useSetups } from '@/hooks/useSetups';
+import { useFollow } from '@/hooks/useFollow';
 import { BRAND } from '@/theme/ThemeProvider';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 
@@ -44,10 +45,23 @@ function formatPriceEur(cents: number): string {
 
 interface SetupDetailScreenProps {
   setup: Setup;
+  focusComment?: boolean;
 }
 
-export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
+export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProps) {
   const navigation = useNavigation<Nav>();
+  const scrollRef = useRef<ScrollView>(null);
+  const [commentsY, setCommentsY] = useState(0);
+  const commentInputRef = useRef<{ focus: () => void }>(null);
+
+  useEffect(() => {
+    if (!focusComment) return;
+    const t = setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: commentsY, animated: true });
+      commentInputRef.current?.focus();
+    }, 350);
+    return () => clearTimeout(t);
+  }, [focusComment, commentsY]);
   const { session } = useAuth();
   const userId = session?.user?.id;
   const isOwner = userId === setup.creator.id;
@@ -56,6 +70,7 @@ export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
   const { count: saveCount } = useToggleSave(setup.id);
   const { comments } = useComments(setup.id);
   const { setups: allSetups } = useSetups();
+  const { following, toggle: toggleFollow } = useFollow(setup.creator.id);
   const [busy, setBusy] = useState(false);
   const [polling, setPolling] = useState(false);
 
@@ -124,7 +139,7 @@ export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
         {hasVideo ? (
           <VideoView player={player} style={styles.hero} nativeControls contentFit="cover" />
         ) : (
@@ -135,13 +150,30 @@ export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
           <Text style={styles.title}>{setup.title}</Text>
 
           <View style={styles.creatorRow}>
-            <Image source={{ uri: setup.creator.avatarUrl }} style={styles.avatar} />
-            <View>
-              <Text style={styles.creatorName}>{setup.creator.displayName}</Text>
-              <Text style={styles.creatorMeta}>
-                ★ {setup.creator.ratingAverage.toFixed(1)} · {setup.creator.setupsCount} Setups
-              </Text>
-            </View>
+            <TouchableOpacity
+              style={styles.creatorTap}
+              onPress={() => navigation.navigate('CreatorProfile', { creatorId: setup.creator.id })}
+              accessibilityLabel={`open-creator-${setup.creator.username}`}
+            >
+              <Image source={{ uri: setup.creator.avatarUrl }} style={styles.avatar} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.creatorName}>{setup.creator.displayName}</Text>
+                <Text style={styles.creatorMeta}>
+                  ★ {setup.creator.ratingAverage.toFixed(1)} · {setup.creator.setupsCount} Setups
+                </Text>
+              </View>
+            </TouchableOpacity>
+            {!isOwner && (
+              <TouchableOpacity
+                onPress={toggleFollow}
+                style={[styles.detailFollowBtn, following && styles.detailFollowBtnActive]}
+                accessibilityLabel={following ? 'unfollow-detail' : 'follow-detail'}
+              >
+                <Text style={[styles.detailFollowText, following && styles.detailFollowTextActive]}>
+                  {following ? '✓ Folgst du' : '+ Folgen'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.statsRow}>
@@ -203,8 +235,8 @@ export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
           )}
         </View>
 
-        <View style={styles.commentsBlock}>
-          <CommentsSection setupId={setup.id} />
+        <View style={styles.commentsBlock} onLayout={(e) => setCommentsY(e.nativeEvent.layout.y)}>
+          <CommentsSection setupId={setup.id} inputRef={commentInputRef} />
         </View>
       </ScrollView>
 
@@ -287,7 +319,8 @@ const styles = StyleSheet.create({
   hero: { width: '100%', height: 300, backgroundColor: '#222' },
   body: { padding: 20 },
   title: { fontSize: 26, fontWeight: '700', marginBottom: 16, color: '#111' },
-  creatorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
+  creatorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24, gap: 8 },
+  creatorTap: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   avatar: {
     width: 44,
     height: 44,
@@ -383,4 +416,15 @@ const styles = StyleSheet.create({
     marginTop: 6,
     lineHeight: 16,
   },
+  detailFollowBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: BRAND.teal,
+  },
+  detailFollowBtnActive: {
+    backgroundColor: '#f0f0f0',
+  },
+  detailFollowText: { color: '#0b3b35', fontSize: 13, fontWeight: '700' },
+  detailFollowTextActive: { color: '#666' },
 });

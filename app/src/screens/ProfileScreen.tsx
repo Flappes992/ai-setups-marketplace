@@ -22,6 +22,7 @@ import { useMyPurchases } from '@/hooks/useMyPurchases';
 import { SetupGrid } from '@/components/SetupGrid';
 import { EmptyState } from '@/components/EmptyState';
 import { useTheme, BRAND } from '@/theme/ThemeProvider';
+import { getFollowerCount, getFollowingCount } from '@/hooks/useFollow';
 
 type ProfileNav = NativeStackNavigationProp<MainStackParamList, 'Tabs'>;
 
@@ -41,6 +42,8 @@ export function ProfileScreen() {
   const [profile, setProfile] = useState<DbProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>('setups');
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followerCount, setFollowerCount] = useState(0);
 
   const mySetups = useMySetups();
   const saved = useSavedSetups();
@@ -65,7 +68,11 @@ export function ProfileScreen() {
       saved.refetch();
       liked.refetch();
       purchases.refetch();
-    }, [loadProfile, mySetups, saved, liked, purchases]),
+      if (session?.user?.id) {
+        getFollowingCount(session.user.id).then(setFollowingCount);
+        getFollowerCount(session.user.id).then(setFollowerCount);
+      }
+    }, [loadProfile, mySetups, saved, liked, purchases, session?.user?.id]),
   );
 
   if (loading) {
@@ -110,22 +117,28 @@ export function ProfileScreen() {
   };
 
   const setupsCount = mySetups.setups.length;
-  const stats = [
+  const stats: { label: string; value: number; onPress?: () => void }[] = [
     { label: 'Setups', value: setupsCount },
+    {
+      label: 'Folge ich',
+      value: followingCount,
+      onPress: () => navigation.navigate('FollowingList'),
+    },
     { label: 'Likes', value: liked.setups.length },
     { label: 'Saved', value: saved.setups.length },
-    { label: 'Käufe', value: purchases.items.length },
   ];
 
   const creatorTier = setupsCount >= 20 ? 'gold' : setupsCount >= 5 ? 'silver' : null;
   const tierColor =
     creatorTier === 'gold' ? '#fbbf24' : creatorTier === 'silver' ? '#cbd5e1' : null;
 
-  const joinedDate = (() => {
+  const joinedDateFull = (() => {
     const t = Date.parse(profile.created_at);
     if (Number.isNaN(t)) return null;
     const d = new Date(t);
-    return d.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}.${mm}.${d.getFullYear()}`;
   })();
 
   return (
@@ -171,11 +184,10 @@ export function ProfileScreen() {
           <Text style={[styles.username, { color: palette.textSecondary }]}>
             @{profile.username}
           </Text>
-          {joinedDate && (
-            <Text style={[styles.joined, { color: palette.textSecondary }]}>
-              Setiq seit {joinedDate}
-            </Text>
-          )}
+          <Text style={[styles.followerLine, { color: palette.text }]}>
+            <Text style={styles.followerCount}>{followerCount}</Text>
+            <Text style={{ color: palette.textSecondary }}> Follower</Text>
+          </Text>
           {profile.bio ? (
             <Text style={[styles.bio, { color: palette.text }]}>{profile.bio}</Text>
           ) : (
@@ -183,19 +195,26 @@ export function ProfileScreen() {
           )}
 
           <View style={styles.statsRow}>
-            {stats.map((s, i) => (
-              <View key={s.label} style={styles.statContainer}>
-                <View style={styles.stat}>
-                  <Text style={[styles.statValue, { color: palette.text }]}>{s.value}</Text>
-                  <Text style={[styles.statLabel, { color: palette.textSecondary }]}>
-                    {s.label}
-                  </Text>
+            {stats.map((s, i) => {
+              const StatWrap = s.onPress ? TouchableOpacity : View;
+              return (
+                <View key={s.label} style={styles.statContainer}>
+                  <StatWrap
+                    style={styles.stat}
+                    onPress={s.onPress}
+                    accessibilityLabel={s.onPress ? `stat-${s.label}` : undefined}
+                  >
+                    <Text style={[styles.statValue, { color: palette.text }]}>{s.value}</Text>
+                    <Text style={[styles.statLabel, { color: palette.textSecondary }]}>
+                      {s.label}
+                    </Text>
+                  </StatWrap>
+                  {i < stats.length - 1 && (
+                    <View style={[styles.statSep, { backgroundColor: palette.border }]} />
+                  )}
                 </View>
-                {i < stats.length - 1 && (
-                  <View style={[styles.statSep, { backgroundColor: palette.border }]} />
-                )}
-              </View>
-            ))}
+              );
+            })}
           </View>
 
           <View style={styles.ctaRow}>
@@ -224,6 +243,12 @@ export function ProfileScreen() {
               <Text style={[styles.ctaSecondaryText, { color: palette.text }]}>↗</Text>
             </TouchableOpacity>
           </View>
+
+          {joinedDateFull && (
+            <Text style={[styles.fastlane, { color: palette.textSecondary }]}>
+              Seit dem {joinedDateFull} auf der Überholspur
+            </Text>
+          )}
         </View>
 
         <View
@@ -357,7 +382,15 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
   },
   tierBadgeText: { color: '#fff', fontSize: 12, fontWeight: '900' },
-  joined: { fontSize: 12, marginTop: 4, fontStyle: 'italic' },
+  followerLine: { fontSize: 14, marginTop: 6, fontWeight: '500' },
+  followerCount: { fontWeight: '800' },
+  fastlane: {
+    fontSize: 11,
+    marginTop: 10,
+    fontStyle: 'italic',
+    letterSpacing: 0.2,
+    opacity: 0.7,
+  },
   displayName: { fontSize: 22, fontWeight: '800', color: '#111' },
   username: { fontSize: 14, color: '#666', marginTop: 2 },
   bio: {

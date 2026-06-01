@@ -18,6 +18,9 @@ import { EditProfileScreen } from '@/screens/EditProfileScreen';
 import { SearchScreen } from '@/screens/SearchScreen';
 import { TagFeedScreen } from '@/screens/TagFeedScreen';
 import { NotificationsScreen } from '@/screens/NotificationsScreen';
+import { TrendingScreen } from '@/screens/TrendingScreen';
+import { FollowingListScreen } from '@/screens/FollowingListScreen';
+import { CreatorProfileScreen } from '@/screens/CreatorProfileScreen';
 import { Setup } from '@/types/setup';
 import { useAuth } from '@/auth/useAuth';
 
@@ -33,7 +36,7 @@ export type TabParamList = {
 
 export type MainStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList> | undefined;
-  SetupDetail: { setup: Setup };
+  SetupDetail: { setup: Setup; focusComment?: boolean };
   SetupUpload: undefined;
   MySetups: undefined;
   MyPurchases: undefined;
@@ -44,14 +47,21 @@ export type MainStackParamList = {
   Search: undefined;
   TagFeed: { tag: string };
   Notifications: undefined;
+  Trending: undefined;
+  FollowingList: undefined;
+  CreatorProfile: { creatorId: string };
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainStackParamList>();
 const Tabs = createBottomTabNavigator<TabParamList>();
 
-function SetupDetailScreenWrapper({ route }: { route: { params: { setup: Setup } } }) {
-  return <SetupDetailScreen setup={route.params.setup} />;
+function SetupDetailScreenWrapper({
+  route,
+}: {
+  route: { params: { setup: Setup; focusComment?: boolean } };
+}) {
+  return <SetupDetailScreen setup={route.params.setup} focusComment={route.params.focusComment} />;
 }
 
 function AuthNavigator() {
@@ -107,6 +117,9 @@ function MainNavigator() {
       <MainStack.Screen name="Search" component={SearchScreen} />
       <MainStack.Screen name="TagFeed" component={TagFeedScreen} />
       <MainStack.Screen name="Notifications" component={NotificationsScreen} />
+      <MainStack.Screen name="Trending" component={TrendingScreen} />
+      <MainStack.Screen name="FollowingList" component={FollowingListScreen} />
+      <MainStack.Screen name="CreatorProfile" component={CreatorProfileScreen} />
     </MainStack.Navigator>
   );
 }

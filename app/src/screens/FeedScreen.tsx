@@ -10,16 +10,18 @@ import {
   type NativeSyntheticEvent,
   type NativeScrollEvent,
 } from 'react-native';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown, FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SetupCard } from '@/components/SetupCard';
 import { SetupCardSkeleton } from '@/components/SetupCardSkeleton';
 import { Setup } from '@/types/setup';
 import { MainStackParamList } from '@/navigation/RootNavigator';
 import { useSetups } from '@/hooks/useSetups';
+import { getFollowingIds } from '@/hooks/useFollow';
+import { useAuth } from '@/auth/useAuth';
 
 const { height } = Dimensions.get('window');
 
@@ -28,17 +30,35 @@ type FeedMode = 'foryou' | 'following';
 
 export function FeedScreen() {
   const navigation = useNavigation<FeedNav>();
+  const { session } = useAuth();
   const { setups, loading, error, refetch } = useSetups();
   const [refreshing, setRefreshing] = useState(false);
   const [mode, setMode] = useState<FeedMode>('foryou');
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
   const listRef = useRef<FlatList<Setup>>(null);
 
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [refetch]),
+      if (session?.user?.id) {
+        getFollowingIds(session.user.id).then((ids) => setFollowedIds(new Set(ids)));
+      }
+    }, [refetch, session?.user?.id]),
   );
+
+  useEffect(() => {
+    if (mode === 'following' && session?.user?.id) {
+      getFollowingIds(session.user.id).then((ids) => setFollowedIds(new Set(ids)));
+    }
+  }, [mode, session?.user?.id]);
+
+  const visibleSetups = useMemo(() => {
+    if (mode === 'following') {
+      return setups.filter((s) => followedIds.has(s.creator.id));
+    }
+    return setups;
+  }, [setups, mode, followedIds]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -77,9 +97,9 @@ export function FeedScreen() {
           <TouchableOpacity
             style={styles.iconBtn}
             onPress={() => navigation.navigate('Notifications')}
-            accessibilityLabel="open-notifications"
+            accessibilityLabel="open-messages"
           >
-            <Text style={styles.iconBtnText}>🔔</Text>
+            <Text style={styles.iconBtnText}>✉</Text>
           </TouchableOpacity>
 
           <View style={styles.modeSwitch}>
@@ -105,13 +125,22 @@ export function FeedScreen() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={styles.iconBtn}
-            onPress={() => navigation.navigate('Search')}
-            accessibilityLabel="open-search"
-          >
-            <Text style={styles.iconBtnText}>⌕</Text>
-          </TouchableOpacity>
+          <View style={styles.rightCluster}>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => navigation.navigate('Trending')}
+              accessibilityLabel="open-trending"
+            >
+              <Text style={styles.iconBtnText}>🏆</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => navigation.navigate('Search')}
+              accessibilityLabel="open-search"
+            >
+              <Text style={styles.iconBtnTextLarge}>⌕</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -128,7 +157,7 @@ export function FeedScreen() {
           <Text style={styles.stateText}>Noch nichts hier</Text>
           <Text style={styles.stateSubtext}>Sei der erste Creator und lade dein Setup hoch.</Text>
         </View>
-      ) : mode === 'following' ? (
+      ) : mode === 'following' && visibleSetups.length === 0 ? (
         <View style={styles.centerState}>
           <Text style={styles.bigEmoji}>👀</Text>
           <Text style={styles.stateText}>Folge Creators, um sie hier zu sehen</Text>
@@ -138,19 +167,17 @@ export function FeedScreen() {
         <>
           <FlatList<Setup>
             ref={listRef}
-            data={setups}
+            data={visibleSetups}
             keyExtractor={(item) => item.id}
-            renderItem={({ item, index }) => (
-              <Animated.View entering={FadeInDown.duration(380).delay(Math.min(index, 4) * 70)}>
-                <TouchableOpacity
-                  activeOpacity={1}
-                  onPress={() => navigation.navigate('SetupDetail', { setup: item })}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Setup öffnen: ${item.title}`}
-                >
-                  <SetupCard setup={item} onTagPress={handleTagPress} />
-                </TouchableOpacity>
-              </Animated.View>
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={() => navigation.navigate('SetupDetail', { setup: item })}
+                accessibilityRole="button"
+                accessibilityLabel={`Setup öffnen: ${item.title}`}
+              >
+                <SetupCard setup={item} onTagPress={handleTagPress} />
+              </TouchableOpacity>
             )}
             pagingEnabled
             snapToInterval={height}
@@ -206,20 +233,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconBtnText: {
     color: '#fff',
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 26,
+    fontWeight: '600',
     textShadowColor: 'rgba(0,0,0,0.4)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
+  iconBtnTextLarge: {
+    color: '#fff',
+    fontSize: 34,
+    fontWeight: '500',
+    lineHeight: 36,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  leftSpacer: { width: 44, height: 44 },
+  rightCluster: { flexDirection: 'row', gap: 4, alignItems: 'center' },
   modeSwitch: {
     flexDirection: 'row',
     gap: 20,

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -29,9 +29,10 @@ function timeAgo(iso: string): string {
 
 interface Props {
   setupId: string;
+  inputRef?: React.MutableRefObject<{ focus: () => void } | null>;
 }
 
-export function CommentsSection({ setupId }: Props) {
+export function CommentsSection({ setupId, inputRef }: Props) {
   const { session } = useAuth();
   const userId = session?.user?.id;
   const { comments, loading, add, remove } = useComments(setupId);
@@ -51,6 +52,17 @@ export function CommentsSection({ setupId }: Props) {
 
   const remaining = MAX_COMMENT_LEN - input.length;
   const nearLimit = remaining <= 50;
+  const localInputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    if (!inputRef) return;
+    inputRef.current = {
+      focus: () => localInputRef.current?.focus(),
+    };
+    return () => {
+      inputRef.current = null;
+    };
+  }, [inputRef]);
 
   async function handleSubmit() {
     if (!input.trim()) return;
@@ -87,6 +99,7 @@ export function CommentsSection({ setupId }: Props) {
       <View style={styles.composer}>
         <View style={{ flex: 1 }}>
           <TextInput
+            ref={localInputRef}
             selectionColor="#2DD4BF"
             placeholder="Was denkst du dazu?"
             value={input}
