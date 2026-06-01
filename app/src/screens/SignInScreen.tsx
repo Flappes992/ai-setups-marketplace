@@ -50,6 +50,7 @@ export function SignInScreen() {
           <Text style={styles.subtitle}>Willkommen zurück</Text>
 
           <TextInput
+            selectionColor="#2DD4BF"
             placeholder="Email"
             value={email}
             onChangeText={setEmail}
@@ -60,6 +61,7 @@ export function SignInScreen() {
             accessibilityLabel="signin-email"
           />
           <TextInput
+            selectionColor="#2DD4BF"
             placeholder="Passwort"
             value={password}
             onChangeText={setPassword}

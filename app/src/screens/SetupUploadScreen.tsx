@@ -179,6 +179,7 @@ export function SetupUploadScreen() {
 
           <Section label="Titel">
             <TextInput
+              selectionColor="#2DD4BF"
               placeholder="z.B. Cold-Email Automation mit Claude"
               value={title}
               onChangeText={setTitle}
@@ -191,6 +192,7 @@ export function SetupUploadScreen() {
 
           <Section label="Beschreibung">
             <TextInput
+              selectionColor="#2DD4BF"
               placeholder="Was macht dein Setup besonders?"
               value={description}
               onChangeText={setDescription}
@@ -204,6 +206,7 @@ export function SetupUploadScreen() {
 
           <Section label="Tags (Komma-getrennt)">
             <TextInput
+              selectionColor="#2DD4BF"
               placeholder="z.B. claude, n8n, automation"
               value={tagsInput}
               onChangeText={setTagsInput}
@@ -258,6 +261,7 @@ export function SetupUploadScreen() {
           {assetType === 'clonable' ? (
             <Section label="Klonbarer Link (https://...)">
               <TextInput
+                selectionColor="#2DD4BF"
                 placeholder="https://chat.openai.com/g/g-XXXX"
                 value={assetUrl}
                 onChangeText={setAssetUrl}
@@ -284,6 +288,7 @@ export function SetupUploadScreen() {
 
           <Section label="Preis (€)">
             <TextInput
+              selectionColor="#2DD4BF"
               placeholder="z.B. 29.00"
               value={priceEur}
               onChangeText={setPriceEur}

@@ -17,6 +17,7 @@ import { Setup } from '@/types/setup';
 import { useAuth } from '@/auth/useAuth';
 import { usePurchase } from '@/hooks/usePurchase';
 import { CommentsSection } from '@/components/CommentsSection';
+import { TealGradient } from '@/components/TealGradient';
 
 const WEB_CHECKOUT_BASE = 'https://web-checkout-sicci-s-projects.vercel.app';
 
@@ -177,19 +178,21 @@ export function SetupDetailScreen({ setup }: SetupDetailScreenProps) {
         )}
         {buttonState === 'buy' && (
           <TouchableOpacity
-            style={styles.purchaseButton}
             activeOpacity={0.85}
             disabled={busy}
             onPress={handleBuy}
             accessibilityLabel="open-checkout"
+            style={styles.purchaseShadow}
           >
-            {busy ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.purchaseButtonText}>
-                Setup holen · {formatPriceEur(setup.priceCents)}
-              </Text>
-            )}
+            <TealGradient style={styles.purchaseGradient}>
+              {busy ? (
+                <ActivityIndicator color="#0b3b35" />
+              ) : (
+                <Text style={styles.purchaseGradientText}>
+                  Setup holen · {formatPriceEur(setup.priceCents)}
+                </Text>
+              )}
+            </TealGradient>
           </TouchableOpacity>
         )}
       </View>
@@ -259,4 +262,20 @@ const styles = StyleSheet.create({
   ownedButton: { backgroundColor: '#16a34a' },
   disabledButton: { backgroundColor: '#999' },
   purchaseButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  purchaseShadow: {
+    borderRadius: 14,
+    shadowColor: '#14B8A6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  purchaseGradient: {
+    flexDirection: 'row',
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  purchaseGradientText: { color: '#0b3b35', fontSize: 16, fontWeight: '800' },
 });

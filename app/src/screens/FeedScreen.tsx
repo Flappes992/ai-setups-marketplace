@@ -138,7 +138,12 @@ export function FeedScreen() {
           decelerationRate="fast"
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#fff" />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#2DD4BF"
+              colors={['#2DD4BF']}
+            />
           }
         />
       )}
@@ -193,7 +198,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 3,
     borderRadius: 2,
-    backgroundColor: '#facc15',
+    backgroundColor: '#2DD4BF',
     marginTop: 4,
   },
   centerState: {

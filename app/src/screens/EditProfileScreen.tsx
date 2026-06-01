@@ -179,6 +179,7 @@ export function EditProfileScreen() {
           <View style={styles.formSection}>
             <Label text="Anzeigename" />
             <TextInput
+              selectionColor="#2DD4BF"
               value={displayName}
               onChangeText={setDisplayName}
               style={styles.input}
@@ -189,6 +190,7 @@ export function EditProfileScreen() {
 
             <Label text="Username" />
             <TextInput
+              selectionColor="#2DD4BF"
               value={username}
               onChangeText={(t) => setUsername(t.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
               style={styles.input}
@@ -201,6 +203,7 @@ export function EditProfileScreen() {
 
             <Label text="Bio" />
             <TextInput
+              selectionColor="#2DD4BF"
               value={bio}
               onChangeText={setBio}
               style={[styles.input, styles.textarea]}
@@ -236,7 +239,7 @@ const styles = StyleSheet.create({
   },
   backIcon: { fontSize: 30, color: '#111', width: 28, lineHeight: 32 },
   title: { fontSize: 17, fontWeight: '800', color: '#111' },
-  saveBtn: { fontSize: 15, fontWeight: '700', color: '#facc15' },
+  saveBtn: { fontSize: 15, fontWeight: '700', color: '#2DD4BF' },
   scroll: { paddingBottom: 32 },
   avatarSection: { alignItems: 'center', paddingVertical: 28 },
   avatarWrap: { position: 'relative' },
@@ -257,7 +260,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#facc15',
+    backgroundColor: '#2DD4BF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,

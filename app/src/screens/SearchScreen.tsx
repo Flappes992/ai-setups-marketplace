@@ -65,6 +65,7 @@ export function SearchScreen() {
           placeholder="Setups, Creator, Tags…"
           style={styles.input}
           autoFocus
+          selectionColor="#2DD4BF"
           accessibilityLabel="search-input"
         />
         {query.length > 0 && (

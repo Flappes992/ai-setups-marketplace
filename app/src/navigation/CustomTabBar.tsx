@@ -5,6 +5,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
+import { BRAND } from '@/theme/ThemeProvider';
 
 type RootNav = NativeStackNavigationProp<MainStackParamList>;
 
@@ -74,7 +75,9 @@ function TabIconButton({
   onFeed: boolean;
   label: string;
 }) {
-  const color = onFeed ? '#fff' : '#111';
+  const inactiveColor = onFeed ? '#fff' : '#111';
+  const activeColor = BRAND.teal;
+  const color = focused ? activeColor : inactiveColor;
   return (
     <TouchableOpacity
       style={styles.iconButton}
@@ -83,7 +86,7 @@ function TabIconButton({
       activeOpacity={0.7}
     >
       <Text style={[styles.iconText, { color, opacity: focused ? 1 : 0.55 }]}>{glyph}</Text>
-      {focused && <View style={[styles.activeDot, { backgroundColor: color }]} />}
+      {focused && <View style={[styles.activeDot, { backgroundColor: activeColor }]} />}
     </TouchableOpacity>
   );
 }

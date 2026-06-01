@@ -12,7 +12,20 @@ interface Palette {
   textSecondary: string;
   border: string;
   accent: string;
+  accentLight: string;
+  accentDark: string;
+  accentText: string;
+  like: string;
+  save: string;
 }
+
+export const BRAND = {
+  teal: '#2DD4BF',
+  tealLight: '#5EEAD4',
+  tealDark: '#14B8A6',
+  tileDark: '#181B22',
+  like: '#ef4444',
+} as const;
 
 const lightPalette: Palette = {
   bg: '#fff',
@@ -21,7 +34,12 @@ const lightPalette: Palette = {
   text: '#111',
   textSecondary: '#666',
   border: '#eee',
-  accent: '#facc15',
+  accent: BRAND.teal,
+  accentLight: BRAND.tealLight,
+  accentDark: BRAND.tealDark,
+  accentText: '#0b3b35',
+  like: BRAND.like,
+  save: BRAND.teal,
 };
 
 const darkPalette: Palette = {
@@ -31,7 +49,12 @@ const darkPalette: Palette = {
   text: '#fff',
   textSecondary: '#aaa',
   border: '#262626',
-  accent: '#facc15',
+  accent: BRAND.teal,
+  accentLight: BRAND.tealLight,
+  accentDark: BRAND.tealDark,
+  accentText: '#0b3b35',
+  like: BRAND.like,
+  save: BRAND.teal,
 };
 
 interface ThemeContextValue {

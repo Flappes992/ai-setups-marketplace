@@ -73,6 +73,7 @@ export function SignUpScreen() {
           <Text style={styles.subtitle}>Entdecke und teile AI-Setups</Text>
 
           <TextInput
+            selectionColor="#2DD4BF"
             placeholder="Email"
             value={email}
             onChangeText={setEmail}
@@ -83,6 +84,7 @@ export function SignUpScreen() {
             accessibilityLabel="signup-email"
           />
           <TextInput
+            selectionColor="#2DD4BF"
             placeholder="Username (3-20 Zeichen)"
             value={username}
             onChangeText={setUsername}
@@ -92,6 +94,7 @@ export function SignUpScreen() {
             accessibilityLabel="signup-username"
           />
           <TextInput
+            selectionColor="#2DD4BF"
             placeholder="Anzeigename"
             value={displayName}
             onChangeText={setDisplayName}
@@ -99,6 +102,7 @@ export function SignUpScreen() {
             accessibilityLabel="signup-displayname"
           />
           <TextInput
+            selectionColor="#2DD4BF"
             placeholder="Passwort (min. 8 Zeichen)"
             value={password}
             onChangeText={setPassword}
@@ -107,6 +111,7 @@ export function SignUpScreen() {
             accessibilityLabel="signup-password"
           />
           <TextInput
+            selectionColor="#2DD4BF"
             placeholder="Passwort bestätigen"
             value={confirm}
             onChangeText={setConfirm}

@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { Setup } from '@/types/setup';
 import { useToggleLike } from '@/hooks/useToggleLike';
 import { useToggleSave } from '@/hooks/useToggleSave';
+import { BRAND } from '@/theme/ThemeProvider';
 
 const { width, height } = Dimensions.get('window');
 
@@ -139,7 +140,7 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
           <Animated.Text
             style={[
               styles.actionIcon,
-              saved && styles.actionIconActiveYellow,
+              saved && styles.actionIconActiveSave,
               { transform: [{ scale: saveScale }] },
             ]}
           >
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heartBurstText: { fontSize: 110, color: '#ef4444' },
+  heartBurstText: { fontSize: 110, color: BRAND.like },
   overlay: { position: 'absolute', bottom: 100, left: 16, right: 96 },
   actionRail: { position: 'absolute', right: 12, bottom: 160, alignItems: 'center', gap: 18 },
   actionButton: { alignItems: 'center', padding: 2 },
@@ -224,8 +225,8 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
-  actionIconActive: { color: '#ef4444' },
-  actionIconActiveYellow: { color: '#facc15' },
+  actionIconActive: { color: BRAND.like },
+  actionIconActiveSave: { color: BRAND.teal },
   actionLabel: {
     color: '#fff',
     fontSize: 11,
@@ -237,13 +238,13 @@ const styles = StyleSheet.create({
   },
   creatorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   avatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     marginRight: 8,
     backgroundColor: '#444',
-    borderWidth: 1,
-    borderColor: '#fff',
+    borderWidth: 2,
+    borderColor: BRAND.teal,
   },
   creatorName: { color: '#fff', fontSize: 14, fontWeight: '700' },
   title: { color: '#fff', fontSize: 20, fontWeight: '800', marginBottom: 4 },
@@ -263,8 +264,8 @@ const styles = StyleSheet.create({
   tagText: { color: '#fff', fontSize: 11, fontWeight: '600' },
   priceRow: { flexDirection: 'row', alignItems: 'center' },
   price: {
-    backgroundColor: '#facc15',
-    color: '#111',
+    backgroundColor: BRAND.teal,
+    color: '#0b3b35',
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 14,

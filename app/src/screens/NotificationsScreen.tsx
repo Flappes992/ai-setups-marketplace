@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   rowTitle: { fontSize: 15, fontWeight: '700', color: '#111' },
   rowSub: { fontSize: 13, color: '#444' },
   rowTime: { fontSize: 12, color: '#999', marginTop: 2 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#facc15' },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#2DD4BF' },
   empty: { padding: 40, alignItems: 'center' },
   emptyText: { color: '#999' },
 });

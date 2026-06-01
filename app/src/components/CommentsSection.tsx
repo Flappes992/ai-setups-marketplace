@@ -51,6 +51,7 @@ export function CommentsSection({ setupId }: Props) {
 
       <View style={styles.composer}>
         <TextInput
+          selectionColor="#2DD4BF"
           placeholder="Was denkst du dazu?"
           value={input}
           onChangeText={setInput}

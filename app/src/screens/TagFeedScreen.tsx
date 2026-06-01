@@ -134,5 +134,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.55)',
   },
   gridTitle: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  gridPrice: { color: '#facc15', fontSize: 12, fontWeight: '800', marginTop: 4 },
+  gridPrice: { color: '#2DD4BF', fontSize: 12, fontWeight: '800', marginTop: 4 },
 });
