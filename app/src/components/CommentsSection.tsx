@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/auth/useAuth';
 import { useComments, Comment } from '@/hooks/useComments';
 import { useToast } from '@/components/Toast';
+import { ReportModal } from '@/components/ReportModal';
 import { supabase } from '@/services/supabase';
 import { BRAND } from '@/theme/ThemeProvider';
 
@@ -47,11 +48,12 @@ export function CommentsSection({ setupId, inputRef }: Props) {
   const { session } = useAuth();
   const userId = session?.user?.id;
   const toast = useToast();
-  const { comments, loading, add, remove, toggleLike, report } = useComments(setupId);
+  const { comments, loading, add, remove, toggleLike } = useComments(setupId);
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [sort, setSort] = useState<SortMode>('newest');
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
+  const [reportTarget, setReportTarget] = useState<{ id: string; label: string } | null>(null);
 
   const tree = useMemo(() => {
     const parents = comments.filter((c) => !c.parentId);
@@ -128,9 +130,11 @@ export function CommentsSection({ setupId, inputRef }: Props) {
           : [
               {
                 text: 'Melden',
-                onPress: async () => {
-                  await report(c.id);
-                  toast.show('Gemeldet — danke', 'success');
+                onPress: () => {
+                  setReportTarget({
+                    id: c.id,
+                    label: `@${c.username}: „${c.body.slice(0, 60)}${c.body.length > 60 ? '…' : ''}"`,
+                  });
                 },
               },
               {
@@ -252,6 +256,16 @@ export function CommentsSection({ setupId, inputRef }: Props) {
               ))}
           </View>
         ))
+      )}
+
+      {reportTarget && (
+        <ReportModal
+          visible={!!reportTarget}
+          onClose={() => setReportTarget(null)}
+          targetType="comment"
+          targetId={reportTarget.id}
+          targetLabel={reportTarget.label}
+        />
       )}
     </View>
   );

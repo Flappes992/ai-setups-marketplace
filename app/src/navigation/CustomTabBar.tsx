@@ -18,7 +18,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const toast = useToast();
 
   const isFeedActive = state.index === 0;
-  const canPost = tier === 'creator';
+  const canPost = tier === 'creator' || tier === 'creator_plus';
 
   return (
     <View

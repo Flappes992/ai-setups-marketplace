@@ -31,7 +31,9 @@ export async function POST(req: NextRequest) {
 
     const { data: setup, error: setupError } = await supabase
       .from('setups')
-      .select('id, title, price_cents, currency, creator_id, video_thumbnail')
+      .select(
+        'id, title, price_cents, currency, creator_id, video_thumbnail, creator:profiles!setups_creator_id_fkey(stripe_account_id, stripe_charges_enabled)',
+      )
       .eq('id', body.setup_id)
       .eq('status', 'live')
       .single();
@@ -42,6 +44,17 @@ export async function POST(req: NextRequest) {
 
     if (setup.creator_id === body.buyer_user_id) {
       return NextResponse.json({ error: 'Cannot buy your own setup' }, { status: 400 });
+    }
+
+    const creator = (setup as unknown as { creator: { stripe_account_id: string | null; stripe_charges_enabled: boolean } }).creator;
+    if (!creator?.stripe_account_id || !creator.stripe_charges_enabled) {
+      return NextResponse.json(
+        {
+          error:
+            'Der Creator hat noch keine Zahlungsdaten verlinkt. Bitte zu einem späteren Zeitpunkt erneut versuchen.',
+        },
+        { status: 400 },
+      );
     }
 
     const platformFee = Math.round((setup.price_cents * platformFeePercent) / 100);
@@ -62,6 +75,10 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
+      payment_intent_data: {
+        application_fee_amount: platformFee,
+        transfer_data: { destination: creator.stripe_account_id },
+      },
       success_url: `${appUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/cancel`,
       metadata: {
@@ -69,6 +86,7 @@ export async function POST(req: NextRequest) {
         buyer_user_id: body.buyer_user_id,
         creator_id: setup.creator_id,
         platform_fee_cents: platformFee.toString(),
+        creator_stripe_account: creator.stripe_account_id,
       },
     });
 

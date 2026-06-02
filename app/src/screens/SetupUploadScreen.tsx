@@ -25,6 +25,7 @@ import { useAuth } from '@/auth/useAuth';
 import { supabase } from '@/services/supabase';
 import { uploadFileToStorage } from '@/services/storage';
 import { useSetups } from '@/hooks/useSetups';
+import { useMyTier } from '@/hooks/useMyTier';
 
 const DRAFT_KEY = 'setiq.upload.draft.v1';
 interface UploadDraft {
@@ -42,6 +43,8 @@ export function SetupUploadScreen() {
   const navigation = useNavigation<UploadNav>();
   const { session } = useAuth();
   const { setups: allSetups } = useSetups();
+  const { tier } = useMyTier();
+  const isPlusCreator = tier === 'creator_plus';
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -116,12 +119,13 @@ export function SetupUploadScreen() {
 
   const priceCents = Math.round(parseFloat(priceEur.replace(',', '.')) * 100) || 0;
 
+  const minPrice = isPlusCreator ? 0 : 500;
   const valid =
     !!videoUri &&
     title.trim().length >= 3 &&
     description.trim().length >= 20 &&
     tagsArray.length >= 1 &&
-    priceCents >= 500 &&
+    priceCents >= minPrice &&
     (assetType === 'clonable' ? assetUrl.startsWith('https://') : !!bundleUri);
 
   async function pickVideo() {
@@ -382,7 +386,11 @@ export function SetupUploadScreen() {
               style={styles.input}
               accessibilityLabel="upload-price"
             />
-            <Text style={styles.hint}>Mindestpreis: 5,00 €</Text>
+            <Text style={styles.hint}>
+              {isPlusCreator
+                ? 'Creator+ Privileg: 0 € erlaubt (Community-Setup)'
+                : 'Mindestpreis: 5,00 €'}
+            </Text>
           </Section>
 
           <TouchableOpacity

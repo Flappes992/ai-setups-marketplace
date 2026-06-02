@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/auth/useAuth';
 
-export type Tier = 'explorer' | 'hustler' | 'creator';
+export type Tier = 'explorer' | 'hustler' | 'creator' | 'creator_plus';
 
 export interface TierProgress {
   accountDays: { current: number; required: number; ok: boolean };

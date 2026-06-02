@@ -18,6 +18,7 @@ import { useAuth } from '@/auth/useAuth';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useToast } from '@/components/Toast';
 import { TierCard } from '@/components/TierCard';
+import { StripeConnectCard } from '@/components/StripeConnectCard';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'Settings'>;
 
@@ -160,16 +161,8 @@ export function SettingsScreen() {
           />
         </Section>
 
-        <Section title="Auszahlungen">
-          <Row
-            label="Stripe-Konto verbinden"
-            sub="Damit Käufer dich bezahlen können"
-            onPress={() => Alert.alert('Stripe Connect', 'Folgt in Phase 4.5')}
-          />
-          <Row
-            label="Auszahlungs-Historie"
-            onPress={() => Alert.alert('Historie', 'Folgt in Phase 4.5')}
-          />
+        <Section title="Zahlungen">
+          <StripeConnectCard />
         </Section>
 
         <Section title="Speicher">

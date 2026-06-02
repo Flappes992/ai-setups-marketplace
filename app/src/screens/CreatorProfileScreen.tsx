@@ -28,6 +28,7 @@ import { useBlock } from '@/hooks/useBlock';
 import { SetupGrid } from '@/components/SetupGrid';
 import { EmptyState } from '@/components/EmptyState';
 import { useToast } from '@/components/Toast';
+import { ReportModal } from '@/components/ReportModal';
 import { BRAND } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'CreatorProfile'>;
@@ -46,6 +47,7 @@ export function CreatorProfileScreen() {
   const [likesReceived, setLikesReceived] = useState(0);
   const [followerCount, setFollowerCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const { following, toggle: rawToggleFollow } = useFollow(creatorId);
   const { blocked, toggle: toggleBlock } = useBlock(creatorId);
@@ -68,7 +70,7 @@ export function CreatorProfileScreen() {
           if (!blocked) navigation.goBack();
         },
       },
-      { text: 'Profil melden', onPress: () => toast.show('Gemeldet — danke', 'success') },
+      { text: 'Profil melden', onPress: () => setReportOpen(true) },
       { text: 'Abbrechen', style: 'cancel' as const },
     ]);
   }
@@ -291,6 +293,14 @@ export function CreatorProfileScreen() {
           />
         </View>
       </ScrollView>
+
+      <ReportModal
+        visible={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetType="profile"
+        targetId={creatorId}
+        targetLabel={`@${profile.username}`}
+      />
     </SafeAreaView>
   );
 }

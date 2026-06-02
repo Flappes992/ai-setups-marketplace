@@ -33,6 +33,12 @@ const TIER_META: Record<Tier, { name: string; emoji: string; line: string; color
     line: 'Du kannst Setups hochladen und verkaufen.',
     color: '#fbbf24',
   },
+  creator_plus: {
+    name: 'Creator+',
+    emoji: '💎',
+    line: 'Founding-Creator. Du darfst gratis Setups posten.',
+    color: BRAND.teal,
+  },
 };
 
 const HUSTLER_LABELS = {
@@ -138,6 +144,34 @@ export function TierCard() {
           <Text style={styles.creatorLine}>
             🚀 Du kannst Setups hochladen und über Stripe Auszahlungen empfangen.
           </Text>
+          <View style={styles.plusInviteBox}>
+            <Text style={styles.plusInviteEmoji}>💎</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.plusInviteTitle}>Auf dem Weg zu Creator+</Text>
+              <Text style={styles.plusInviteSub}>
+                Gib Gas — die ersten Creator+ lade ich persönlich ein. Kein öffentliches Kriterium.
+                Wer launcht, postet, sich in der Community zeigt, fällt auf.
+              </Text>
+              <Text style={styles.plusInvitePerk}>
+                Privileg: kostenlose Setups als Community-Beitrag posten.
+              </Text>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {tier === 'creator_plus' && (
+        <View style={styles.creatorBlock}>
+          <View style={styles.plusActiveBox}>
+            <Text style={styles.plusInviteEmoji}>💎</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.plusActiveTitle}>Founding Creator+</Text>
+              <Text style={styles.plusActiveSub}>
+                Du gehörst zu den ersten von Sicci persönlich ausgewählten Creators. Du darfst
+                Setups gratis posten als Community-Beitrag.
+              </Text>
+            </View>
+          </View>
         </View>
       )}
 
@@ -316,8 +350,39 @@ const styles = StyleSheet.create({
   },
   applyBtnText: { color: '#0b3b35', fontWeight: '800', fontSize: 14 },
 
-  creatorBlock: { marginTop: 12 },
+  creatorBlock: { marginTop: 12, gap: 12 },
   creatorLine: { fontSize: 13, color: '#666', lineHeight: 18 },
+  plusInviteBox: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 14,
+    backgroundColor: '#181B22',
+    borderRadius: 14,
+    alignItems: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(45,212,191,0.4)',
+  },
+  plusInviteEmoji: { fontSize: 26 },
+  plusInviteTitle: { fontSize: 15, fontWeight: '800', color: '#fff', marginBottom: 4 },
+  plusInviteSub: { fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 17 },
+  plusInvitePerk: {
+    fontSize: 12,
+    color: BRAND.tealLight,
+    marginTop: 8,
+    fontWeight: '700',
+  },
+  plusActiveBox: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 14,
+    backgroundColor: '#181B22',
+    borderRadius: 14,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: BRAND.teal,
+  },
+  plusActiveTitle: { fontSize: 15, fontWeight: '900', color: BRAND.tealLight, marginBottom: 4 },
+  plusActiveSub: { fontSize: 12, color: 'rgba(255,255,255,0.85)', lineHeight: 17 },
 
   modalBackdrop: {
     flex: 1,
