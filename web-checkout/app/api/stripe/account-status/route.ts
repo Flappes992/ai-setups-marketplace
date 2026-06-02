@@ -22,6 +22,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
     }
 
+    const mockMode = process.env.STRIPE_CONNECT_MOCK === 'true';
+
     const stripe = new Stripe(stripeKey);
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
@@ -36,6 +38,26 @@ export async function POST(req: NextRequest) {
         connected: false,
         charges_enabled: false,
         payouts_enabled: false,
+      });
+    }
+
+    if (mockMode || accountId.startsWith('acct_mock_')) {
+      await supabase
+        .from('profiles')
+        .update({
+          stripe_charges_enabled: true,
+          stripe_payouts_enabled: true,
+          stripe_onboarded_at: new Date().toISOString(),
+        })
+        .eq('id', body.user_id);
+      return NextResponse.json({
+        connected: true,
+        account_id: accountId,
+        charges_enabled: true,
+        payouts_enabled: true,
+        details_submitted: true,
+        requirements_due: [],
+        mock: true,
       });
     }
 

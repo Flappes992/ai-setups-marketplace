@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
     }
 
+    const mockMode = process.env.STRIPE_CONNECT_MOCK === 'true';
+
     const stripe = new Stripe(stripeKey);
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
@@ -33,6 +35,23 @@ export async function POST(req: NextRequest) {
       .single();
     if (profileError || !profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+    }
+
+    if (mockMode) {
+      const mockId = `acct_mock_${profile.id.slice(0, 8)}`;
+      await supabase
+        .from('profiles')
+        .update({
+          stripe_account_id: mockId,
+          stripe_charges_enabled: true,
+          stripe_payouts_enabled: true,
+          stripe_onboarded_at: new Date().toISOString(),
+        })
+        .eq('id', profile.id);
+      return NextResponse.json({
+        url: `${appUrl}/onboarding/done?user_id=${profile.id}&mock=1`,
+        account_id: mockId,
+      });
     }
 
     const { data: authUser } = await supabase.auth.admin.getUserById(body.user_id);

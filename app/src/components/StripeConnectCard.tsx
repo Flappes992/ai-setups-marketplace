@@ -114,7 +114,15 @@ export function StripeConnectCard() {
       )}
 
       {fullyActive && status.accountId && (
-        <Text style={styles.accountId}>Account: {status.accountId.slice(0, 16)}…</Text>
+        <View style={{ gap: 4 }}>
+          <Text style={styles.accountId}>Account: {status.accountId.slice(0, 16)}…</Text>
+          {status.accountId.startsWith('acct_mock_') && (
+            <Text style={styles.mockBadge}>
+              ⚠ MOCK-Modus aktiv — Zahlungen werden nicht echt gesplittet. Echten Stripe-Connect
+              vor Launch aktivieren.
+            </Text>
+          )}
+        </View>
       )}
     </View>
   );
@@ -156,4 +164,13 @@ const styles = StyleSheet.create({
   },
   btnAltText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   accountId: { fontSize: 11, color: '#999', fontVariant: ['tabular-nums'] },
+  mockBadge: {
+    fontSize: 11,
+    color: '#fbbf24',
+    fontWeight: '700',
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 4,
+  },
 });

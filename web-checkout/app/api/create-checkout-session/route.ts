@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     const platformFee = Math.round((setup.price_cents * platformFeePercent) / 100);
+    const isMockAccount = creator.stripe_account_id.startsWith('acct_mock_');
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -75,10 +76,15 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      payment_intent_data: {
-        application_fee_amount: platformFee,
-        transfer_data: { destination: creator.stripe_account_id },
-      },
+      // Mock accounts: alles auf Platform-Account, kein Stripe-Routing
+      ...(isMockAccount
+        ? {}
+        : {
+            payment_intent_data: {
+              application_fee_amount: platformFee,
+              transfer_data: { destination: creator.stripe_account_id },
+            },
+          }),
       success_url: `${appUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/cancel`,
       metadata: {
@@ -87,6 +93,7 @@ export async function POST(req: NextRequest) {
         creator_id: setup.creator_id,
         platform_fee_cents: platformFee.toString(),
         creator_stripe_account: creator.stripe_account_id,
+        mock_account: isMockAccount ? '1' : '0',
       },
     });
 
