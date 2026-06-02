@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/auth/useAuth';
 import { useComments, Comment } from '@/hooks/useComments';
 import { useToast } from '@/components/Toast';
+import { supabase } from '@/services/supabase';
 import { BRAND } from '@/theme/ThemeProvider';
 
 const MAX_COMMENT_LEN = 500;
@@ -86,10 +87,14 @@ export function CommentsSection({ setupId, inputRef }: Props) {
   async function handleSubmit() {
     if (!input.trim()) return;
     setSubmitting(true);
-    await add(input, replyTo?.id ?? null);
+    const result = await add(input, replyTo?.id ?? null);
+    setSubmitting(false);
+    if (!result.ok) {
+      toast.show(result.error ?? 'Konnte Kommentar nicht senden', 'error');
+      return;
+    }
     setInput('');
     setReplyTo(null);
-    setSubmitting(false);
   }
 
   function startReply(c: Comment) {
@@ -123,10 +128,24 @@ export function CommentsSection({ setupId, inputRef }: Props) {
           : [
               {
                 text: 'Melden',
-                style: 'destructive' as const,
                 onPress: async () => {
                   await report(c.id);
                   toast.show('Gemeldet — danke', 'success');
+                },
+              },
+              {
+                text: `@${c.username} blockieren`,
+                style: 'destructive' as const,
+                onPress: async () => {
+                  if (!userId) return;
+                  const { error } = await supabase
+                    .from('blocks')
+                    .insert({ blocker_id: userId, blocked_id: c.userId });
+                  if (error) {
+                    toast.show(error.message, 'error');
+                    return;
+                  }
+                  toast.show(`@${c.username} blockiert`, 'success');
                 },
               },
             ]),

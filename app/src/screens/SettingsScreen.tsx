@@ -17,6 +17,7 @@ import { supabase } from '@/services/supabase';
 import { useAuth } from '@/auth/useAuth';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useToast } from '@/components/Toast';
+import { TierCard } from '@/components/TierCard';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'Settings'>;
 
@@ -27,7 +28,6 @@ export function SettingsScreen() {
   const toast = useToast();
   const [pushNotifs, setPushNotifs] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
-  const [privateAccount, setPrivateAccount] = useState(false);
   const [dataSaver, setDataSaver] = useState(false);
   const [autoplayVideos, setAutoplayVideos] = useState(true);
 
@@ -77,6 +77,10 @@ export function SettingsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <Section title="Mein Rang">
+          <TierCard />
+        </Section>
+
         <Section title="Account">
           <Row
             label="Email"
@@ -93,16 +97,14 @@ export function SettingsScreen() {
         </Section>
 
         <Section title="Privatsphäre & Sicherheit">
-          <ToggleRow
-            label="Privater Account"
-            sub="Nur Follower sehen deine Setups"
-            value={privateAccount}
-            onChange={setPrivateAccount}
-          />
-          <Row
-            label="Blockierte Accounts"
-            onPress={() => Alert.alert('Blockiert', 'Folgt in Phase 5')}
-          />
+          <View style={[styles.row, styles.rowDisabled]}>
+            <View style={styles.rowLeft}>
+              <Text style={[styles.rowLabel, styles.textMuted]}>Privater Account</Text>
+              <Text style={styles.rowSub}>Bald verfügbar</Text>
+            </View>
+            <Switch value={false} disabled />
+          </View>
+          <Row label="Blockierte Accounts" onPress={() => navigation.navigate('BlockedList')} />
           <Row label="Datenexport" onPress={() => Alert.alert('Datenexport', 'Folgt in Phase 5')} />
         </Section>
 
@@ -306,6 +308,8 @@ const styles = StyleSheet.create({
   },
   rowLeft: { flex: 1 },
   rowLabel: { fontSize: 15, color: '#111', fontWeight: '500' },
+  rowDisabled: { opacity: 0.5 },
+  textMuted: { color: '#888' },
   rowSub: { fontSize: 12, color: '#888', marginTop: 2 },
   rowValue: { fontSize: 14, color: '#666', marginLeft: 8 },
   rowChevron: { fontSize: 22, color: '#bbb', marginLeft: 6 },

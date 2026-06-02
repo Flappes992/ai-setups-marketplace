@@ -3,6 +3,8 @@ import { supabase } from '@/services/supabase';
 import { mapDbSetupToSetup } from '@/services/setupMapper';
 import { Setup } from '@/types/setup';
 import { DbSetupWithCreator } from '@/types/database';
+import { useAuth } from '@/auth/useAuth';
+import { getMutualBlockSet } from '@/hooks/useBlock';
 
 interface UseSetupsResult {
   setups: Setup[];
@@ -12,6 +14,8 @@ interface UseSetupsResult {
 }
 
 export function useSetups(): UseSetupsResult {
+  const { session } = useAuth();
+  const myId = session?.user?.id;
   const [setups, setSetups] = useState<Setup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -31,11 +35,18 @@ export function useSetups(): UseSetupsResult {
     if (fetchError) {
       setError(new Error(fetchError.message));
     } else if (data) {
-      setSetups((data as DbSetupWithCreator[]).map(mapDbSetupToSetup));
+      let mapped = (data as DbSetupWithCreator[]).map(mapDbSetupToSetup);
+      if (myId) {
+        const blockSet = await getMutualBlockSet(myId);
+        if (blockSet.size > 0) {
+          mapped = mapped.filter((s) => !blockSet.has(s.creator.id));
+        }
+      }
+      setSetups(mapped);
     }
     setLoading(false);
     hasFetchedOnce.current = true;
-  }, []);
+  }, [myId]);
 
   useEffect(() => {
     fetchSetups();

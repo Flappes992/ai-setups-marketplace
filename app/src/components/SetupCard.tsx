@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 20,
   },
   overlay: { position: 'absolute', bottom: 100, left: 16, right: 96 },
-  actionRail: { position: 'absolute', right: 12, bottom: 160, alignItems: 'center', gap: 18 },
+  actionRail: { position: 'absolute', right: 12, bottom: 100, alignItems: 'center', gap: 18 },
   actionButton: { alignItems: 'center', padding: 2 },
   actionIcon: {
     color: '#fff',

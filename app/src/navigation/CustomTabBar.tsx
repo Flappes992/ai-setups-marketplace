@@ -6,14 +6,19 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 import { BRAND } from '@/theme/ThemeProvider';
+import { useMyTier } from '@/hooks/useMyTier';
+import { useToast } from '@/components/Toast';
 
 type RootNav = NativeStackNavigationProp<MainStackParamList>;
 
 export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const rootNav = useNavigation<RootNav>();
+  const { tier } = useMyTier();
+  const toast = useToast();
 
   const isFeedActive = state.index === 0;
+  const canPost = tier === 'creator';
 
   return (
     <View
@@ -37,14 +42,33 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
       <TouchableOpacity
         style={styles.plusButton}
         onPress={() => {
+          if (!canPost) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            toast.show(
+              tier === 'hustler'
+                ? 'Du musst Creator sein um zu posten — beantrage es in Einstellungen'
+                : 'Werde erst Hustler, dann Creator — Status in Einstellungen',
+              'info',
+            );
+            rootNav.navigate('Settings');
+            return;
+          }
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           rootNav.navigate('SetupUpload');
         }}
         accessibilityLabel="tab-create"
         activeOpacity={0.8}
       >
-        <View style={[styles.plusBg, isFeedActive ? styles.plusBgFeed : styles.plusBgProfile]}>
-          <Text style={[styles.plusText, { color: isFeedActive ? '#111' : '#fff' }]}>+</Text>
+        <View
+          style={[
+            styles.plusBg,
+            isFeedActive ? styles.plusBgFeed : styles.plusBgProfile,
+            !canPost && styles.plusBgLocked,
+          ]}
+        >
+          <Text style={[styles.plusText, { color: isFeedActive ? '#111' : '#fff' }]}>
+            {canPost ? '+' : '🔒'}
+          </Text>
         </View>
       </TouchableOpacity>
 
@@ -141,6 +165,9 @@ const styles = StyleSheet.create({
   },
   plusBgProfile: {
     backgroundColor: '#111',
+  },
+  plusBgLocked: {
+    opacity: 0.55,
   },
   plusText: {
     color: '#111',

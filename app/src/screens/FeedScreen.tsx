@@ -22,6 +22,7 @@ import { Setup } from '@/types/setup';
 import { MainStackParamList } from '@/navigation/RootNavigator';
 import { useSetups } from '@/hooks/useSetups';
 import { getFollowingIds } from '@/hooks/useFollow';
+import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 import { useAuth } from '@/auth/useAuth';
 
 const { height } = Dimensions.get('window');
@@ -67,6 +68,7 @@ export function FeedScreen() {
   const navigation = useNavigation<FeedNav>();
   const { session } = useAuth();
   const { setups, loading, error, refetch } = useSetups();
+  const unread = useUnreadNotifications();
   const [refreshing, setRefreshing] = useState(false);
   const [mode, setMode] = useState<FeedMode>('foryou');
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -76,10 +78,11 @@ export function FeedScreen() {
   useFocusEffect(
     useCallback(() => {
       refetch();
+      unread.refresh();
       if (session?.user?.id) {
         getFollowingIds(session.user.id).then((ids) => setFollowedIds(new Set(ids)));
       }
-    }, [refetch, session?.user?.id]),
+    }, [refetch, session?.user?.id, unread]),
   );
 
   useEffect(() => {
@@ -135,6 +138,11 @@ export function FeedScreen() {
             accessibilityLabel="open-messages"
           >
             <Text style={styles.iconBtnText}>✉</Text>
+            {unread.count > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unread.count > 99 ? '99+' : unread.count}</Text>
+              </View>
+            )}
           </TouchableOpacity>
 
           <View style={styles.modeSwitch}>
@@ -290,6 +298,26 @@ const styles = StyleSheet.create({
   },
   leftSpacer: { width: 44, height: 44 },
   rightCluster: { flexDirection: 'row', gap: 4, alignItems: 'center' },
+  badge: {
+    position: 'absolute',
+    top: 0,
+    right: -2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#fff',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '900',
+    lineHeight: 12,
+  },
   modeSwitch: {
     flexDirection: 'row',
     gap: 20,

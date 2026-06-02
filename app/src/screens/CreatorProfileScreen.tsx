@@ -8,6 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Share,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -23,6 +24,7 @@ import { Setup } from '@/types/setup';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 import { useAuth } from '@/auth/useAuth';
 import { useFollow, getFollowerCount } from '@/hooks/useFollow';
+import { useBlock } from '@/hooks/useBlock';
 import { SetupGrid } from '@/components/SetupGrid';
 import { EmptyState } from '@/components/EmptyState';
 import { useToast } from '@/components/Toast';
@@ -46,12 +48,30 @@ export function CreatorProfileScreen() {
   const [loading, setLoading] = useState(true);
 
   const { following, toggle: rawToggleFollow } = useFollow(creatorId);
+  const { blocked, toggle: toggleBlock } = useBlock(creatorId);
 
   const toggleFollow = useCallback(async () => {
     await rawToggleFollow();
     const c = await getFollowerCount(creatorId);
     setFollowerCount(c);
   }, [rawToggleFollow, creatorId]);
+
+  function openMenu() {
+    if (isSelf) return;
+    Alert.alert(`@${profile?.username ?? ''}`, undefined, [
+      {
+        text: blocked ? 'Entsperren' : 'Blockieren',
+        style: blocked ? 'default' : ('destructive' as const),
+        onPress: async () => {
+          await toggleBlock();
+          toast.show(blocked ? 'Entsperrt' : 'Blockiert', 'success');
+          if (!blocked) navigation.goBack();
+        },
+      },
+      { text: 'Profil melden', onPress: () => toast.show('Gemeldet — danke', 'success') },
+      { text: 'Abbrechen', style: 'cancel' as const },
+    ]);
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -161,9 +181,16 @@ export function CreatorProfileScreen() {
           <Text style={styles.backIcon}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.topTitle}>@{profile.username}</Text>
-        <TouchableOpacity onPress={handleShare} accessibilityLabel="share-creator-profile">
-          <Text style={styles.shareIcon}>↗</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TouchableOpacity onPress={handleShare} accessibilityLabel="share-creator-profile">
+            <Text style={styles.shareIcon}>↗</Text>
+          </TouchableOpacity>
+          {!isSelf && (
+            <TouchableOpacity onPress={openMenu} accessibilityLabel="creator-menu">
+              <Text style={styles.shareIcon}>⋯</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>

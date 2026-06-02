@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/auth/useAuth';
+import { getMutualBlockSet } from '@/hooks/useBlock';
 
 export interface Comment {
   id: string;
@@ -33,7 +34,7 @@ interface UseCommentsResult {
   loading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
-  add: (body: string, parentId?: string | null) => Promise<void>;
+  add: (body: string, parentId?: string | null) => Promise<{ ok: boolean; error?: string }>;
   remove: (id: string) => Promise<void>;
   toggleLike: (id: string) => Promise<void>;
   report: (id: string, reason?: string) => Promise<void>;
@@ -61,7 +62,13 @@ export function useComments(setupId: string): UseCommentsResult {
       setLoading(false);
       return;
     }
-    const rows = (data ?? []) as unknown as CommentRow[];
+    let rows = (data ?? []) as unknown as CommentRow[];
+
+    if (myId && rows.length > 0) {
+      const blockSet = await getMutualBlockSet(myId);
+      if (blockSet.size > 0) rows = rows.filter((r) => !blockSet.has(r.user_id));
+    }
+
     if (rows.length === 0) {
       setComments([]);
       setLoading(false);
@@ -109,21 +116,66 @@ export function useComments(setupId: string): UseCommentsResult {
   }, [fetchComments]);
 
   const add = useCallback(
-    async (body: string, parentId: string | null = null) => {
-      if (!myId || !body.trim()) return;
-      const { error: insertError } = await supabase.from('comments').insert({
-        setup_id: setupId,
-        user_id: myId,
-        body: body.trim(),
-        parent_id: parentId,
-      });
-      if (insertError) {
-        setError(new Error(insertError.message));
-        return;
+    async (
+      body: string,
+      parentId: string | null = null,
+    ): Promise<{ ok: boolean; error?: string }> => {
+      if (!myId) return { ok: false, error: 'Nicht eingeloggt' };
+      const trimmed = body.trim();
+      if (!trimmed) return { ok: false, error: 'Leerer Kommentar' };
+
+      const { data, error: insertError } = await supabase
+        .from('comments')
+        .insert({
+          setup_id: setupId,
+          user_id: myId,
+          body: trimmed,
+          parent_id: parentId,
+        })
+        .select('id, user_id, body, created_at, parent_id')
+        .single();
+
+      if (insertError || !data) {
+        const msg = insertError?.message ?? 'Insert fehlgeschlagen';
+        setError(new Error(msg));
+        return { ok: false, error: msg };
       }
-      await fetchComments();
+
+      const inserted = data as {
+        id: string;
+        user_id: string;
+        body: string;
+        created_at: string;
+        parent_id: string | null;
+      };
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, display_name, avatar_url')
+        .eq('id', myId)
+        .single();
+      const p = profile as {
+        username: string;
+        display_name: string;
+        avatar_url: string | null;
+      } | null;
+
+      const newComment: Comment = {
+        id: inserted.id,
+        userId: inserted.user_id,
+        username: p?.username ?? 'user',
+        displayName: p?.display_name ?? 'User',
+        avatarUrl: p?.avatar_url ?? null,
+        body: inserted.body,
+        createdAt: inserted.created_at,
+        parentId: inserted.parent_id,
+        likeCount: 0,
+        likedByMe: false,
+      };
+      setComments((cs) => [newComment, ...cs]);
+      return { ok: true };
     },
-    [myId, setupId, fetchComments],
+    [myId, setupId],
   );
 
   const remove = useCallback(async (id: string) => {
