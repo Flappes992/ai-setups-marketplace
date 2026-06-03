@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
-import { useTrending } from '@/hooks/useTrending';
+import { useTrending, RatedSetup } from '@/hooks/useTrending';
 import { Setup } from '@/types/setup';
 import { BRAND } from '@/theme/ThemeProvider';
 
@@ -21,7 +21,7 @@ type Nav = NativeStackNavigationProp<MainStackParamList, 'Trending'>;
 
 export function TrendingScreen() {
   const navigation = useNavigation<Nav>();
-  const { loading, topLiked, topSold, newest, refetch } = useTrending();
+  const { loading, topLiked, topSold, newest, topRated, refetch } = useTrending();
   const [refreshing, setRefreshing] = useState(false);
 
   async function handleRefresh() {
@@ -38,7 +38,7 @@ export function TrendingScreen() {
         </TouchableOpacity>
         <View style={styles.titleWrap}>
           <Text style={styles.title}>Trending heute</Text>
-          <Text style={styles.subtitle}>Was die Setiq-Community gerade feiert</Text>
+          <Text style={styles.subtitle}>Was die setiq-Community gerade feiert</Text>
         </View>
         <View style={{ width: 30 }} />
       </View>
@@ -76,6 +76,10 @@ export function TrendingScreen() {
             emptyText="Heute noch keine Käufe."
             onPress={(s) => navigation.navigate('SetupDetail', { setup: s })}
             rankColor={BRAND.teal}
+          />
+          <RatedSection
+            setups={topRated}
+            onPress={(s) => navigation.navigate('SetupDetail', { setup: s })}
           />
           <Section
             emoji="✨"
@@ -145,6 +149,60 @@ function Section({
                 style: 'currency',
                 currency: 'EUR',
               }).format(s.priceCents / 100)}
+            </Text>
+          </TouchableOpacity>
+        ))
+      )}
+    </View>
+  );
+}
+
+function RatedSection({
+  setups,
+  onPress,
+}: {
+  setups: RatedSetup[];
+  onPress: (s: Setup) => void;
+}) {
+  return (
+    <View style={styles.section}>
+      <View style={styles.sectionHead}>
+        <Text style={styles.sectionEmoji}>⭐</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.sectionTitle}>Bestbewertet (Top 20)</Text>
+          <Text style={styles.sectionSub}>Mindestens 10 Bewertungen · sortiert nach Schnitt</Text>
+        </View>
+      </View>
+      {setups.length === 0 ? (
+        <Text style={styles.emptyText}>
+          Noch keine Setups mit 10+ Bewertungen. Sei der erste der eines hochpushed.
+        </Text>
+      ) : (
+        setups.map((r, i) => (
+          <TouchableOpacity
+            key={r.setup.id}
+            style={styles.row}
+            onPress={() => onPress(r.setup)}
+            accessibilityLabel={`rated-${r.setup.id}`}
+          >
+            <View style={[styles.rank, { backgroundColor: '#fbbf24' }]}>
+              <Text style={styles.rankText}>{i + 1}</Text>
+            </View>
+            <Image source={{ uri: r.setup.videoThumbnail }} style={styles.thumb} />
+            <View style={styles.rowBody}>
+              <Text style={styles.rowTitle} numberOfLines={1}>
+                {r.setup.title}
+              </Text>
+              <Text style={styles.rowMeta} numberOfLines={1}>
+                ★ {r.averageRating.toFixed(2)} · {r.reviewsCount} Bewertungen · @
+                {r.setup.creator.username}
+              </Text>
+            </View>
+            <Text style={styles.rowPrice}>
+              {new Intl.NumberFormat('de-DE', {
+                style: 'currency',
+                currency: 'EUR',
+              }).format(r.setup.priceCents / 100)}
             </Text>
           </TouchableOpacity>
         ))

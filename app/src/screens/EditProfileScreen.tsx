@@ -63,7 +63,7 @@ export function EditProfileScreen() {
     if (!session?.user.id) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Fotozugriff nötig', 'Erlaube Setiq Zugriff auf deine Fotos.');
+      Alert.alert('Fotozugriff nötig', 'Erlaube setiq Zugriff auf deine Fotos.');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({

@@ -180,7 +180,7 @@ export function SettingsScreen() {
           />
         </Section>
 
-        <Section title="Über Setiq">
+        <Section title="Über setiq">
           <Row label="Version" value="0.1.0 (Phase 4)" />
           <Row label="AGB" onPress={() => Linking.openURL('https://setiq.net/agb')} />
           <Row

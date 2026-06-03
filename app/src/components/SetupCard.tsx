@@ -214,7 +214,7 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             try {
               await Share.share({
-                message: `Schau dir „${setup.title}" auf Setiq an — von @${setup.creator.username}`,
+                message: `Schau dir „${setup.title}" auf setiq an — von @${setup.creator.username}`,
                 url: `https://setiq.net/setup/${setup.id}`,
               });
             } catch {

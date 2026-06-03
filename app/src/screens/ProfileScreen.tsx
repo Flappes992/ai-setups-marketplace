@@ -242,7 +242,7 @@ export function ProfileScreen() {
                 try {
                   const { Share } = await import('react-native');
                   await Share.share({
-                    message: `Schau dir @${profile.username} auf Setiq an`,
+                    message: `Schau dir @${profile.username} auf setiq an`,
                     url: `https://setiq.net/@${profile.username}`,
                   });
                 } catch {

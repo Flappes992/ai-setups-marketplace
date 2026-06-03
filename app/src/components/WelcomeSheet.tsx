@@ -18,7 +18,7 @@ const { width } = Dimensions.get('window');
 const SLIDES = [
   {
     icon: '🎯',
-    title: 'Willkommen bei Setiq',
+    title: 'Willkommen bei setiq',
     body: 'Entdecke AI-Setups die andere bereits gebaut haben — Custom GPTs, Prompt-Stacks, Workflows, Tutorials. Alles sofort einsetzbar.',
   },
   {

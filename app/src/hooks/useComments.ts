@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/auth/useAuth';
 import { getMutualBlockSet } from '@/hooks/useBlock';
@@ -127,6 +127,43 @@ export function useComments(setupId: string): UseCommentsResult {
   useEffect(() => {
     fetchComments();
   }, [fetchComments]);
+
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  useEffect(() => {
+    // Unique channel id per hook-instance to avoid "channel already subscribed" if FlatList renders multiple cards
+    const channelId = `comments:${setupId}:${Math.random().toString(36).slice(2, 10)}`;
+    const ch = supabase
+      .channel(channelId)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'comments',
+          filter: `setup_id=eq.${setupId}`,
+        },
+        () => {
+          fetchComments();
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'comments',
+          filter: `setup_id=eq.${setupId}`,
+        },
+        () => {
+          fetchComments();
+        },
+      )
+      .subscribe();
+    channelRef.current = ch;
+    return () => {
+      ch.unsubscribe();
+    };
+  }, [setupId, fetchComments]);
 
   const add = useCallback(
     async (

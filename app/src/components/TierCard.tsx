@@ -250,7 +250,7 @@ function CreatorApplicationModal({
         <Pressable style={styles.modalSheet} onPress={(e) => e.stopPropagation()}>
           <Text style={styles.modalTitle}>Creator werden</Text>
           <Text style={styles.modalSub}>
-            Warum solltest du als Creator auf Setiq posten dürfen? Was ist dein AI-Stack, dein
+            Warum solltest du als Creator auf setiq posten dürfen? Was ist dein AI-Stack, dein
             Use-Case, deine Zielgruppe?
           </Text>
           <TextInput

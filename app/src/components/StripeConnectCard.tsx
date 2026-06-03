@@ -75,7 +75,7 @@ export function StripeConnectCard() {
           </Text>
           <Text style={styles.sub}>
             {fullyActive
-              ? 'Käufe landen automatisch auf deinem Konto (abzüglich 15 % Setiq-Provision).'
+              ? 'Käufe landen automatisch auf deinem Konto (abzüglich 15 % setiq-Provision).'
               : partiallyActive
                 ? 'Stripe prüft noch deine Daten. Du wirst informiert sobald aktiv.'
                 : 'Verlinke ein Bankkonto via Stripe um deine Setups verkaufen zu können.'}

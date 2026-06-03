@@ -170,7 +170,7 @@ export function CreatorProfileScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       await Share.share({
-        message: `Schau dir @${profile.username} auf Setiq an`,
+        message: `Schau dir @${profile.username} auf setiq an`,
         url: `https://setiq.net/@${profile.username}`,
       });
     } catch {
