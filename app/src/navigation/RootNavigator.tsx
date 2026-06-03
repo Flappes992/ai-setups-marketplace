@@ -22,6 +22,8 @@ import { TrendingScreen } from '@/screens/TrendingScreen';
 import { UserListScreen } from '@/screens/UserListScreen';
 import { CreatorProfileScreen } from '@/screens/CreatorProfileScreen';
 import { BlockedListScreen } from '@/screens/BlockedListScreen';
+import { ConversationsListScreen } from '@/screens/ConversationsListScreen';
+import { ConversationScreen } from '@/screens/ConversationScreen';
 import { Setup } from '@/types/setup';
 import { useAuth } from '@/auth/useAuth';
 
@@ -52,6 +54,14 @@ export type MainStackParamList = {
   UserList: { userId: string; mode: 'followers' | 'following' };
   CreatorProfile: { creatorId: string };
   BlockedList: undefined;
+  Conversations: undefined;
+  Conversation: {
+    conversationId: string;
+    otherUserId: string;
+    otherUsername: string;
+    otherDisplayName: string;
+    otherAvatarUrl: string | null;
+  };
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -123,6 +133,8 @@ function MainNavigator() {
       <MainStack.Screen name="UserList" component={UserListScreen} />
       <MainStack.Screen name="CreatorProfile" component={CreatorProfileScreen} />
       <MainStack.Screen name="BlockedList" component={BlockedListScreen} />
+      <MainStack.Screen name="Conversations" component={ConversationsListScreen} />
+      <MainStack.Screen name="Conversation" component={ConversationScreen} />
     </MainStack.Navigator>
   );
 }

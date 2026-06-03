@@ -134,7 +134,7 @@ export function FeedScreen() {
         <View style={styles.topBarRow}>
           <TouchableOpacity
             style={styles.iconBtn}
-            onPress={() => navigation.navigate('Notifications')}
+            onPress={() => navigation.navigate('Conversations')}
             accessibilityLabel="open-messages"
           >
             <Text style={styles.iconBtnText}>✉</Text>

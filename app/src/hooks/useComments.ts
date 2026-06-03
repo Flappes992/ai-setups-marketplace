@@ -22,11 +22,13 @@ interface CommentRow {
   body: string;
   created_at: string;
   parent_id: string | null;
-  author: {
-    username: string;
-    display_name: string;
-    avatar_url: string | null;
-  } | null;
+}
+
+interface ProfileLite {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
 }
 
 interface UseCommentsResult {
@@ -51,9 +53,7 @@ export function useComments(setupId: string): UseCommentsResult {
     setError(null);
     const { data, error: fetchError } = await supabase
       .from('comments')
-      .select(
-        'id, user_id, body, created_at, parent_id, author:profiles(username, display_name, avatar_url)',
-      )
+      .select('id, user_id, body, created_at, parent_id')
       .eq('setup_id', setupId)
       .order('created_at', { ascending: false });
 
@@ -62,7 +62,7 @@ export function useComments(setupId: string): UseCommentsResult {
       setLoading(false);
       return;
     }
-    let rows = (data ?? []) as unknown as CommentRow[];
+    let rows = (data ?? []) as CommentRow[];
 
     if (myId && rows.length > 0) {
       const blockSet = await getMutualBlockSet(myId);
@@ -75,17 +75,27 @@ export function useComments(setupId: string): UseCommentsResult {
       return;
     }
 
-    const ids = rows.map((r) => r.id);
-    const [{ data: allLikes }, { data: myLikes }] = await Promise.all([
-      supabase.from('comment_likes').select('comment_id').in('comment_id', ids),
+    const userIds = [...new Set(rows.map((r) => r.user_id))];
+    const commentIds = rows.map((r) => r.id);
+
+    const [{ data: profiles }, { data: allLikes }, { data: myLikes }] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, username, display_name, avatar_url')
+        .in('id', userIds),
+      supabase.from('comment_likes').select('comment_id').in('comment_id', commentIds),
       myId
         ? supabase
             .from('comment_likes')
             .select('comment_id')
-            .in('comment_id', ids)
+            .in('comment_id', commentIds)
             .eq('user_id', myId)
         : Promise.resolve({ data: [] as { comment_id: string }[] }),
     ]);
+
+    const profileMap = new Map<string, ProfileLite>();
+    for (const p of (profiles as ProfileLite[] | null) ?? []) profileMap.set(p.id, p);
+
     const countMap = new Map<string, number>();
     for (const r of (allLikes as { comment_id: string }[] | null) ?? []) {
       countMap.set(r.comment_id, (countMap.get(r.comment_id) ?? 0) + 1);
@@ -95,18 +105,21 @@ export function useComments(setupId: string): UseCommentsResult {
     );
 
     setComments(
-      rows.map((r) => ({
-        id: r.id,
-        userId: r.user_id,
-        username: r.author?.username ?? 'user',
-        displayName: r.author?.display_name ?? 'User',
-        avatarUrl: r.author?.avatar_url ?? null,
-        body: r.body,
-        createdAt: r.created_at,
-        parentId: r.parent_id,
-        likeCount: countMap.get(r.id) ?? 0,
-        likedByMe: mineSet.has(r.id),
-      })),
+      rows.map((r) => {
+        const p = profileMap.get(r.user_id);
+        return {
+          id: r.id,
+          userId: r.user_id,
+          username: p?.username ?? 'user',
+          displayName: p?.display_name ?? 'User',
+          avatarUrl: p?.avatar_url ?? null,
+          body: r.body,
+          createdAt: r.created_at,
+          parentId: r.parent_id,
+          likeCount: countMap.get(r.id) ?? 0,
+          likedByMe: mineSet.has(r.id),
+        };
+      }),
     );
     setLoading(false);
   }, [setupId, myId]);

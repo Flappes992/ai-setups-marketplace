@@ -22,6 +22,7 @@ import { Setup } from '@/types/setup';
 import { useAuth } from '@/auth/useAuth';
 import { usePurchase } from '@/hooks/usePurchase';
 import { CommentsSection } from '@/components/CommentsSection';
+import { ReviewSection } from '@/components/ReviewSection';
 import { TealGradient } from '@/components/TealGradient';
 import { useToggleLike } from '@/hooks/useToggleLike';
 import { useToggleSave } from '@/hooks/useToggleSave';
@@ -256,6 +257,14 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
                 </ScrollView>
               </>
             )}
+          </View>
+
+          <View style={styles.commentsBlock}>
+            <ReviewSection
+              setupId={setup.id}
+              purchaseId={purchase?.id}
+              canReview={purchase?.status === 'completed'}
+            />
           </View>
 
           <View style={styles.commentsBlock} onLayout={(e) => setCommentsY(e.nativeEvent.layout.y)}>

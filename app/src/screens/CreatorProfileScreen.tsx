@@ -29,6 +29,7 @@ import { SetupGrid } from '@/components/SetupGrid';
 import { EmptyState } from '@/components/EmptyState';
 import { useToast } from '@/components/Toast';
 import { ReportModal } from '@/components/ReportModal';
+import { useConversations } from '@/hooks/useConversations';
 import { BRAND } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'CreatorProfile'>;
@@ -51,6 +52,7 @@ export function CreatorProfileScreen() {
 
   const { following, toggle: rawToggleFollow } = useFollow(creatorId);
   const { blocked, toggle: toggleBlock } = useBlock(creatorId);
+  const { openOrCreate } = useConversations();
 
   const toggleFollow = useCallback(async () => {
     await rawToggleFollow();
@@ -261,7 +263,21 @@ export function CreatorProfileScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.msgBtn}
-                onPress={() => toast.show('DMs kommen bald 💬', 'info')}
+                onPress={async () => {
+                  if (!profile) return;
+                  const cid = await openOrCreate(creatorId);
+                  if (!cid) {
+                    toast.show('Konnte Konversation nicht öffnen', 'error');
+                    return;
+                  }
+                  navigation.navigate('Conversation', {
+                    conversationId: cid,
+                    otherUserId: creatorId,
+                    otherUsername: profile.username,
+                    otherDisplayName: profile.display_name,
+                    otherAvatarUrl: profile.avatar_url,
+                  });
+                }}
                 accessibilityLabel="message-creator"
               >
                 <Text style={styles.msgIcon}>✉</Text>
