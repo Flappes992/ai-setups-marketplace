@@ -20,6 +20,7 @@ import { Setup } from '@/types/setup';
 import { DbSetupWithCreator } from '@/types/database';
 import { useSetups } from '@/hooks/useSetups';
 import { useRecentSearches } from '@/hooks/useRecentSearches';
+import { useTheme } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'Search'>;
 
@@ -36,6 +37,7 @@ const CATEGORIES = [
 
 export function SearchScreen() {
   const navigation = useNavigation<Nav>();
+  const { palette } = useTheme();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Setup[]>([]);
   const [loading, setLoading] = useState(false);
@@ -78,23 +80,23 @@ export function SearchScreen() {
   }, [query, addRecent]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
+      <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back">
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
         <TextInput
           value={query}
           onChangeText={setQuery}
           placeholder="Setups, Creator, Tags…"
-          style={styles.input}
+          style={[styles.input, { backgroundColor: palette.surface, color: palette.text }]}
           autoFocus
           selectionColor="#2DD4BF"
           accessibilityLabel="search-input"
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={() => setQuery('')}>
-            <Text style={styles.clearBtn}>✕</Text>
+            <Text style={[styles.clearBtn, { color: palette.textSecondary }]}>✕</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -114,17 +116,17 @@ export function SearchScreen() {
             </View>
             <Text style={styles.conciergeArrow}>›</Text>
           </TouchableOpacity>
-          <Text style={styles.sectionTitle}>Entdecken</Text>
+          <Text style={[styles.sectionTitle, { color: palette.textSecondary }]}>Entdecken</Text>
           <View style={styles.catGrid}>
             {CATEGORIES.map((c) => (
               <TouchableOpacity
                 key={c.key}
-                style={styles.catCard}
+                style={[styles.catCard, { backgroundColor: palette.surface }]}
                 onPress={() => setQuery(c.query)}
                 accessibilityLabel={`category-${c.key}`}
               >
                 <Text style={styles.catIcon}>{c.icon}</Text>
-                <Text style={styles.catLabel}>{c.label}</Text>
+                <Text style={[styles.catLabel, { color: palette.text }]}>{c.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -132,26 +134,26 @@ export function SearchScreen() {
           {recent.length > 0 && (
             <>
               <View style={styles.sectionTitleRow}>
-                <Text style={styles.sectionTitle}>Zuletzt gesucht</Text>
+                <Text style={[styles.sectionTitle, { color: palette.textSecondary }]}>Zuletzt gesucht</Text>
                 <TouchableOpacity onPress={clearRecent}>
                   <Text style={styles.clearLink}>Alle löschen</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.tagWrap}>
                 {recent.map((t) => (
-                  <TouchableOpacity key={t} onPress={() => setQuery(t)} style={styles.recentTag}>
-                    <Text style={styles.recentTagText}>{t}</Text>
+                  <TouchableOpacity key={t} onPress={() => setQuery(t)} style={[styles.recentTag, { backgroundColor: palette.bg, borderColor: palette.border }]}>
+                    <Text style={[styles.recentTagText, { color: palette.textSecondary }]}>{t}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </>
           )}
 
-          <Text style={styles.sectionTitle}>Trending Tags</Text>
+          <Text style={[styles.sectionTitle, { color: palette.textSecondary }]}>Trending Tags</Text>
           <View style={styles.tagWrap}>
             {trendingTags.map((t) => (
-              <TouchableOpacity key={t} onPress={() => setQuery(t)} style={styles.trendingTag}>
-                <Text style={styles.trendingTagText}>#{t}</Text>
+              <TouchableOpacity key={t} onPress={() => setQuery(t)} style={[styles.trendingTag, { backgroundColor: palette.surface }]}>
+                <Text style={[styles.trendingTagText, { color: palette.text }]}>#{t}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -162,7 +164,7 @@ export function SearchScreen() {
         </View>
       ) : results.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.emptyText}>Keine Treffer für „{query}“</Text>
+          <Text style={[styles.emptyText, { color: palette.textSecondary }]}>Keine Treffer für „{query}“</Text>
         </View>
       ) : (
         <FlatList
@@ -171,15 +173,15 @@ export function SearchScreen() {
           contentContainerStyle={{ paddingHorizontal: 16 }}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={styles.row}
+              style={[styles.row, { backgroundColor: palette.surface }]}
               onPress={() => navigation.navigate('SetupDetail', { setup: item })}
             >
               <Image source={{ uri: item.videoThumbnail }} style={styles.thumb} />
               <View style={styles.rowBody}>
-                <Text style={styles.rowTitle} numberOfLines={1}>
+                <Text style={[styles.rowTitle, { color: palette.text }]} numberOfLines={1}>
                   {item.title}
                 </Text>
-                <Text style={styles.rowMeta} numberOfLines={1}>
+                <Text style={[styles.rowMeta, { color: palette.textSecondary }]} numberOfLines={1}>
                   @{item.creator.username} ·{' '}
                   {new Intl.NumberFormat('de-DE', {
                     style: 'currency',

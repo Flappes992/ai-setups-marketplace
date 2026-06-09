@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 import { useAchievements, Achievement } from '@/hooks/useAchievements';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'Achievements'>;
 
@@ -26,6 +26,7 @@ const RARITY_COLOR: Record<Achievement['rarity'], string> = {
 
 export function AchievementsScreen() {
   const navigation = useNavigation<Nav>();
+  const { palette } = useTheme();
   const { achievements, unlockedCount, totalCount, loading, refresh, evaluateAndGrant } =
     useAchievements();
   const [refreshing, setRefreshing] = useState(false);
@@ -44,14 +45,14 @@ export function AchievementsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
+      <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
         <View style={{ alignItems: 'center', flex: 1 }}>
-          <Text style={styles.title}>Achievements</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: palette.text }]}>Achievements</Text>
+          <Text style={[styles.subtitle, { color: palette.textSecondary }]}>
             {unlockedCount} / {totalCount} freigeschaltet
           </Text>
         </View>
@@ -76,7 +77,7 @@ export function AchievementsScreen() {
           {achievements.map((a) => (
             <Card key={a.id} a={a} />
           ))}
-          <Text style={styles.foot}>
+          <Text style={[styles.foot, { color: palette.textSecondary }]}>
             Tippe „Check" oben rechts um neue Achievements einzulösen, falls die Bedingungen erfüllt
             sind.
           </Text>
@@ -87,22 +88,24 @@ export function AchievementsScreen() {
 }
 
 function Card({ a }: { a: Achievement }) {
+  const { palette } = useTheme();
   const color = RARITY_COLOR[a.rarity];
   return (
     <View
       style={[
         styles.card,
+        { backgroundColor: palette.surface, borderColor: palette.border },
         a.unlocked ? { borderColor: color } : styles.cardLocked,
       ]}
     >
       <Text style={[styles.cardEmoji, !a.unlocked && styles.cardEmojiLocked]}>{a.emoji}</Text>
-      <Text style={[styles.cardTitle, !a.unlocked && styles.cardTitleLocked]} numberOfLines={1}>
+      <Text style={[styles.cardTitle, { color: palette.text }, !a.unlocked && styles.cardTitleLocked]} numberOfLines={1}>
         {a.title}
       </Text>
-      <Text style={styles.cardDesc} numberOfLines={2}>
+      <Text style={[styles.cardDesc, { color: palette.textSecondary }]} numberOfLines={2}>
         {a.description ?? ''}
       </Text>
-      <Text style={[styles.cardRarity, { color: a.unlocked ? color : '#bbb' }]}>
+      <Text style={[styles.cardRarity, { color: a.unlocked ? color : palette.textSecondary }]}>
         {a.rarity.toUpperCase()}
       </Text>
     </View>

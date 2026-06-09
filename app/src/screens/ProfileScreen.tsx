@@ -97,7 +97,7 @@ export function ProfileScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
         <View style={styles.centerState}>
-          <Text style={styles.errorText}>Profil nicht gefunden</Text>
+          <Text style={[styles.errorText, { color: palette.like }]}>Profil nicht gefunden</Text>
         </View>
       </SafeAreaView>
     );
@@ -178,10 +178,13 @@ export function ProfileScreen() {
             ]}
           >
             {profile.avatar_url ? (
-              <Image source={{ uri: profile.avatar_url }} style={styles.avatarImg} />
+              <Image
+                source={{ uri: profile.avatar_url }}
+                style={[styles.avatarImg, { backgroundColor: palette.border }]}
+              />
             ) : (
-              <View style={styles.avatarFallback}>
-                <Text style={styles.avatarLetter}>{initials || 'U'}</Text>
+              <View style={[styles.avatarFallback, { backgroundColor: palette.text }]}>
+                <Text style={[styles.avatarLetter, { color: palette.bg }]}>{initials || 'U'}</Text>
               </View>
             )}
             {creatorTier && (
@@ -209,7 +212,9 @@ export function ProfileScreen() {
           {profile.bio ? (
             <Text style={[styles.bio, { color: palette.text }]}>{profile.bio}</Text>
           ) : (
-            <Text style={styles.bioPlaceholder}>Noch keine Bio.</Text>
+            <Text style={[styles.bioPlaceholder, { color: palette.textSecondary }]}>
+              Noch keine Bio.
+            </Text>
           )}
 
           <View style={styles.statsRow}>

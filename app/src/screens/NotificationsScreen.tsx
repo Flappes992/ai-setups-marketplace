@@ -16,7 +16,7 @@ import type { MainStackParamList } from '@/navigation/RootNavigator';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 import { useNotifications, NotificationItem } from '@/hooks/useNotifications';
 import { useToast } from '@/components/Toast';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'Notifications'>;
 
@@ -65,6 +65,7 @@ function buildLine(n: NotificationItem): { icon: string; title: string; sub: str
 
 export function NotificationsScreen() {
   const navigation = useNavigation<Nav>();
+  const { palette } = useTheme();
   const { markSeen } = useUnreadNotifications();
   const { items, loading, refetch } = useNotifications();
   const toast = useToast();
@@ -108,12 +109,12 @@ export function NotificationsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
+      <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back">
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Aktivität</Text>
+        <Text style={[styles.title, { color: palette.text }]}>Aktivität</Text>
         <TouchableOpacity onPress={handleMarkRead} accessibilityLabel="mark-all-read">
           <Text style={styles.markRead}>Alle gelesen</Text>
         </TouchableOpacity>
@@ -140,11 +141,11 @@ export function NotificationsScreen() {
             return (
               <TouchableOpacity
                 onPress={() => onItemPress(item)}
-                style={[styles.row, unread && styles.rowUnread]}
+                style={[styles.row, { borderBottomColor: palette.border }, unread && styles.rowUnread]}
                 accessibilityLabel={`notif-${item.id}`}
               >
                 {item.actorAvatarUrl ? (
-                  <Image source={{ uri: item.actorAvatarUrl }} style={styles.avatar} />
+                  <Image source={{ uri: item.actorAvatarUrl }} style={[styles.avatar, { backgroundColor: palette.border }]} />
                 ) : (
                   <View style={[styles.avatar, styles.avatarFallback]}>
                     <Text style={styles.avatarLetter}>
@@ -152,15 +153,15 @@ export function NotificationsScreen() {
                     </Text>
                   </View>
                 )}
-                <View style={styles.iconBadge}>
+                <View style={[styles.iconBadge, { backgroundColor: palette.bg, borderColor: palette.bg }]}>
                   <Text style={styles.iconBadgeText}>{line.icon}</Text>
                 </View>
                 <View style={styles.rowBody}>
-                  <Text style={styles.rowTitle}>{line.title}</Text>
-                  <Text style={styles.rowSub} numberOfLines={2}>
+                  <Text style={[styles.rowTitle, { color: palette.text }]}>{line.title}</Text>
+                  <Text style={[styles.rowSub, { color: palette.textSecondary }]} numberOfLines={2}>
                     {line.sub}
                   </Text>
-                  <Text style={styles.rowTime}>{timeAgo(item.createdAt)}</Text>
+                  <Text style={[styles.rowTime, { color: palette.textSecondary }]}>{timeAgo(item.createdAt)}</Text>
                 </View>
                 {unread && <View style={styles.dot} />}
               </TouchableOpacity>
@@ -169,8 +170,8 @@ export function NotificationsScreen() {
           ListEmptyComponent={() => (
             <View style={styles.empty}>
               <Text style={styles.emptyEmoji}>🌱</Text>
-              <Text style={styles.emptyText}>Noch keine Aktivität.</Text>
-              <Text style={styles.emptySub}>
+              <Text style={[styles.emptyText, { color: palette.text }]}>Noch keine Aktivität.</Text>
+              <Text style={[styles.emptySub, { color: palette.textSecondary }]}>
                 Sobald jemand dir folgt, liked, kommentiert oder kauft, taucht es hier auf.
               </Text>
             </View>

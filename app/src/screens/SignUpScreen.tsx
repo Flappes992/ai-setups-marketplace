@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/services/supabase';
+import { useTheme } from '@/theme/ThemeProvider';
 import { LEGAL_URLS } from '@/config/legal';
 
 function isValidEmail(value: string): boolean {
@@ -20,6 +21,7 @@ function isValidEmail(value: string): boolean {
 }
 
 export function SignUpScreen() {
+  const { palette } = useTheme();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -72,14 +74,14 @@ export function SignUpScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>Konto erstellen</Text>
-          <Text style={styles.subtitle}>Entdecke und teile AI-Setups</Text>
+          <Text style={[styles.title, { color: palette.text }]}>Konto erstellen</Text>
+          <Text style={[styles.subtitle, { color: palette.textSecondary }]}>Entdecke und teile AI-Setups</Text>
 
           <TextInput
             selectionColor="#2DD4BF"
@@ -89,7 +91,7 @@ export function SignUpScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
-            style={styles.input}
+            style={[styles.input, { backgroundColor: palette.surface, color: palette.text }]}
             accessibilityLabel="signup-email"
           />
           <TextInput
@@ -99,7 +101,7 @@ export function SignUpScreen() {
             onChangeText={setUsername}
             autoCapitalize="none"
             autoCorrect={false}
-            style={styles.input}
+            style={[styles.input, { backgroundColor: palette.surface, color: palette.text }]}
             accessibilityLabel="signup-username"
           />
           <TextInput
@@ -107,7 +109,7 @@ export function SignUpScreen() {
             placeholder="Anzeigename"
             value={displayName}
             onChangeText={setDisplayName}
-            style={styles.input}
+            style={[styles.input, { backgroundColor: palette.surface, color: palette.text }]}
             accessibilityLabel="signup-displayname"
           />
           <TextInput
@@ -116,7 +118,7 @@ export function SignUpScreen() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            style={styles.input}
+            style={[styles.input, { backgroundColor: palette.surface, color: palette.text }]}
             accessibilityLabel="signup-password"
           />
           <TextInput
@@ -125,7 +127,7 @@ export function SignUpScreen() {
             value={confirm}
             onChangeText={setConfirm}
             secureTextEntry
-            style={styles.input}
+            style={[styles.input, { backgroundColor: palette.surface, color: palette.text }]}
             accessibilityLabel="signup-confirm"
           />
 
@@ -137,10 +139,10 @@ export function SignUpScreen() {
             accessibilityState={{ checked: acceptedTerms }}
             accessibilityLabel="signup-accept-terms"
           >
-            <View style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]}>
+            <View style={[styles.checkbox, { borderColor: palette.border }, acceptedTerms && styles.checkboxChecked]}>
               {acceptedTerms && <Text style={styles.checkmark}>✓</Text>}
             </View>
-            <Text style={styles.consentText}>
+            <Text style={[styles.consentText, { color: palette.textSecondary }]}>
               Ich akzeptiere die{' '}
               <Text style={styles.link} onPress={() => Linking.openURL(LEGAL_URLS.agb)}>
                 AGB
@@ -156,16 +158,16 @@ export function SignUpScreen() {
           {error && <Text style={styles.error}>{error}</Text>}
 
           <TouchableOpacity
-            style={[styles.button, !allFilled && styles.buttonDisabled]}
+            style={[styles.button, { backgroundColor: palette.text }, !allFilled && [styles.buttonDisabled, { backgroundColor: palette.border }]]}
             disabled={!allFilled || loading}
             onPress={handleSubmit}
             accessibilityLabel="signup-submit"
             accessibilityState={{ disabled: !allFilled || loading }}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={palette.bg} />
             ) : (
-              <Text style={styles.buttonText}>Registrieren</Text>
+              <Text style={[styles.buttonText, { color: palette.bg }]}>Registrieren</Text>
             )}
           </TouchableOpacity>
         </ScrollView>

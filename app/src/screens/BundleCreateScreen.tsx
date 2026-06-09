@@ -17,12 +17,13 @@ import { useMySetups } from '@/hooks/useMySetups';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/auth/useAuth';
 import { useToast } from '@/components/Toast';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'BundleCreate'>;
 
 export function BundleCreateScreen() {
   const navigation = useNavigation<Nav>();
+  const { palette } = useTheme();
   const { session } = useAuth();
   const mySetups = useMySetups();
   const toast = useToast();
@@ -82,35 +83,35 @@ export function BundleCreateScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
+      <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Neues Bundle</Text>
+        <Text style={[styles.title, { color: palette.text }]}>Neues Bundle</Text>
         <View style={{ width: 30 }} />
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
         <View style={styles.section}>
-          <Text style={styles.label}>Titel</Text>
+          <Text style={[styles.label, { color: palette.textSecondary }]}>Titel</Text>
           <TextInput
             value={title}
             onChangeText={setTitle}
             placeholder="z.B. Cold-Email Complete Stack"
-            style={styles.input}
+            style={[styles.input, { backgroundColor: palette.surface, color: palette.text }]}
             selectionColor={BRAND.teal}
             maxLength={80}
           />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Kurzbeschreibung (optional)</Text>
+          <Text style={[styles.label, { color: palette.textSecondary }]}>Kurzbeschreibung (optional)</Text>
           <TextInput
             value={description}
             onChangeText={setDescription}
             placeholder="Was komplementiert sich an diesen Setups?"
-            style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]}
+            style={[styles.input, { minHeight: 80, textAlignVertical: 'top', backgroundColor: palette.surface, color: palette.text }]}
             selectionColor={BRAND.teal}
             multiline
             maxLength={300}
@@ -118,26 +119,26 @@ export function BundleCreateScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Rabatt (%)</Text>
+          <Text style={[styles.label, { color: palette.textSecondary }]}>Rabatt (%)</Text>
           <TextInput
             value={discount}
             onChangeText={setDiscount}
             placeholder="15"
             keyboardType="number-pad"
-            style={styles.input}
+            style={[styles.input, { backgroundColor: palette.surface, color: palette.text }]}
             selectionColor={BRAND.teal}
             maxLength={2}
           />
-          <Text style={styles.hint}>5–50 % erlaubt</Text>
+          <Text style={[styles.hint, { color: palette.textSecondary }]}>5–50 % erlaubt</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Setups auswählen ({selectedIds.size})</Text>
-          <Text style={styles.hint}>Mindestens 2 deiner eigenen Setups</Text>
+          <Text style={[styles.label, { color: palette.textSecondary }]}>Setups auswählen ({selectedIds.size})</Text>
+          <Text style={[styles.hint, { color: palette.textSecondary }]}>Mindestens 2 deiner eigenen Setups</Text>
           {mySetups.loading ? (
             <ActivityIndicator color={BRAND.teal} />
           ) : mySetups.setups.length === 0 ? (
-            <Text style={styles.empty}>Du hast noch keine Setups hochgeladen.</Text>
+            <Text style={[styles.empty, { color: palette.textSecondary }]}>Du hast noch keine Setups hochgeladen.</Text>
           ) : (
             mySetups.setups.map((s) => {
               const sel = selectedIds.has(s.id);
@@ -145,21 +146,21 @@ export function BundleCreateScreen() {
                 <TouchableOpacity
                   key={s.id}
                   onPress={() => toggle(s.id)}
-                  style={[styles.setupRow, sel && styles.setupRowSel]}
+                  style={[styles.setupRow, { backgroundColor: palette.surface }, sel && styles.setupRowSel]}
                 >
-                  <Image source={{ uri: s.videoThumbnail }} style={styles.thumb} />
+                  <Image source={{ uri: s.videoThumbnail }} style={[styles.thumb, { backgroundColor: palette.border }]} />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.setupTitle} numberOfLines={1}>
+                    <Text style={[styles.setupTitle, { color: palette.text }]} numberOfLines={1}>
                       {s.title}
                     </Text>
-                    <Text style={styles.setupPrice}>
+                    <Text style={[styles.setupPrice, { color: palette.textSecondary }]}>
                       {new Intl.NumberFormat('de-DE', {
                         style: 'currency',
                         currency: 'EUR',
                       }).format(s.priceCents / 100)}
                     </Text>
                   </View>
-                  <View style={[styles.check, sel && styles.checkSel]}>
+                  <View style={[styles.check, { borderColor: palette.border }, sel && styles.checkSel]}>
                     {sel && <Text style={styles.checkMark}>✓</Text>}
                   </View>
                 </TouchableOpacity>
@@ -193,7 +194,7 @@ export function BundleCreateScreen() {
         <TouchableOpacity
           onPress={submit}
           disabled={!valid || submitting}
-          style={[styles.submitBtn, (!valid || submitting) && styles.submitDisabled]}
+          style={[styles.submitBtn, (!valid || submitting) && [styles.submitDisabled, { backgroundColor: palette.border }]]}
         >
           {submitting ? (
             <ActivityIndicator color="#0b3b35" />

@@ -22,12 +22,14 @@ import { useAuth } from '@/auth/useAuth';
 import { DbProfile } from '@/types/database';
 import { uploadAvatar } from '@/services/avatarUpload';
 import { useToast } from '@/components/Toast';
+import { useTheme } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'EditProfile'>;
 
 export function EditProfileScreen() {
   const navigation = useNavigation<Nav>();
   const { session } = useAuth();
+  const { palette } = useTheme();
   const [profile, setProfile] = useState<DbProfile | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
@@ -117,7 +119,7 @@ export function EditProfileScreen() {
 
   if (loading || !profile) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
         <View style={styles.centerState}>
           <ActivityIndicator />
         </View>
@@ -133,12 +135,15 @@ export function EditProfileScreen() {
     .toUpperCase();
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: palette.bg }]}
+      edges={['top', 'bottom']}
+    >
+      <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back">
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Profil bearbeiten</Text>
+        <Text style={[styles.title, { color: palette.text }]}>Profil bearbeiten</Text>
         <TouchableOpacity onPress={handleSave} disabled={saving} accessibilityLabel="save-profile">
           {saving ? <ActivityIndicator /> : <Text style={styles.saveBtn}>Speichern</Text>}
         </TouchableOpacity>
@@ -157,10 +162,13 @@ export function EditProfileScreen() {
               style={styles.avatarWrap}
             >
               {avatarUrl ? (
-                <Image source={{ uri: avatarUrl }} style={styles.avatarImg} />
+                <Image
+                  source={{ uri: avatarUrl }}
+                  style={[styles.avatarImg, { backgroundColor: palette.border }]}
+                />
               ) : (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarLetter}>{initials || 'U'}</Text>
+                <View style={[styles.avatar, { backgroundColor: palette.text }]}>
+                  <Text style={[styles.avatarLetter, { color: palette.bg }]}>{initials || 'U'}</Text>
                 </View>
               )}
               <View style={styles.avatarBadge}>
@@ -172,47 +180,55 @@ export function EditProfileScreen() {
               </View>
             </TouchableOpacity>
             <TouchableOpacity style={styles.avatarChange} onPress={handlePickAvatar}>
-              <Text style={styles.avatarChangeText}>Avatar ändern</Text>
+              <Text style={[styles.avatarChangeText, { color: palette.textSecondary }]}>
+                Avatar ändern
+              </Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.formSection}>
-            <Label text="Anzeigename" />
+            <Label text="Anzeigename" palette={palette} />
             <TextInput
               selectionColor="#2DD4BF"
               value={displayName}
               onChangeText={setDisplayName}
-              style={styles.input}
+              style={[styles.input, { backgroundColor: palette.surface, color: palette.text }]}
               placeholder="Dein Name"
               maxLength={40}
               accessibilityLabel="edit-displayname"
             />
 
-            <Label text="Username" />
+            <Label text="Username" palette={palette} />
             <TextInput
               selectionColor="#2DD4BF"
               value={username}
               onChangeText={(t) => setUsername(t.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-              style={styles.input}
+              style={[styles.input, { backgroundColor: palette.surface, color: palette.text }]}
               autoCapitalize="none"
               placeholder="username"
               maxLength={20}
               accessibilityLabel="edit-username"
             />
-            <Text style={styles.hint}>3-20 Zeichen, Buchstaben + Zahlen + _</Text>
+            <Text style={[styles.hint, { color: palette.textSecondary }]}>
+              3-20 Zeichen, Buchstaben + Zahlen + _
+            </Text>
 
-            <Label text="Bio" />
+            <Label text="Bio" palette={palette} />
             <TextInput
               selectionColor="#2DD4BF"
               value={bio}
               onChangeText={setBio}
-              style={[styles.input, styles.textarea]}
+              style={[
+                styles.input,
+                styles.textarea,
+                { backgroundColor: palette.surface, color: palette.text },
+              ]}
               placeholder="Was machst du? AI-Stack, Tools, Use-Cases…"
               multiline
               maxLength={160}
               accessibilityLabel="edit-bio"
             />
-            <Text style={styles.hint}>{bio.length}/160</Text>
+            <Text style={[styles.hint, { color: palette.textSecondary }]}>{bio.length}/160</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -220,8 +236,14 @@ export function EditProfileScreen() {
   );
 }
 
-function Label({ text }: { text: string }) {
-  return <Text style={styles.label}>{text}</Text>;
+function Label({
+  text,
+  palette,
+}: {
+  text: string;
+  palette: ReturnType<typeof useTheme>['palette'];
+}) {
+  return <Text style={[styles.label, { color: palette.textSecondary }]}>{text}</Text>;
 }
 
 const styles = StyleSheet.create({

@@ -15,12 +15,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 import { useTrending, RatedSetup } from '@/hooks/useTrending';
 import { Setup } from '@/types/setup';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'Trending'>;
 
 export function TrendingScreen() {
   const navigation = useNavigation<Nav>();
+  const { palette } = useTheme();
   const { loading, topLiked, topSold, newest, topRated, refetch } = useTrending();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -31,14 +32,14 @@ export function TrendingScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
+      <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back">
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
         <View style={styles.titleWrap}>
-          <Text style={styles.title}>Trending heute</Text>
-          <Text style={styles.subtitle}>Was die setiq-Community gerade feiert</Text>
+          <Text style={[styles.title, { color: palette.text }]}>Trending heute</Text>
+          <Text style={[styles.subtitle, { color: palette.textSecondary }]}>Was die setiq-Community gerade feiert</Text>
         </View>
         <View style={{ width: 30 }} />
       </View>
@@ -66,7 +67,7 @@ export function TrendingScreen() {
             setups={topLiked}
             emptyText="Heute noch keine Likes verteilt."
             onPress={(s) => navigation.navigate('SetupDetail', { setup: s })}
-            rankColor="#ef4444"
+            rankColor={palette.like}
           />
           <Section
             emoji="💰"
@@ -113,34 +114,35 @@ function Section({
   onPress: (s: Setup) => void;
   rankColor: string;
 }) {
+  const { palette } = useTheme();
   return (
     <View style={styles.section}>
       <View style={styles.sectionHead}>
         <Text style={styles.sectionEmoji}>{emoji}</Text>
         <View style={{ flex: 1 }}>
-          <Text style={styles.sectionTitle}>{title}</Text>
-          <Text style={styles.sectionSub}>{subtitle}</Text>
+          <Text style={[styles.sectionTitle, { color: palette.text }]}>{title}</Text>
+          <Text style={[styles.sectionSub, { color: palette.textSecondary }]}>{subtitle}</Text>
         </View>
       </View>
       {setups.length === 0 ? (
-        <Text style={styles.emptyText}>{emptyText}</Text>
+        <Text style={[styles.emptyText, { color: palette.textSecondary }]}>{emptyText}</Text>
       ) : (
         setups.map((s, i) => (
           <TouchableOpacity
             key={s.id}
-            style={styles.row}
+            style={[styles.row, { borderBottomColor: palette.border }]}
             onPress={() => onPress(s)}
             accessibilityLabel={`trending-${s.id}`}
           >
             <View style={[styles.rank, { backgroundColor: rankColor }]}>
               <Text style={styles.rankText}>{i + 1}</Text>
             </View>
-            <Image source={{ uri: s.videoThumbnail }} style={styles.thumb} />
+            <Image source={{ uri: s.videoThumbnail }} style={[styles.thumb, { backgroundColor: palette.border }]} />
             <View style={styles.rowBody}>
-              <Text style={styles.rowTitle} numberOfLines={1}>
+              <Text style={[styles.rowTitle, { color: palette.text }]} numberOfLines={1}>
                 {s.title}
               </Text>
-              <Text style={styles.rowMeta} numberOfLines={1}>
+              <Text style={[styles.rowMeta, { color: palette.textSecondary }]} numberOfLines={1}>
                 @{s.creator.username}
               </Text>
             </View>
@@ -164,36 +166,37 @@ function RatedSection({
   setups: RatedSetup[];
   onPress: (s: Setup) => void;
 }) {
+  const { palette } = useTheme();
   return (
     <View style={styles.section}>
       <View style={styles.sectionHead}>
         <Text style={styles.sectionEmoji}>⭐</Text>
         <View style={{ flex: 1 }}>
-          <Text style={styles.sectionTitle}>Bestbewertet (Top 20)</Text>
-          <Text style={styles.sectionSub}>Mindestens 10 Bewertungen · sortiert nach Schnitt</Text>
+          <Text style={[styles.sectionTitle, { color: palette.text }]}>Bestbewertet (Top 20)</Text>
+          <Text style={[styles.sectionSub, { color: palette.textSecondary }]}>Mindestens 10 Bewertungen · sortiert nach Schnitt</Text>
         </View>
       </View>
       {setups.length === 0 ? (
-        <Text style={styles.emptyText}>
+        <Text style={[styles.emptyText, { color: palette.textSecondary }]}>
           Noch keine Setups mit 10+ Bewertungen. Sei der erste der eines hochpushed.
         </Text>
       ) : (
         setups.map((r, i) => (
           <TouchableOpacity
             key={r.setup.id}
-            style={styles.row}
+            style={[styles.row, { borderBottomColor: palette.border }]}
             onPress={() => onPress(r.setup)}
             accessibilityLabel={`rated-${r.setup.id}`}
           >
             <View style={[styles.rank, { backgroundColor: '#fbbf24' }]}>
               <Text style={styles.rankText}>{i + 1}</Text>
             </View>
-            <Image source={{ uri: r.setup.videoThumbnail }} style={styles.thumb} />
+            <Image source={{ uri: r.setup.videoThumbnail }} style={[styles.thumb, { backgroundColor: palette.border }]} />
             <View style={styles.rowBody}>
-              <Text style={styles.rowTitle} numberOfLines={1}>
+              <Text style={[styles.rowTitle, { color: palette.text }]} numberOfLines={1}>
                 {r.setup.title}
               </Text>
-              <Text style={styles.rowMeta} numberOfLines={1}>
+              <Text style={[styles.rowMeta, { color: palette.textSecondary }]} numberOfLines={1}>
                 ★ {r.averageRating.toFixed(2)} · {r.reviewsCount} Bewertungen · @
                 {r.setup.creator.username}
               </Text>

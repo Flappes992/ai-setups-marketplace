@@ -18,12 +18,13 @@ import { DbProfile } from '@/types/database';
 import { getBlockedIds, useBlock } from '@/hooks/useBlock';
 import { useAuth } from '@/auth/useAuth';
 import { useToast } from '@/components/Toast';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'BlockedList'>;
 
 export function BlockedListScreen() {
   const navigation = useNavigation<Nav>();
+  const { palette } = useTheme();
   const { session } = useAuth();
   const [profiles, setProfiles] = useState<DbProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,12 +52,12 @@ export function BlockedListScreen() {
   }, [load]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
+      <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back">
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Blockierte Accounts</Text>
+        <Text style={[styles.title, { color: palette.text }]}>Blockierte Accounts</Text>
         <View style={{ width: 30 }} />
       </View>
 
@@ -67,8 +68,8 @@ export function BlockedListScreen() {
       ) : profiles.length === 0 ? (
         <View style={styles.center}>
           <Text style={styles.emptyEmoji}>🚫</Text>
-          <Text style={styles.emptyTitle}>Keine blockierten Accounts</Text>
-          <Text style={styles.emptySub}>
+          <Text style={[styles.emptyTitle, { color: palette.text }]}>Keine blockierten Accounts</Text>
+          <Text style={[styles.emptySub, { color: palette.textSecondary }]}>
             Long-press auf einen Kommentar oder einen Account um zu blockieren.
           </Text>
         </View>
@@ -85,6 +86,7 @@ export function BlockedListScreen() {
 }
 
 function Row({ profile, onChange }: { profile: DbProfile; onChange: () => void }) {
+  const { palette } = useTheme();
   const { toggle } = useBlock(profile.id);
   const toast = useToast();
   const initials = profile.display_name.charAt(0).toUpperCase();
@@ -109,7 +111,7 @@ function Row({ profile, onChange }: { profile: DbProfile; onChange: () => void }
   }
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, { borderBottomColor: palette.border }]}>
       {profile.avatar_url ? (
         <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
       ) : (
@@ -118,11 +120,11 @@ function Row({ profile, onChange }: { profile: DbProfile; onChange: () => void }
         </View>
       )}
       <View style={styles.body}>
-        <Text style={styles.name}>{profile.display_name}</Text>
-        <Text style={styles.handle}>@{profile.username}</Text>
+        <Text style={[styles.name, { color: palette.text }]}>{profile.display_name}</Text>
+        <Text style={[styles.handle, { color: palette.textSecondary }]}>@{profile.username}</Text>
       </View>
-      <TouchableOpacity onPress={confirmUnblock} style={styles.btn}>
-        <Text style={styles.btnText}>Entsperren</Text>
+      <TouchableOpacity onPress={confirmUnblock} style={[styles.btn, { backgroundColor: palette.surface }]}>
+        <Text style={[styles.btnText, { color: palette.textSecondary }]}>Entsperren</Text>
       </TouchableOpacity>
     </View>
   );

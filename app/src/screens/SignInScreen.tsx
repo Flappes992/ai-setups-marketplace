@@ -13,12 +13,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '@/services/supabase';
+import { useTheme } from '@/theme/ThemeProvider';
 import type { AuthStackParamList } from '@/navigation/RootNavigator';
 
 type SignInNav = NativeStackNavigationProp<AuthStackParamList, 'SignIn'>;
 
 export function SignInScreen() {
   const navigation = useNavigation<SignInNav>();
+  const { palette } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -40,14 +42,14 @@ export function SignInScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
         <View style={styles.content}>
-          <Text style={styles.title}>Anmelden</Text>
-          <Text style={styles.subtitle}>Willkommen zurück</Text>
+          <Text style={[styles.title, { color: palette.text }]}>Anmelden</Text>
+          <Text style={[styles.subtitle, { color: palette.textSecondary }]}>Willkommen zurück</Text>
 
           <TextInput
             selectionColor="#2DD4BF"
@@ -57,7 +59,7 @@ export function SignInScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
-            style={styles.input}
+            style={[styles.input, { backgroundColor: palette.surface, color: palette.text }]}
             accessibilityLabel="signin-email"
           />
           <TextInput
@@ -66,23 +68,23 @@ export function SignInScreen() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            style={styles.input}
+            style={[styles.input, { backgroundColor: palette.surface, color: palette.text }]}
             accessibilityLabel="signin-password"
           />
 
           {error && <Text style={styles.error}>{error}</Text>}
 
           <TouchableOpacity
-            style={[styles.button, !filled && styles.buttonDisabled]}
+            style={[styles.button, { backgroundColor: palette.text }, !filled && [styles.buttonDisabled, { backgroundColor: palette.border }]]}
             disabled={!filled || loading}
             onPress={handleSubmit}
             accessibilityLabel="signin-submit"
             accessibilityState={{ disabled: !filled || loading }}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={palette.bg} />
             ) : (
-              <Text style={styles.buttonText}>Einloggen</Text>
+              <Text style={[styles.buttonText, { color: palette.bg }]}>Einloggen</Text>
             )}
           </TouchableOpacity>
 
@@ -91,8 +93,8 @@ export function SignInScreen() {
             onPress={() => navigation.navigate('SignUp')}
             accessibilityLabel="goto-signup"
           >
-            <Text style={styles.secondaryText}>
-              Noch kein Konto? <Text style={styles.secondaryEmphasis}>Registrieren</Text>
+            <Text style={[styles.secondaryText, { color: palette.textSecondary }]}>
+              Noch kein Konto? <Text style={[styles.secondaryEmphasis, { color: palette.text }]}>Registrieren</Text>
             </Text>
           </TouchableOpacity>
         </View>

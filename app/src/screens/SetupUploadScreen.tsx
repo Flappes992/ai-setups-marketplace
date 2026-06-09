@@ -35,7 +35,7 @@ import { useSetups } from '@/hooks/useSetups';
 import { useMyTier } from '@/hooks/useMyTier';
 import { evaluateAchievementsFor } from '@/hooks/useAchievements';
 import { CreatorUploadGuide } from '@/components/CreatorUploadGuide';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 const DRAFT_KEY = 'setiq.upload.draft.v1';
 
@@ -158,6 +158,7 @@ type UploadNav = NativeStackNavigationProp<MainStackParamList, 'SetupUpload'>;
 
 export function SetupUploadScreen() {
   const navigation = useNavigation<UploadNav>();
+  const { palette } = useTheme();
   const { session } = useAuth();
   const { setups: allSetups } = useSetups();
   const { tier } = useMyTier();
@@ -482,8 +483,13 @@ export function SetupUploadScreen() {
     }
   }
 
+  const switchOptionTheme = { backgroundColor: palette.surface };
+  const switchActiveTheme = { backgroundColor: palette.text };
+  const switchTextTheme = { color: palette.textSecondary };
+  const inputTheme = { backgroundColor: palette.surface, color: palette.text };
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
@@ -491,7 +497,7 @@ export function SetupUploadScreen() {
         <CreatorUploadGuide forceVisible={guideOpen} onClose={() => setGuideOpen(false)} />
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.headerRow}>
-            <Text style={styles.title}>Neues Setup</Text>
+            <Text style={[styles.title, { color: palette.text }]}>Neues Setup</Text>
             <TouchableOpacity
               onPress={() => setGuideOpen(true)}
               style={styles.helpBtn}
@@ -505,39 +511,66 @@ export function SetupUploadScreen() {
             <View style={styles.switchRow}>
               <TouchableOpacity
                 onPress={() => setMode('standard')}
-                style={[styles.switchOption, mode === 'standard' && styles.switchActive]}
+                style={[
+                  styles.switchOption,
+                  switchOptionTheme,
+                  mode === 'standard' && styles.switchActive,
+                  mode === 'standard' && switchActiveTheme,
+                ]}
                 accessibilityLabel="mode-standard"
               >
                 <Text
-                  style={[styles.switchText, mode === 'standard' && styles.switchTextActive]}
+                  style={[
+                    styles.switchText,
+                    switchTextTheme,
+                    mode === 'standard' && styles.switchTextActive,
+                  ]}
                 >
                   Standard
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setMode('brainpack')}
-                style={[styles.switchOption, mode === 'brainpack' && styles.switchActive]}
+                style={[
+                  styles.switchOption,
+                  switchOptionTheme,
+                  mode === 'brainpack' && styles.switchActive,
+                  mode === 'brainpack' && switchActiveTheme,
+                ]}
                 accessibilityLabel="mode-brainpack"
               >
                 <Text
-                  style={[styles.switchText, mode === 'brainpack' && styles.switchTextActive]}
+                  style={[
+                    styles.switchText,
+                    switchTextTheme,
+                    mode === 'brainpack' && styles.switchTextActive,
+                  ]}
                 >
                   🧠 BrainPack
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setMode('claudepack')}
-                style={[styles.switchOption, mode === 'claudepack' && styles.switchActive]}
+                style={[
+                  styles.switchOption,
+                  switchOptionTheme,
+                  mode === 'claudepack' && styles.switchActive,
+                  mode === 'claudepack' && switchActiveTheme,
+                ]}
                 accessibilityLabel="mode-claudepack"
               >
                 <Text
-                  style={[styles.switchText, mode === 'claudepack' && styles.switchTextActive]}
+                  style={[
+                    styles.switchText,
+                    switchTextTheme,
+                    mode === 'claudepack' && styles.switchTextActive,
+                  ]}
                 >
                   🪐 ClaudePack
                 </Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.hint}>
+            <Text style={[styles.hint, { color: palette.textSecondary }]}>
               {mode === 'brainpack'
                 ? 'Komplettes Vault (Obsidian / Logseq / …) für AI-Kontext'
                 : mode === 'claudepack'
@@ -556,20 +589,26 @@ export function SetupUploadScreen() {
                   contentFit="cover"
                 />
                 <TouchableOpacity onPress={pickVideo} style={styles.secondaryButton}>
-                  <Text style={styles.secondaryText}>Anderes Video wählen</Text>
+                  <Text style={[styles.secondaryText, { color: palette.textSecondary }]}>
+                    Anderes Video wählen
+                  </Text>
                 </TouchableOpacity>
               </View>
             ) : (
               <TouchableOpacity
                 onPress={pickVideo}
-                style={styles.pickerArea}
+                style={[styles.pickerArea, { backgroundColor: palette.surface, borderColor: palette.border }]}
                 accessibilityLabel="upload-video-pick"
               >
-                <Text style={styles.pickerText}>Video aus Gallery wählen</Text>
-                <Text style={styles.pickerHint}>max. 60 Sek vertikal</Text>
+                <Text style={[styles.pickerText, { color: palette.text }]}>
+                  Video aus Gallery wählen
+                </Text>
+                <Text style={[styles.pickerHint, { color: palette.textSecondary }]}>
+                  max. 60 Sek vertikal
+                </Text>
               </TouchableOpacity>
             )}
-            <Text style={styles.videoHint}>
+            <Text style={[styles.videoHint, { color: palette.textSecondary }]}>
               Präsentiere dein Value kurz und knapp mit einem Video.
             </Text>
           </Section>
@@ -578,37 +617,42 @@ export function SetupUploadScreen() {
             <TextInput
               selectionColor="#2DD4BF"
               placeholder="z.B. Cold-Email Automation mit Claude"
+              placeholderTextColor={palette.textSecondary}
               value={title}
               onChangeText={setTitle}
-              style={styles.input}
+              style={[styles.input, inputTheme]}
               accessibilityLabel="upload-title"
               maxLength={80}
             />
-            <Text style={styles.hint}>{title.length}/80</Text>
+            <Text style={[styles.hint, { color: palette.textSecondary }]}>{title.length}/80</Text>
           </Section>
 
           <Section label="Beschreibung" onTipPress={() => setActiveTip('description')}>
             <TextInput
               selectionColor="#2DD4BF"
               placeholder="Was macht dein Setup besonders?"
+              placeholderTextColor={palette.textSecondary}
               value={description}
               onChangeText={setDescription}
               multiline
-              style={[styles.input, styles.textarea]}
+              style={[styles.input, styles.textarea, inputTheme]}
               accessibilityLabel="upload-description"
               maxLength={500}
             />
-            <Text style={styles.hint}>{description.length}/500 (min. 20)</Text>
+            <Text style={[styles.hint, { color: palette.textSecondary }]}>
+              {description.length}/500 (min. 20)
+            </Text>
           </Section>
 
           <Section label="Tags (Komma-getrennt)" onTipPress={() => setActiveTip('tags')}>
             <TextInput
               selectionColor="#2DD4BF"
               placeholder="z.B. claude, n8n, automation"
+              placeholderTextColor={palette.textSecondary}
               value={tagsInput}
               onChangeText={setTagsInput}
               autoCapitalize="none"
-              style={styles.input}
+              style={[styles.input, inputTheme]}
               accessibilityLabel="upload-tags"
             />
             {topTags.length > 0 && (
@@ -635,8 +679,8 @@ export function SetupUploadScreen() {
             {tagsArray.length > 0 && (
               <View style={styles.tagPreview}>
                 {tagsArray.map((t) => (
-                  <View key={t} style={styles.tagChip}>
-                    <Text style={styles.tagChipText}>#{t}</Text>
+                  <View key={t} style={[styles.tagChip, { backgroundColor: palette.surface }]}>
+                    <Text style={[styles.tagChipText, { color: palette.text }]}>#{t}</Text>
                   </View>
                 ))}
               </View>
@@ -649,12 +693,18 @@ export function SetupUploadScreen() {
                 <View style={styles.switchRow}>
                   <TouchableOpacity
                     onPress={() => setAssetType('clonable')}
-                    style={[styles.switchOption, assetType === 'clonable' && styles.switchActive]}
+                    style={[
+                      styles.switchOption,
+                      switchOptionTheme,
+                      assetType === 'clonable' && styles.switchActive,
+                      assetType === 'clonable' && switchActiveTheme,
+                    ]}
                     accessibilityLabel="upload-type-clonable"
                   >
                     <Text
                       style={[
                         styles.switchText,
+                        switchTextTheme,
                         assetType === 'clonable' && styles.switchTextActive,
                       ]}
                     >
@@ -665,13 +715,16 @@ export function SetupUploadScreen() {
                     onPress={() => setAssetType('tutorial_bundle')}
                     style={[
                       styles.switchOption,
+                      switchOptionTheme,
                       assetType === 'tutorial_bundle' && styles.switchActive,
+                      assetType === 'tutorial_bundle' && switchActiveTheme,
                     ]}
                     accessibilityLabel="upload-type-bundle"
                   >
                     <Text
                       style={[
                         styles.switchText,
+                        switchTextTheme,
                         assetType === 'tutorial_bundle' && styles.switchTextActive,
                       ]}
                     >
@@ -689,12 +742,13 @@ export function SetupUploadScreen() {
                   <TextInput
                     selectionColor="#2DD4BF"
                     placeholder="https://chat.openai.com/g/g-XXXX"
+                    placeholderTextColor={palette.textSecondary}
                     value={assetUrl}
                     onChangeText={setAssetUrl}
                     autoCapitalize="none"
                     autoCorrect={false}
                     keyboardType="url"
-                    style={styles.input}
+                    style={[styles.input, inputTheme]}
                     accessibilityLabel="upload-asset-url"
                   />
                 </Section>
@@ -705,10 +759,10 @@ export function SetupUploadScreen() {
                 >
                   <TouchableOpacity
                     onPress={pickBundle}
-                    style={styles.pickerArea}
+                    style={[styles.pickerArea, { backgroundColor: palette.surface, borderColor: palette.border }]}
                     accessibilityLabel="upload-pick-bundle"
                   >
-                    <Text style={styles.pickerText}>
+                    <Text style={[styles.pickerText, { color: palette.text }]}>
                       {bundleUri ? 'Datei gewählt — ändern' : 'PDF oder Video wählen'}
                     </Text>
                   </TouchableOpacity>
@@ -725,13 +779,13 @@ export function SetupUploadScreen() {
               >
                 <TouchableOpacity
                   onPress={pickBrainpack}
-                  style={styles.pickerArea}
+                  style={[styles.pickerArea, { backgroundColor: palette.surface, borderColor: palette.border }]}
                   accessibilityLabel="upload-pick-brainpack"
                 >
-                  <Text style={styles.pickerText}>
+                  <Text style={[styles.pickerText, { color: palette.text }]}>
                     {brainpackUri ? 'BrainPack gewählt — ändern' : 'Vault-Ordner als .zip wählen'}
                   </Text>
-                  <Text style={styles.pickerHint}>
+                  <Text style={[styles.pickerHint, { color: palette.textSecondary }]}>
                     Pack dein Vault als .zip (ohne persönliche Notizen)
                   </Text>
                 </TouchableOpacity>
@@ -749,12 +803,18 @@ export function SetupUploadScreen() {
                     <TouchableOpacity
                       key={val}
                       onPress={() => setBpVaultType(val)}
-                      style={[styles.switchOption, bpVaultType === val && styles.switchActive]}
+                      style={[
+                        styles.switchOption,
+                        switchOptionTheme,
+                        bpVaultType === val && styles.switchActive,
+                        bpVaultType === val && switchActiveTheme,
+                      ]}
                       accessibilityLabel={`bp-vault-${val}`}
                     >
                       <Text
                         style={[
                           styles.switchText,
+                          switchTextTheme,
                           bpVaultType === val && styles.switchTextActive,
                         ]}
                       >
@@ -769,10 +829,11 @@ export function SetupUploadScreen() {
                 <TextInput
                   selectionColor="#2DD4BF"
                   placeholder="z.B. 84"
+                  placeholderTextColor={palette.textSecondary}
                   value={bpNoteCount}
                   onChangeText={setBpNoteCount}
                   keyboardType="number-pad"
-                  style={styles.input}
+                  style={[styles.input, inputTheme]}
                   accessibilityLabel="bp-note-count"
                 />
               </Section>
@@ -784,10 +845,11 @@ export function SetupUploadScreen() {
                 <TextInput
                   selectionColor="#2DD4BF"
                   placeholder={'00 Inbox\n01 Projects\n02 Areas\n03 Resources\n04 Archive'}
+                  placeholderTextColor={palette.textSecondary}
                   value={bpTreeInput}
                   onChangeText={setBpTreeInput}
                   multiline
-                  style={[styles.input, styles.textarea]}
+                  style={[styles.input, styles.textarea, inputTheme]}
                   autoCapitalize="none"
                   accessibilityLabel="bp-tree"
                 />
@@ -812,12 +874,18 @@ export function SetupUploadScreen() {
                     <TouchableOpacity
                       key={val}
                       onPress={() => toggleTarget(val)}
-                      style={[styles.switchOption, cpTargets.includes(val) && styles.switchActive]}
+                      style={[
+                        styles.switchOption,
+                        switchOptionTheme,
+                        cpTargets.includes(val) && styles.switchActive,
+                        cpTargets.includes(val) && switchActiveTheme,
+                      ]}
                       accessibilityLabel={`cp-target-${val}`}
                     >
                       <Text
                         style={[
                           styles.switchText,
+                          switchTextTheme,
                           cpTargets.includes(val) && styles.switchTextActive,
                         ]}
                       >
@@ -832,9 +900,10 @@ export function SetupUploadScreen() {
                 <TextInput
                   selectionColor="#2DD4BF"
                   placeholder={'Persona-Name, z.B. „Cold-Email Closer"'}
+                  placeholderTextColor={palette.textSecondary}
                   value={cpPersonaTitle}
                   onChangeText={setCpPersonaTitle}
-                  style={styles.input}
+                  style={[styles.input, inputTheme]}
                   accessibilityLabel="cp-persona-title"
                   maxLength={60}
                 />
@@ -848,12 +917,18 @@ export function SetupUploadScreen() {
                     <TouchableOpacity
                       key={val}
                       onPress={() => setCpPersonaScope(val)}
-                      style={[styles.switchOption, cpPersonaScope === val && styles.switchActive]}
+                      style={[
+                        styles.switchOption,
+                        switchOptionTheme,
+                        cpPersonaScope === val && styles.switchActive,
+                        cpPersonaScope === val && switchActiveTheme,
+                      ]}
                       accessibilityLabel={`cp-persona-scope-${val}`}
                     >
                       <Text
                         style={[
                           styles.switchText,
+                          switchTextTheme,
                           cpPersonaScope === val && styles.switchTextActive,
                         ]}
                       >
@@ -865,10 +940,11 @@ export function SetupUploadScreen() {
                 <TextInput
                   selectionColor="#2DD4BF"
                   placeholder={'Du bist ein erfahrener … (mind. 20 Zeichen wenn ausgefüllt)'}
+                  placeholderTextColor={palette.textSecondary}
                   value={cpPersonaBody}
                   onChangeText={setCpPersonaBody}
                   multiline
-                  style={[styles.input, styles.textarea, { marginTop: 6 }]}
+                  style={[styles.input, styles.textarea, inputTheme, { marginTop: 6 }]}
                   accessibilityLabel="cp-persona-body"
                 />
               </Section>
@@ -878,9 +954,11 @@ export function SetupUploadScreen() {
                 onTipPress={() => setActiveTip('cp-commands')}
               >
                 {cpCommands.map((c, i) => (
-                  <View key={i} style={styles.cpItemBox}>
+                  <View key={i} style={[styles.cpItemBox, { backgroundColor: palette.bgSecondary }]}>
                     <View style={styles.cpItemHeader}>
-                      <Text style={styles.cpItemLabel}>Command {i + 1}</Text>
+                      <Text style={[styles.cpItemLabel, { color: palette.textSecondary }]}>
+                        Command {i + 1}
+                      </Text>
                       {cpCommands.length > 1 && (
                         <TouchableOpacity
                           onPress={() => removeCommand(i)}
@@ -893,27 +971,30 @@ export function SetupUploadScreen() {
                     <TextInput
                       selectionColor="#2DD4BF"
                       placeholder="Trigger, z.B. /standup"
+                      placeholderTextColor={palette.textSecondary}
                       value={c.trigger}
                       onChangeText={(t) => updateCommand(i, { trigger: t })}
                       autoCapitalize="none"
-                      style={styles.input}
+                      style={[styles.input, inputTheme]}
                       accessibilityLabel={`cp-cmd-trigger-${i}`}
                     />
                     <TextInput
                       selectionColor="#2DD4BF"
                       placeholder="Kurzbeschreibung"
+                      placeholderTextColor={palette.textSecondary}
                       value={c.summary}
                       onChangeText={(t) => updateCommand(i, { summary: t })}
-                      style={[styles.input, { marginTop: 6 }]}
+                      style={[styles.input, inputTheme, { marginTop: 6 }]}
                       accessibilityLabel={`cp-cmd-summary-${i}`}
                     />
                     <TextInput
                       selectionColor="#2DD4BF"
                       placeholder={'Command-Body als Markdown\n\nz.B. "Du bist ein Standup-Bot. Fasse meinen Tag zusammen…"'}
+                      placeholderTextColor={palette.textSecondary}
                       value={c.body}
                       onChangeText={(t) => updateCommand(i, { body: t })}
                       multiline
-                      style={[styles.input, styles.textarea, { marginTop: 6 }]}
+                      style={[styles.input, styles.textarea, inputTheme, { marginTop: 6 }]}
                       accessibilityLabel={`cp-cmd-body-${i}`}
                     />
                   </View>
@@ -921,10 +1002,12 @@ export function SetupUploadScreen() {
                 {cpCommands.length < 5 && (
                   <TouchableOpacity
                     onPress={addCommand}
-                    style={styles.cpAddBtn}
+                    style={[styles.cpAddBtn, { borderColor: palette.border }]}
                     accessibilityLabel="cp-cmd-add"
                   >
-                    <Text style={styles.cpAddText}>+ Command hinzufügen</Text>
+                    <Text style={[styles.cpAddText, { color: palette.textSecondary }]}>
+                      + Command hinzufügen
+                    </Text>
                   </TouchableOpacity>
                 )}
               </Section>
@@ -934,9 +1017,11 @@ export function SetupUploadScreen() {
                 onTipPress={() => setActiveTip('cp-agents')}
               >
                 {cpAgents.map((a, i) => (
-                  <View key={i} style={styles.cpItemBox}>
+                  <View key={i} style={[styles.cpItemBox, { backgroundColor: palette.bgSecondary }]}>
                     <View style={styles.cpItemHeader}>
-                      <Text style={styles.cpItemLabel}>Agent {i + 1}</Text>
+                      <Text style={[styles.cpItemLabel, { color: palette.textSecondary }]}>
+                        Agent {i + 1}
+                      </Text>
                       <TouchableOpacity
                         onPress={() => removeAgent(i)}
                         accessibilityLabel={`cp-agent-remove-${i}`}
@@ -947,27 +1032,30 @@ export function SetupUploadScreen() {
                     <TextInput
                       selectionColor="#2DD4BF"
                       placeholder="Name, z.B. code-reviewer"
+                      placeholderTextColor={palette.textSecondary}
                       value={a.name}
                       onChangeText={(t) => updateAgent(i, { name: t })}
                       autoCapitalize="none"
-                      style={styles.input}
+                      style={[styles.input, inputTheme]}
                       accessibilityLabel={`cp-agent-name-${i}`}
                     />
                     <TextInput
                       selectionColor="#2DD4BF"
                       placeholder="Kurzbeschreibung"
+                      placeholderTextColor={palette.textSecondary}
                       value={a.summary}
                       onChangeText={(t) => updateAgent(i, { summary: t })}
-                      style={[styles.input, { marginTop: 6 }]}
+                      style={[styles.input, inputTheme, { marginTop: 6 }]}
                       accessibilityLabel={`cp-agent-summary-${i}`}
                     />
                     <TextInput
                       selectionColor="#2DD4BF"
                       placeholder={'Agent-Body als Markdown (System-Prompt + Anweisungen)'}
+                      placeholderTextColor={palette.textSecondary}
                       value={a.body}
                       onChangeText={(t) => updateAgent(i, { body: t })}
                       multiline
-                      style={[styles.input, styles.textarea, { marginTop: 6 }]}
+                      style={[styles.input, styles.textarea, inputTheme, { marginTop: 6 }]}
                       accessibilityLabel={`cp-agent-body-${i}`}
                     />
                   </View>
@@ -975,10 +1063,12 @@ export function SetupUploadScreen() {
                 {cpAgents.length < 3 && (
                   <TouchableOpacity
                     onPress={addAgent}
-                    style={styles.cpAddBtn}
+                    style={[styles.cpAddBtn, { borderColor: palette.border }]}
                     accessibilityLabel="cp-agent-add"
                   >
-                    <Text style={styles.cpAddText}>+ Subagent hinzufügen</Text>
+                    <Text style={[styles.cpAddText, { color: palette.textSecondary }]}>
+                      + Subagent hinzufügen
+                    </Text>
                   </TouchableOpacity>
                 )}
               </Section>
@@ -989,13 +1079,14 @@ export function SetupUploadScreen() {
             <TextInput
               selectionColor="#2DD4BF"
               placeholder="z.B. 29.00"
+              placeholderTextColor={palette.textSecondary}
               value={priceEur}
               onChangeText={setPriceEur}
               keyboardType="decimal-pad"
-              style={styles.input}
+              style={[styles.input, inputTheme]}
               accessibilityLabel="upload-price"
             />
-            <Text style={styles.hint}>
+            <Text style={[styles.hint, { color: palette.textSecondary }]}>
               {isPlusCreator
                 ? 'Creator+ Privileg: 0 € erlaubt (Community-Setup)'
                 : 'Mindestpreis: 5,00 €'}
@@ -1009,10 +1100,11 @@ export function SetupUploadScreen() {
             <TextInput
               selectionColor="#2DD4BF"
               placeholder="Minuten gespart pro Nutzung (z.B. 15)"
+              placeholderTextColor={palette.textSecondary}
               value={roiMinutes}
               onChangeText={setRoiMinutes}
               keyboardType="number-pad"
-              style={styles.input}
+              style={[styles.input, inputTheme]}
               accessibilityLabel="upload-roi-minutes"
             />
             <View style={[styles.switchRow, { marginTop: 8 }]}>
@@ -1027,18 +1119,27 @@ export function SetupUploadScreen() {
                 <TouchableOpacity
                   key={val}
                   onPress={() => setRoiFrequency(val)}
-                  style={[styles.switchOption, roiFrequency === val && styles.switchActive]}
+                  style={[
+                    styles.switchOption,
+                    switchOptionTheme,
+                    roiFrequency === val && styles.switchActive,
+                    roiFrequency === val && switchActiveTheme,
+                  ]}
                   accessibilityLabel={`upload-roi-${val}`}
                 >
                   <Text
-                    style={[styles.switchText, roiFrequency === val && styles.switchTextActive]}
+                    style={[
+                      styles.switchText,
+                      switchTextTheme,
+                      roiFrequency === val && styles.switchTextActive,
+                    ]}
                   >
                     {label}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={styles.hint}>
+            <Text style={[styles.hint, { color: palette.textSecondary }]}>
               Käufer sehen damit „Du sparst X Std/Monat" — krasser Sales-Trigger.
             </Text>
           </Section>
@@ -1057,7 +1158,7 @@ export function SetupUploadScreen() {
             )}
           </TouchableOpacity>
 
-          <Text style={styles.disclaimer}>
+          <Text style={[styles.disclaimer, { color: palette.textSecondary }]}>
             Mit dem Veröffentlichen bestätigst du, dass du Rechteinhaber des Inhalts bist.
           </Text>
         </ScrollView>
@@ -1108,10 +1209,11 @@ function Section({
   children: React.ReactNode;
   onTipPress?: () => void;
 }) {
+  const { palette } = useTheme();
   return (
     <View style={styles.section}>
       <View style={styles.sectionLabelRow}>
-        <Text style={styles.sectionLabel}>{label}</Text>
+        <Text style={[styles.sectionLabel, { color: palette.textSecondary }]}>{label}</Text>
         {onTipPress && (
           <TouchableOpacity
             onPress={onTipPress}

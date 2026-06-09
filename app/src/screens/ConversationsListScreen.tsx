@@ -14,7 +14,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 import { useConversations, ConversationItem } from '@/hooks/useConversations';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'Conversations'>;
 
@@ -32,6 +32,7 @@ function timeAgo(iso: string): string {
 
 export function ConversationsListScreen() {
   const navigation = useNavigation<Nav>();
+  const { palette } = useTheme();
   const { items, loading, refresh } = useConversations();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -48,12 +49,12 @@ export function ConversationsListScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
+      <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Nachrichten</Text>
+        <Text style={[styles.title, { color: palette.text }]}>Nachrichten</Text>
         <View style={{ width: 30 }} />
       </View>
 
@@ -64,8 +65,8 @@ export function ConversationsListScreen() {
       ) : items.length === 0 ? (
         <View style={styles.center}>
           <Text style={styles.emptyEmoji}>💬</Text>
-          <Text style={styles.emptyTitle}>Noch keine Nachrichten</Text>
-          <Text style={styles.emptySub}>
+          <Text style={[styles.emptyTitle, { color: palette.text }]}>Noch keine Nachrichten</Text>
+          <Text style={[styles.emptySub, { color: palette.textSecondary }]}>
             Tap auf das ✉-Icon auf einem Creator-Profil um zu schreiben.
           </Text>
         </View>
@@ -89,8 +90,9 @@ export function ConversationsListScreen() {
 }
 
 function Row({ item, onPress }: { item: ConversationItem; onPress: () => void }) {
+  const { palette } = useTheme();
   return (
-    <TouchableOpacity style={styles.row} onPress={onPress}>
+    <TouchableOpacity style={[styles.row, { borderBottomColor: palette.border }]} onPress={onPress}>
       {item.otherAvatarUrl ? (
         <Image source={{ uri: item.otherAvatarUrl }} style={styles.avatar} />
       ) : (
@@ -100,11 +102,11 @@ function Row({ item, onPress }: { item: ConversationItem; onPress: () => void })
       )}
       <View style={styles.body}>
         <View style={styles.headRow}>
-          <Text style={styles.name} numberOfLines={1}>{item.otherDisplayName}</Text>
-          <Text style={styles.time}>{timeAgo(item.lastMessageAt)}</Text>
+          <Text style={[styles.name, { color: palette.text }]} numberOfLines={1}>{item.otherDisplayName}</Text>
+          <Text style={[styles.time, { color: palette.textSecondary }]}>{timeAgo(item.lastMessageAt)}</Text>
         </View>
         <View style={styles.subRow}>
-          <Text style={styles.preview} numberOfLines={1}>
+          <Text style={[styles.preview, { color: palette.textSecondary }]} numberOfLines={1}>
             {item.lastMessageBody ?? `Schreib @${item.otherUsername} eine Nachricht`}
           </Text>
           {item.unreadCount > 0 && (

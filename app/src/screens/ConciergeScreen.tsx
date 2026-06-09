@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 import { useConcierge, ConciergeMatch } from '@/hooks/useConcierge';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'Concierge'>;
 
@@ -28,6 +28,7 @@ const EXAMPLES = [
 
 export function ConciergeScreen() {
   const navigation = useNavigation<Nav>();
+  const { palette } = useTheme();
   const [query, setQuery] = useState('');
   const { matches, loading, search, clear } = useConcierge();
 
@@ -42,14 +43,14 @@ export function ConciergeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
+      <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
         <View style={{ flex: 1, alignItems: 'center' }}>
-          <Text style={styles.title}>🤖 Setup-Concierge</Text>
-          <Text style={styles.subtitle}>Beschreib was du brauchst — natürliche Sprache</Text>
+          <Text style={[styles.title, { color: palette.text }]}>🤖 Setup-Concierge</Text>
+          <Text style={[styles.subtitle, { color: palette.textSecondary }]}>Beschreib was du brauchst — natürliche Sprache</Text>
         </View>
         <View style={{ width: 30 }} />
       </View>
@@ -59,7 +60,7 @@ export function ConciergeScreen() {
           value={query}
           onChangeText={setQuery}
           placeholder="z.B. n8n-Workflow für Cold-Outreach…"
-          style={styles.input}
+          style={[styles.input, { backgroundColor: palette.surface, color: palette.text }]}
           selectionColor={BRAND.teal}
           onSubmitEditing={go}
           returnKeyType="search"
@@ -69,7 +70,7 @@ export function ConciergeScreen() {
         <TouchableOpacity
           onPress={go}
           disabled={!query.trim() || loading}
-          style={[styles.goBtn, (!query.trim() || loading) && styles.goBtnDisabled]}
+          style={[styles.goBtn, (!query.trim() || loading) && [styles.goBtnDisabled, { backgroundColor: palette.border }]]}
           accessibilityLabel="concierge-search"
         >
           {loading ? (
@@ -83,23 +84,23 @@ export function ConciergeScreen() {
       <ScrollView keyboardShouldPersistTaps="handled">
         {matches.length === 0 && !loading ? (
           <View style={styles.exampleBox}>
-            <Text style={styles.exampleTitle}>Probier mal:</Text>
+            <Text style={[styles.exampleTitle, { color: palette.textSecondary }]}>Probier mal:</Text>
             {EXAMPLES.map((ex) => (
               <TouchableOpacity
                 key={ex}
                 onPress={() => useExample(ex)}
-                style={styles.exampleRow}
+                style={[styles.exampleRow, { borderBottomColor: palette.border }]}
                 accessibilityLabel={`example-${ex}`}
               >
                 <Text style={styles.exampleArrow}>›</Text>
-                <Text style={styles.exampleText}>{ex}</Text>
+                <Text style={[styles.exampleText, { color: palette.text }]}>{ex}</Text>
               </TouchableOpacity>
             ))}
           </View>
         ) : (
           <View style={styles.results}>
             <View style={styles.resultsHead}>
-              <Text style={styles.resultsTitle}>{matches.length} Treffer</Text>
+              <Text style={[styles.resultsTitle, { color: palette.textSecondary }]}>{matches.length} Treffer</Text>
               <TouchableOpacity
                 onPress={() => {
                   clear();
@@ -133,17 +134,18 @@ function Row({
   rank: number;
   onPress: () => void;
 }) {
+  const { palette } = useTheme();
   return (
-    <TouchableOpacity style={styles.row} onPress={onPress}>
+    <TouchableOpacity style={[styles.row, { backgroundColor: palette.surface }]} onPress={onPress}>
       <View style={styles.rank}>
         <Text style={styles.rankText}>{rank}</Text>
       </View>
-      <Image source={{ uri: m.setup.videoThumbnail }} style={styles.thumb} />
+      <Image source={{ uri: m.setup.videoThumbnail }} style={[styles.thumb, { backgroundColor: palette.border }]} />
       <View style={{ flex: 1 }}>
-        <Text style={styles.rowTitle} numberOfLines={1}>
+        <Text style={[styles.rowTitle, { color: palette.text }]} numberOfLines={1}>
           {m.setup.title}
         </Text>
-        <Text style={styles.rowMeta} numberOfLines={1}>
+        <Text style={[styles.rowMeta, { color: palette.textSecondary }]} numberOfLines={1}>
           @{m.setup.creator.username} ·{' '}
           {new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(
             m.setup.priceCents / 100,

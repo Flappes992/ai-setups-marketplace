@@ -30,7 +30,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { useToast } from '@/components/Toast';
 import { ReportModal } from '@/components/ReportModal';
 import { useConversations } from '@/hooks/useConversations';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'CreatorProfile'>;
 type RouteProps = NativeStackScreenProps<MainStackParamList, 'CreatorProfile'>['route'];
@@ -39,6 +39,7 @@ export function CreatorProfileScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<RouteProps>();
   const { session } = useAuth();
+  const { palette } = useTheme();
   const toast = useToast();
   const creatorId = route.params.creatorId;
   const isSelf = session?.user?.id === creatorId;
@@ -115,10 +116,13 @@ export function CreatorProfileScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <View style={styles.topBar}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: palette.bg }]}
+        edges={['top', 'bottom']}
+      >
+        <View style={[styles.topBar, { backgroundColor: palette.bg }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back">
-            <Text style={styles.backIcon}>‹</Text>
+            <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.center}>
@@ -130,15 +134,18 @@ export function CreatorProfileScreen() {
 
   if (!profile) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <View style={styles.topBar}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: palette.bg }]}
+        edges={['top', 'bottom']}
+      >
+        <View style={[styles.topBar, { backgroundColor: palette.bg }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back">
-            <Text style={styles.backIcon}>‹</Text>
+            <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
           </TouchableOpacity>
           <View style={{ width: 30 }} />
         </View>
         <View style={styles.center}>
-          <Text style={styles.errorText}>Profil nicht gefunden</Text>
+          <Text style={[styles.errorText, { color: palette.like }]}>Profil nicht gefunden</Text>
         </View>
       </SafeAreaView>
     );
@@ -179,19 +186,19 @@ export function CreatorProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
+      <View style={[styles.topBar, { backgroundColor: palette.bg }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back">
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.topTitle}>@{profile.username}</Text>
+        <Text style={[styles.topTitle, { color: palette.text }]}>@{profile.username}</Text>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <TouchableOpacity onPress={handleShare} accessibilityLabel="share-creator-profile">
-            <Text style={styles.shareIcon}>↗</Text>
+            <Text style={[styles.shareIcon, { color: palette.text }]}>↗</Text>
           </TouchableOpacity>
           {!isSelf && (
             <TouchableOpacity onPress={openMenu} accessibilityLabel="creator-menu">
-              <Text style={styles.shareIcon}>⋯</Text>
+              <Text style={[styles.shareIcon, { color: palette.text }]}>⋯</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -206,10 +213,13 @@ export function CreatorProfileScreen() {
             ]}
           >
             {profile.avatar_url ? (
-              <Image source={{ uri: profile.avatar_url }} style={styles.avatarImg} />
+              <Image
+                source={{ uri: profile.avatar_url }}
+                style={[styles.avatarImg, { backgroundColor: palette.border }]}
+              />
             ) : (
-              <View style={styles.avatarFallback}>
-                <Text style={styles.avatarLetter}>{initials || 'U'}</Text>
+              <View style={[styles.avatarFallback, { backgroundColor: palette.text }]}>
+                <Text style={[styles.avatarLetter, { color: palette.bg }]}>{initials || 'U'}</Text>
               </View>
             )}
             {creatorTier && (
@@ -219,50 +229,64 @@ export function CreatorProfileScreen() {
             )}
           </View>
 
-          <Text style={styles.displayName}>{profile.display_name}</Text>
-          <Text style={styles.username}>@{profile.username}</Text>
+          <Text style={[styles.displayName, { color: palette.text }]}>{profile.display_name}</Text>
+          <Text style={[styles.username, { color: palette.textSecondary }]}>
+            @{profile.username}
+          </Text>
           <TouchableOpacity
             onPress={() =>
               navigation.navigate('UserList', { userId: creatorId, mode: 'followers' })
             }
             accessibilityLabel="open-creator-followers"
           >
-            <Text style={styles.followerLine}>
+            <Text style={[styles.followerLine, { color: palette.text }]}>
               <Text style={styles.followerCount}>{followerCount}</Text>
-              <Text style={styles.followerLabel}> Follower</Text>
+              <Text style={[styles.followerLabel, { color: palette.textSecondary }]}> Follower</Text>
             </Text>
           </TouchableOpacity>
 
           {profile.bio ? (
-            <Text style={styles.bio}>{profile.bio}</Text>
+            <Text style={[styles.bio, { color: palette.text }]}>{profile.bio}</Text>
           ) : (
-            <Text style={styles.bioPlaceholder}>Keine Bio</Text>
+            <Text style={[styles.bioPlaceholder, { color: palette.textSecondary }]}>Keine Bio</Text>
           )}
 
           <View style={styles.statsRow}>
-            <Stat label="Setups" value={setupsCount} />
-            <Sep />
-            <Stat label="Likes" value={likesReceived} />
-            <Sep />
-            <Stat label="Tier" value={creatorTier ? (creatorTier === 'gold' ? '★' : '◆') : '—'} />
+            <Stat label="Setups" value={setupsCount} palette={palette} />
+            <Sep palette={palette} />
+            <Stat label="Likes" value={likesReceived} palette={palette} />
+            <Sep palette={palette} />
+            <Stat
+              label="Tier"
+              value={creatorTier ? (creatorTier === 'gold' ? '★' : '◆') : '—'}
+              palette={palette}
+            />
           </View>
 
           {!isSelf && (
             <View style={styles.ctaRow}>
               <TouchableOpacity
-                style={[styles.followBtn, following && styles.followBtnActive]}
+                style={[
+                  styles.followBtn,
+                  following && [styles.followBtnActive, { backgroundColor: palette.surface }],
+                ]}
                 onPress={async () => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   await toggleFollow();
                 }}
                 accessibilityLabel={following ? 'unfollow-creator' : 'follow-creator'}
               >
-                <Text style={[styles.followText, following && styles.followTextActive]}>
+                <Text
+                  style={[
+                    styles.followText,
+                    following && [styles.followTextActive, { color: palette.textSecondary }],
+                  ]}
+                >
                   {following ? '✓ Folgst du' : '+ Folgen'}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.msgBtn}
+                style={[styles.msgBtn, { backgroundColor: palette.surface }]}
                 onPress={async () => {
                   if (!profile) return;
                   const cid = await openOrCreate(creatorId);
@@ -280,19 +304,28 @@ export function CreatorProfileScreen() {
                 }}
                 accessibilityLabel="message-creator"
               >
-                <Text style={styles.msgIcon}>✉</Text>
+                <Text style={[styles.msgIcon, { color: palette.text }]}>✉</Text>
               </TouchableOpacity>
             </View>
           )}
 
           {joinedDateFull && (
-            <Text style={styles.fastlane}>Seit dem {joinedDateFull} auf der Überholspur</Text>
+            <Text style={[styles.fastlane, { color: palette.textSecondary }]}>
+              Seit dem {joinedDateFull} auf der Überholspur
+            </Text>
           )}
         </View>
 
         <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>Setups</Text>
-          <Text style={styles.sectionCount}>{setupsCount}</Text>
+          <Text style={[styles.sectionTitle, { color: palette.text }]}>Setups</Text>
+          <Text
+            style={[
+              styles.sectionCount,
+              { color: palette.textSecondary, backgroundColor: palette.surface },
+            ]}
+          >
+            {setupsCount}
+          </Text>
         </View>
 
         <View style={styles.tabContent}>
@@ -321,17 +354,27 @@ export function CreatorProfileScreen() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number | string }) {
+type Palette = ReturnType<typeof useTheme>['palette'];
+
+function Stat({
+  label,
+  value,
+  palette,
+}: {
+  label: string;
+  value: number | string;
+  palette: Palette;
+}) {
   return (
     <View style={styles.stat}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statValue, { color: palette.text }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: palette.textSecondary }]}>{label}</Text>
     </View>
   );
 }
 
-function Sep() {
-  return <View style={styles.statSep} />;
+function Sep({ palette }: { palette: Palette }) {
+  return <View style={[styles.statSep, { backgroundColor: palette.border }]} />;
 }
 
 const styles = StyleSheet.create({

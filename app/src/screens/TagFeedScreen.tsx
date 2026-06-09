@@ -16,6 +16,7 @@ import { supabase } from '@/services/supabase';
 import { mapDbSetupToSetup } from '@/services/setupMapper';
 import { Setup } from '@/types/setup';
 import { DbSetupWithCreator } from '@/types/database';
+import { useTheme } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'TagFeed'>;
 type R = RouteProp<MainStackParamList, 'TagFeed'>;
@@ -23,6 +24,7 @@ type R = RouteProp<MainStackParamList, 'TagFeed'>;
 export function TagFeedScreen() {
   const navigation = useNavigation<Nav>();
   const { params } = useRoute<R>();
+  const { palette } = useTheme();
   const tag = params.tag;
   const [setups, setSetups] = useState<Setup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,16 +49,16 @@ export function TagFeedScreen() {
   }, [tag]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
+      <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back">
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>#{tag}</Text>
+        <Text style={[styles.title, { color: palette.text }]}>#{tag}</Text>
         <View style={{ width: 28 }} />
       </View>
 
-      <Text style={styles.subtitle}>
+      <Text style={[styles.subtitle, { color: palette.textSecondary }]}>
         {setups.length} {setups.length === 1 ? 'Setup' : 'Setups'}
       </Text>
 
@@ -66,7 +68,9 @@ export function TagFeedScreen() {
         </View>
       ) : setups.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.emptyText}>Noch keine Setups mit diesem Tag</Text>
+          <Text style={[styles.emptyText, { color: palette.textSecondary }]}>
+            Noch keine Setups mit diesem Tag
+          </Text>
         </View>
       ) : (
         <FlatList

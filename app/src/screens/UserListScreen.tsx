@@ -20,7 +20,7 @@ import { supabase } from '@/services/supabase';
 import { DbProfile } from '@/types/database';
 import { getFollowerIds, getFollowingIds, useFollow, getFollowerCount } from '@/hooks/useFollow';
 import { useAuth } from '@/auth/useAuth';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'UserList'>;
 type RouteProps = NativeStackScreenProps<MainStackParamList, 'UserList'>['route'];
@@ -28,6 +28,7 @@ type RouteProps = NativeStackScreenProps<MainStackParamList, 'UserList'>['route'
 export function UserListScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<RouteProps>();
+  const { palette } = useTheme();
   const { session } = useAuth();
   const { userId, mode } = route.params;
   const isOwn = session?.user?.id === userId;
@@ -85,22 +86,22 @@ export function UserListScreen() {
         : 'Hier wird niemandem gefolgt.';
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
+      <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back">
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, { color: palette.text }]}>{title}</Text>
         <View style={{ width: 30 }} />
       </View>
 
-      <View style={styles.searchWrap}>
-        <Text style={styles.searchIcon}>⌕</Text>
+      <View style={[styles.searchWrap, { backgroundColor: palette.surface }]}>
+        <Text style={[styles.searchIcon, { color: palette.textSecondary }]}>⌕</Text>
         <TextInput
           value={query}
           onChangeText={setQuery}
           placeholder="Suche nach Name oder @handle"
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: palette.text }]}
           selectionColor={BRAND.teal}
           autoCorrect={false}
           autoCapitalize="none"
@@ -108,7 +109,7 @@ export function UserListScreen() {
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={() => setQuery('')}>
-            <Text style={styles.searchClear}>✕</Text>
+            <Text style={[styles.searchClear, { color: palette.textSecondary }]}>✕</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -120,13 +121,13 @@ export function UserListScreen() {
       ) : profiles.length === 0 ? (
         <View style={styles.center}>
           <Text style={styles.emptyEmoji}>{emptyEmoji}</Text>
-          <Text style={styles.emptyTitle}>{emptyTitle}</Text>
-          <Text style={styles.emptySub}>{emptySub}</Text>
+          <Text style={[styles.emptyTitle, { color: palette.text }]}>{emptyTitle}</Text>
+          <Text style={[styles.emptySub, { color: palette.textSecondary }]}>{emptySub}</Text>
         </View>
       ) : filtered.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.emptyTitle}>Keine Treffer</Text>
-          <Text style={styles.emptySub}>Keine Übereinstimmung mit {'„' + query + '"'}.</Text>
+          <Text style={[styles.emptyTitle, { color: palette.text }]}>Keine Treffer</Text>
+          <Text style={[styles.emptySub, { color: palette.textSecondary }]}>Keine Übereinstimmung mit {'„' + query + '"'}.</Text>
         </View>
       ) : (
         <FlatList
@@ -142,6 +143,7 @@ export function UserListScreen() {
 
 function Row({ profile, onChange }: { profile: DbProfile; onChange: () => void }) {
   const navigation = useNavigation<Nav>();
+  const { palette } = useTheme();
   const { session } = useAuth();
   const myId = session?.user?.id;
   const isMe = myId === profile.id;
@@ -155,7 +157,7 @@ function Row({ profile, onChange }: { profile: DbProfile; onChange: () => void }
   const initials = profile.display_name.charAt(0).toUpperCase();
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, { borderBottomColor: palette.border }]}>
       <TouchableOpacity
         style={styles.rowTap}
         onPress={() => navigation.navigate('CreatorProfile', { creatorId: profile.id })}
@@ -169,10 +171,10 @@ function Row({ profile, onChange }: { profile: DbProfile; onChange: () => void }
           </View>
         )}
         <View style={styles.body}>
-          <Text style={styles.name} numberOfLines={1}>
+          <Text style={[styles.name, { color: palette.text }]} numberOfLines={1}>
             {profile.display_name}
           </Text>
-          <Text style={styles.handle} numberOfLines={1}>
+          <Text style={[styles.handle, { color: palette.textSecondary }]} numberOfLines={1}>
             @{profile.username}
             {followerCount !== null && followerCount > 0 ? ` · ${followerCount} Follower` : ''}
           </Text>
@@ -184,9 +186,9 @@ function Row({ profile, onChange }: { profile: DbProfile; onChange: () => void }
             await toggle();
             onChange();
           }}
-          style={[styles.btn, !following && styles.btnFollow]}
+          style={[styles.btn, { backgroundColor: palette.surface }, !following && styles.btnFollow]}
         >
-          <Text style={[styles.btnText, !following && styles.btnFollowText]}>
+          <Text style={[styles.btnText, { color: palette.textSecondary }, !following && styles.btnFollowText]}>
             {following ? 'Folgst du' : '+ Folgen'}
           </Text>
         </TouchableOpacity>

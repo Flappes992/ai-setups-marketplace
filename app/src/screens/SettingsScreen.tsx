@@ -106,42 +106,60 @@ export function SettingsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Section title="Mein Rang">
+        <Section title="Mein Rang" palette={palette}>
           <TierCard />
         </Section>
 
-        <Section title="Account">
+        <Section title="Account" palette={palette}>
           <Row
             label="Email"
             value={session?.user.email ?? '—'}
+            palette={palette}
             onPress={() => {
               Alert.alert('Email ändern', 'Folgt in Phase 5');
             }}
           />
           <Row
             label="Passwort ändern"
+            palette={palette}
             onPress={() => Alert.alert('Passwort', 'Folgt in Phase 5')}
           />
-          <Row label="Profil bearbeiten" onPress={() => navigation.navigate('EditProfile')} />
+          <Row
+            label="Profil bearbeiten"
+            palette={palette}
+            onPress={() => navigation.navigate('EditProfile')}
+          />
         </Section>
 
-        <Section title="Privatsphäre & Sicherheit">
-          <View style={[styles.row, styles.rowDisabled]}>
+        <Section title="Privatsphäre & Sicherheit" palette={palette}>
+          <View style={[styles.row, styles.rowDisabled, { borderBottomColor: palette.border }]}>
             <View style={styles.rowLeft}>
-              <Text style={[styles.rowLabel, styles.textMuted]}>Privater Account</Text>
-              <Text style={styles.rowSub}>Bald verfügbar</Text>
+              <Text style={[styles.rowLabel, styles.textMuted, { color: palette.textSecondary }]}>
+                Privater Account
+              </Text>
+              <Text style={[styles.rowSub, { color: palette.textSecondary }]}>Bald verfügbar</Text>
             </View>
             <Switch value={false} disabled />
           </View>
-          <Row label="Blockierte Accounts" onPress={() => navigation.navigate('BlockedList')} />
-          <Row label="Datenexport" onPress={() => Alert.alert('Datenexport', 'Folgt in Phase 5')} />
+          <Row
+            label="Blockierte Accounts"
+            palette={palette}
+            onPress={() => navigation.navigate('BlockedList')}
+          />
+          <Row
+            label="Datenexport"
+            palette={palette}
+            onPress={() => Alert.alert('Datenexport', 'Folgt in Phase 5')}
+          />
         </Section>
 
-        <Section title="Darstellung">
-          <View style={styles.row}>
+        <Section title="Darstellung" palette={palette}>
+          <View style={[styles.row, { borderBottomColor: palette.border }]}>
             <View style={styles.rowLeft}>
-              <Text style={styles.rowLabel}>Theme</Text>
-              <Text style={styles.rowSub}>System, Hell, Dunkel</Text>
+              <Text style={[styles.rowLabel, { color: palette.text }]}>Theme</Text>
+              <Text style={[styles.rowSub, { color: palette.textSecondary }]}>
+                System, Hell, Dunkel
+              </Text>
             </View>
             <View style={styles.themeSelector}>
               {(['system', 'light', 'dark'] as const).map((m) => (
@@ -151,9 +169,19 @@ export function SettingsScreen() {
                     setMode(m);
                     toast.show(`Theme: ${m}`, 'success');
                   }}
-                  style={[styles.themeChip, mode === m && styles.themeChipActive]}
+                  style={[
+                    styles.themeChip,
+                    { backgroundColor: palette.surface },
+                    mode === m && [styles.themeChipActive, { backgroundColor: palette.text }],
+                  ]}
                 >
-                  <Text style={[styles.themeChipText, mode === m && styles.themeChipTextActive]}>
+                  <Text
+                    style={[
+                      styles.themeChipText,
+                      { color: palette.textSecondary },
+                      mode === m && [styles.themeChipTextActive, { color: palette.bg }],
+                    ]}
+                  >
                     {m === 'system' ? 'Auto' : m === 'light' ? 'Hell' : 'Dunkel'}
                   </Text>
                 </TouchableOpacity>
@@ -165,38 +193,43 @@ export function SettingsScreen() {
             sub="Spart Daten wenn aus"
             value={autoplayVideos}
             onChange={setAutoplayVideos}
+            palette={palette}
           />
           <ToggleRow
             label="Daten-Spar-Modus"
             sub="Niedrige Video-Qualität"
             value={dataSaver}
             onChange={setDataSaver}
+            palette={palette}
           />
         </Section>
 
-        <Section title="Benachrichtigungen">
+        <Section title="Benachrichtigungen" palette={palette}>
           <ToggleRow
             label="Push-Benachrichtigungen"
             sub="Likes, Kommentare, Käufe"
             value={pushNotifs}
             onChange={setPushNotifs}
+            palette={palette}
           />
           <ToggleRow
             label="Email-Benachrichtigungen"
             sub="Wöchentlicher Digest, wichtige Updates"
             value={emailNotifs}
             onChange={setEmailNotifs}
+            palette={palette}
           />
         </Section>
 
-        <Section title="Zahlungen">
+        <Section title="Zahlungen" palette={palette}>
           <StripeConnectCard />
         </Section>
 
-        <Section title="Speicher">
+        <Section title="Speicher" palette={palette}>
           <Row
             label="Cache löschen"
             sub="Lokal gespeicherte Daten zurücksetzen"
+            palette={palette}
             onPress={() => {
               toast.show('Cache gelöscht', 'success');
             }}
@@ -204,23 +237,36 @@ export function SettingsScreen() {
           <Row
             label="Heruntergeladene Setups"
             value="0 MB"
+            palette={palette}
             onPress={() => Alert.alert('Downloads', 'Folgt in Phase 5')}
           />
         </Section>
 
-        <Section title="Über setiq">
-          <Row label="Version" value="0.1.0 (Phase 4)" />
-          <Row label="AGB" onPress={() => Linking.openURL(LEGAL_URLS.agb)} />
+        <Section title="Über setiq" palette={palette}>
+          <Row label="Version" value="0.1.0 (Phase 4)" palette={palette} />
+          <Row label="AGB" palette={palette} onPress={() => Linking.openURL(LEGAL_URLS.agb)} />
           <Row
             label="Datenschutz"
+            palette={palette}
             onPress={() => Linking.openURL(LEGAL_URLS.datenschutz)}
           />
-          <Row label="Impressum" onPress={() => Linking.openURL(LEGAL_URLS.impressum)} />
-          <Row label="Support" onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)} />
+          <Row
+            label="Impressum"
+            palette={palette}
+            onPress={() => Linking.openURL(LEGAL_URLS.impressum)}
+          />
+          <Row
+            label="Support"
+            palette={palette}
+            onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
+          />
         </Section>
 
         <View style={styles.dangerZone}>
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+          <TouchableOpacity
+            style={[styles.logoutBtn, { backgroundColor: palette.bg, borderColor: palette.border }]}
+            onPress={handleLogout}
+          >
             <Text style={styles.logoutText}>Abmelden</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -228,7 +274,7 @@ export function SettingsScreen() {
             onPress={handleDeleteAccount}
             disabled={deleting}
           >
-            <Text style={styles.deleteText}>
+            <Text style={[styles.deleteText, { color: palette.textSecondary }]}>
               {deleting ? 'Lösche…' : 'Account löschen'}
             </Text>
           </TouchableOpacity>
@@ -238,11 +284,23 @@ export function SettingsScreen() {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+type Palette = ReturnType<typeof useTheme>['palette'];
+
+function Section({
+  title,
+  children,
+  palette,
+}: {
+  title: string;
+  children: React.ReactNode;
+  palette: Palette;
+}) {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.sectionBody}>{children}</View>
+      <Text style={[styles.sectionTitle, { color: palette.textSecondary }]}>{title}</Text>
+      <View style={[styles.sectionBody, { backgroundColor: palette.bg, borderColor: palette.border }]}>
+        {children}
+      </View>
     </View>
   );
 }
@@ -252,21 +310,27 @@ function Row({
   value,
   sub,
   onPress,
+  palette,
 }: {
   label: string;
   value?: string;
   sub?: string;
   onPress?: () => void;
+  palette: Palette;
 }) {
   const Wrapper = onPress ? TouchableOpacity : View;
   return (
-    <Wrapper style={styles.row} onPress={onPress} activeOpacity={0.7}>
+    <Wrapper
+      style={[styles.row, { borderBottomColor: palette.border }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={styles.rowLeft}>
-        <Text style={styles.rowLabel}>{label}</Text>
-        {sub && <Text style={styles.rowSub}>{sub}</Text>}
+        <Text style={[styles.rowLabel, { color: palette.text }]}>{label}</Text>
+        {sub && <Text style={[styles.rowSub, { color: palette.textSecondary }]}>{sub}</Text>}
       </View>
-      {value && <Text style={styles.rowValue}>{value}</Text>}
-      {onPress && <Text style={styles.rowChevron}>›</Text>}
+      {value && <Text style={[styles.rowValue, { color: palette.textSecondary }]}>{value}</Text>}
+      {onPress && <Text style={[styles.rowChevron, { color: palette.textSecondary }]}>›</Text>}
     </Wrapper>
   );
 }
@@ -276,17 +340,19 @@ function ToggleRow({
   sub,
   value,
   onChange,
+  palette,
 }: {
   label: string;
   sub?: string;
   value: boolean;
   onChange: (v: boolean) => void;
+  palette: Palette;
 }) {
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, { borderBottomColor: palette.border }]}>
       <View style={styles.rowLeft}>
-        <Text style={styles.rowLabel}>{label}</Text>
-        {sub && <Text style={styles.rowSub}>{sub}</Text>}
+        <Text style={[styles.rowLabel, { color: palette.text }]}>{label}</Text>
+        {sub && <Text style={[styles.rowSub, { color: palette.textSecondary }]}>{sub}</Text>}
       </View>
       <Switch value={value} onValueChange={onChange} />
     </View>

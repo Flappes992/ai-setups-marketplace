@@ -15,7 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 import { useBundles, Bundle } from '@/hooks/useBundles';
 import { useMyTier } from '@/hooks/useMyTier';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'Bundles'>;
 
@@ -25,6 +25,7 @@ function fmt(cents: number): string {
 
 export function BundlesScreen() {
   const navigation = useNavigation<Nav>();
+  const { palette } = useTheme();
   const { bundles, loading, refresh } = useBundles();
   const { tier } = useMyTier();
   const [refreshing, setRefreshing] = useState(false);
@@ -37,12 +38,12 @@ export function BundlesScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
+      <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>📦 Bundles</Text>
+        <Text style={[styles.title, { color: palette.text }]}>📦 Bundles</Text>
         {canCreate ? (
           <TouchableOpacity
             onPress={() => navigation.navigate('BundleCreate')}
@@ -69,8 +70,8 @@ export function BundlesScreen() {
           {bundles.length === 0 ? (
             <View style={styles.empty}>
               <Text style={styles.emptyEmoji}>📦</Text>
-              <Text style={styles.emptyTitle}>Noch keine Bundles</Text>
-              <Text style={styles.emptySub}>
+              <Text style={[styles.emptyTitle, { color: palette.text }]}>Noch keine Bundles</Text>
+              <Text style={[styles.emptySub, { color: palette.textSecondary }]}>
                 Bundles sind Stacks aus mehreren Setups mit automatischem Rabatt — komplementäre
                 Workflows zum besseren Preis.
                 {canCreate ? '\n\nLeg dein erstes Bundle an oben rechts.' : ''}
@@ -94,10 +95,11 @@ export function BundlesScreen() {
 }
 
 function BundleCard({ bundle, onPress }: { bundle: Bundle; onPress: () => void }) {
+  const { palette } = useTheme();
   return (
-    <TouchableOpacity onPress={onPress} style={styles.card}>
+    <TouchableOpacity onPress={onPress} style={[styles.card, { backgroundColor: palette.surface }]}>
       <View style={styles.cardHead}>
-        <Text style={styles.cardTitle} numberOfLines={1}>
+        <Text style={[styles.cardTitle, { color: palette.text }]} numberOfLines={1}>
           {bundle.title}
         </Text>
         <View style={styles.discountBadge}>
@@ -105,17 +107,17 @@ function BundleCard({ bundle, onPress }: { bundle: Bundle; onPress: () => void }
         </View>
       </View>
       {bundle.description ? (
-        <Text style={styles.cardDesc} numberOfLines={2}>
+        <Text style={[styles.cardDesc, { color: palette.textSecondary }]} numberOfLines={2}>
           {bundle.description}
         </Text>
       ) : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
         {bundle.setups.map((s) => (
-          <Image key={s.id} source={{ uri: s.videoThumbnail }} style={styles.thumb} />
+          <Image key={s.id} source={{ uri: s.videoThumbnail }} style={[styles.thumb, { backgroundColor: palette.border }]} />
         ))}
       </ScrollView>
       <View style={styles.priceRow}>
-        <Text style={styles.strike}>{fmt(bundle.totalPriceCents)}</Text>
+        <Text style={[styles.strike, { color: palette.textSecondary }]}>{fmt(bundle.totalPriceCents)}</Text>
         <Text style={styles.price}>{fmt(bundle.discountedPriceCents)}</Text>
         <Text style={styles.savings}>du sparst {fmt(bundle.totalPriceCents - bundle.discountedPriceCents)}</Text>
       </View>

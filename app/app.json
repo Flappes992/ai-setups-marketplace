@@ -6,11 +6,19 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.setiq.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Setiq braucht Zugriff auf deine Mediathek, um Setup-Videos und dein Profilbild hochzuladen.",
+        "NSCameraUsageDescription": "Setiq braucht Kamerazugriff, um Setup-Videos aufzunehmen."
+      }
     },
     "android": {
+      "package": "com.setiq.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#181B22",
         "foregroundImage": "./assets/android-icon-foreground.png",

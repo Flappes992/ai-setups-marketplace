@@ -33,7 +33,7 @@ import { useComments } from '@/hooks/useComments';
 import { useSetups } from '@/hooks/useSetups';
 import { useFollow } from '@/hooks/useFollow';
 import { useCreatorStats } from '@/hooks/useCreatorStats';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'SetupDetail'>;
@@ -58,6 +58,7 @@ interface SetupDetailScreenProps {
 
 export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProps) {
   const navigation = useNavigation<Nav>();
+  const { palette } = useTheme();
   const scrollRef = useRef<ScrollView>(null);
   const [commentsY, setCommentsY] = useState(0);
   const commentInputRef = useRef<{ focus: () => void }>(null);
@@ -152,7 +153,10 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
       'Weiter zur Zahlung',
       'Der Kauf wird außerhalb des App Stores über unseren Zahlungsdienstleister Stripe ' +
         'abgewickelt. Apple ist nicht Vertragspartner und übernimmt für diesen Kauf keine ' +
-        'Zahlungsabwicklung, Rückerstattung oder Support.',
+        'Zahlungsabwicklung, Rückerstattung oder Support.\n\n' +
+        'Mit „Weiter zu Stripe" stimmst du ausdrücklich zu, dass das Setup sofort ' +
+        'bereitgestellt wird, und bestätigst, dass dein 14-tägiges Widerrufsrecht damit ' +
+        'erlischt (§ 356 Abs. 5 BGB).',
       [
         { text: 'Abbrechen', style: 'cancel' },
         { text: 'Weiter zu Stripe', onPress: () => startCheckout() },
@@ -176,7 +180,7 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
   })();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -194,7 +198,7 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
           )}
 
           <View style={styles.body}>
-            <Text style={styles.title}>{setup.title}</Text>
+            <Text style={[styles.title, { color: palette.text }]}>{setup.title}</Text>
 
             <View style={styles.creatorRow}>
               <TouchableOpacity
@@ -206,8 +210,10 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
               >
                 <Image source={{ uri: setup.creator.avatarUrl }} style={styles.avatar} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.creatorName}>{setup.creator.displayName}</Text>
-                  <Text style={styles.creatorMeta}>
+                  <Text style={[styles.creatorName, { color: palette.text }]}>
+                    {setup.creator.displayName}
+                  </Text>
+                  <Text style={[styles.creatorMeta, { color: palette.textSecondary }]}>
                     {creatorStats.reviewsCount > 0
                       ? `★ ${creatorStats.averageRating.toFixed(1)} (${creatorStats.reviewsCount})`
                       : '★ noch nicht bewertet'}{' '}
@@ -219,11 +225,19 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
               {!isOwner && (
                 <TouchableOpacity
                   onPress={toggleFollow}
-                  style={[styles.detailFollowBtn, following && styles.detailFollowBtnActive]}
+                  style={[
+                    styles.detailFollowBtn,
+                    following && styles.detailFollowBtnActive,
+                    following && { backgroundColor: palette.surface },
+                  ]}
                   accessibilityLabel={following ? 'unfollow-detail' : 'follow-detail'}
                 >
                   <Text
-                    style={[styles.detailFollowText, following && styles.detailFollowTextActive]}
+                    style={[
+                      styles.detailFollowText,
+                      following && styles.detailFollowTextActive,
+                      following && { color: palette.textSecondary },
+                    ]}
                   >
                     {following ? '✓ Folgst du' : '+ Folgen'}
                   </Text>
@@ -255,28 +269,32 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
           ) : null}
 
           <View style={styles.body}>
-            <Text style={styles.sectionTitle}>Über das Setup</Text>
-            <Text style={styles.description}>{setup.description}</Text>
+            <Text style={[styles.sectionTitle, { color: palette.textSecondary }]}>
+              Über das Setup
+            </Text>
+            <Text style={[styles.description, { color: palette.text }]}>{setup.description}</Text>
 
-            <Text style={styles.sectionTitle}>Über {setup.creator.displayName}</Text>
-            <Text style={styles.description}>{setup.creator.bio}</Text>
+            <Text style={[styles.sectionTitle, { color: palette.textSecondary }]}>
+              Über {setup.creator.displayName}
+            </Text>
+            <Text style={[styles.description, { color: palette.text }]}>{setup.creator.bio}</Text>
 
-            <Text style={styles.sectionTitle}>Tags</Text>
+            <Text style={[styles.sectionTitle, { color: palette.textSecondary }]}>Tags</Text>
             <View style={styles.tagRow}>
               {setup.tags.map((tag) => (
                 <TouchableOpacity
                   key={tag}
-                  style={styles.tag}
+                  style={[styles.tag, { backgroundColor: palette.surface }]}
                   onPress={() => navigation.navigate('TagFeed', { tag })}
                   accessibilityLabel={`tag-${tag}`}
                 >
-                  <Text style={styles.tagText}>#{tag}</Text>
+                  <Text style={[styles.tagText, { color: palette.text }]}>#{tag}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={styles.sectionTitle}>Asset-Typ</Text>
-            <Text style={styles.description}>
+            <Text style={[styles.sectionTitle, { color: palette.textSecondary }]}>Asset-Typ</Text>
+            <Text style={[styles.description, { color: palette.text }]}>
               {setup.assetType === 'clonable'
                 ? 'Klonbares Template — sofort verfügbar nach Kauf'
                 : 'PDF + Video-Tutorial Bundle'}
@@ -284,7 +302,9 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
 
             {otherSetups.length > 0 && (
               <>
-                <Text style={styles.sectionTitle}>Mehr von {setup.creator.displayName}</Text>
+                <Text style={[styles.sectionTitle, { color: palette.textSecondary }]}>
+                  Mehr von {setup.creator.displayName}
+                </Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -297,8 +317,11 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
                       onPress={() => navigation.push('SetupDetail', { setup: s })}
                       accessibilityLabel={`other-setup-${s.id}`}
                     >
-                      <Image source={{ uri: s.videoThumbnail }} style={styles.otherThumb} />
-                      <Text numberOfLines={2} style={styles.otherTitle}>
+                      <Image
+                        source={{ uri: s.videoThumbnail }}
+                        style={[styles.otherThumb, { backgroundColor: palette.border }]}
+                      />
+                      <Text numberOfLines={2} style={[styles.otherTitle, { color: palette.text }]}>
                         {s.title}
                       </Text>
                     </TouchableOpacity>
@@ -308,7 +331,12 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
             )}
           </View>
 
-          <View style={styles.commentsBlock}>
+          <View
+            style={[
+              styles.commentsBlock,
+              { backgroundColor: palette.bgSecondary, borderTopColor: palette.border },
+            ]}
+          >
             <ReviewSection
               setupId={setup.id}
               purchaseId={purchase?.id}
@@ -316,13 +344,24 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
             />
           </View>
 
-          <View style={styles.commentsBlock} onLayout={(e) => setCommentsY(e.nativeEvent.layout.y)}>
+          <View
+            style={[
+              styles.commentsBlock,
+              { backgroundColor: palette.bgSecondary, borderTopColor: palette.border },
+            ]}
+            onLayout={(e) => setCommentsY(e.nativeEvent.layout.y)}
+          >
             <CommentsSection setupId={setup.id} inputRef={commentInputRef} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <View style={styles.purchaseBar}>
+      <View
+        style={[
+          styles.purchaseBar,
+          { backgroundColor: palette.bg, borderTopColor: palette.border },
+        ]}
+      >
         {buttonState === 'owner' && (
           <View style={[styles.purchaseButton, styles.disabledButton]}>
             <Text style={styles.purchaseButtonText}>Eigenes Setup</Text>
@@ -380,11 +419,12 @@ function Stat({
   label: string;
   tint?: string;
 }) {
+  const { palette } = useTheme();
   return (
-    <View style={styles.statBox}>
+    <View style={[styles.statBox, { backgroundColor: palette.bgSecondary }]}>
       <Text style={[styles.statIcon, tint ? { color: tint } : null]}>{icon}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statValue, { color: palette.text }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: palette.textSecondary }]}>{label}</Text>
     </View>
   );
 }

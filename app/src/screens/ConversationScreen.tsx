@@ -23,7 +23,7 @@ import { useMessages, Message, SendAttachment } from '@/hooks/useMessages';
 import { useAuth } from '@/auth/useAuth';
 import { useToast } from '@/components/Toast';
 import { MediaPickerButton } from '@/components/MediaPicker';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'Conversation'>;
 type RouteProps = NativeStackScreenProps<MainStackParamList, 'Conversation'>['route'];
@@ -31,6 +31,7 @@ type RouteProps = NativeStackScreenProps<MainStackParamList, 'Conversation'>['ro
 export function ConversationScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<RouteProps>();
+  const { palette } = useTheme();
   const { session } = useAuth();
   const myId = session?.user?.id;
   const toast = useToast();
@@ -72,10 +73,10 @@ export function ConversationScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
+      <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backIcon}>‹</Text>
+          <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => navigation.navigate('CreatorProfile', { creatorId: params.otherUserId })}
@@ -92,8 +93,8 @@ export function ConversationScreen() {
             </View>
           )}
           <View>
-            <Text style={styles.topName}>{params.otherDisplayName}</Text>
-            <Text style={styles.topHandle}>@{params.otherUsername}</Text>
+            <Text style={[styles.topName, { color: palette.text }]}>{params.otherDisplayName}</Text>
+            <Text style={[styles.topHandle, { color: palette.textSecondary }]}>@{params.otherUsername}</Text>
           </View>
         </TouchableOpacity>
         <View style={{ width: 30 }} />
@@ -125,14 +126,14 @@ export function ConversationScreen() {
             ListEmptyComponent={() => (
               <View style={styles.empty}>
                 <Text style={styles.emptyEmoji}>👋</Text>
-                <Text style={styles.emptyText}>Sag Hi.</Text>
+                <Text style={[styles.emptyText, { color: palette.textSecondary }]}>Sag Hi.</Text>
               </View>
             )}
           />
         )}
 
         {pendingAttachment && (
-          <View style={styles.pendingAttachmentBar}>
+          <View style={[styles.pendingAttachmentBar, { backgroundColor: palette.surface }]}>
             {pendingAttachment.type !== 'file' ? (
               <Image source={{ uri: pendingAttachment.url }} style={styles.pendingThumb} />
             ) : (
@@ -140,22 +141,22 @@ export function ConversationScreen() {
                 <Text style={{ fontSize: 18 }}>📎</Text>
               </View>
             )}
-            <Text style={styles.pendingName} numberOfLines={1}>
+            <Text style={[styles.pendingName, { color: palette.text }]} numberOfLines={1}>
               {pendingAttachment.name}
             </Text>
             <TouchableOpacity onPress={() => setPendingAttachment(null)}>
-              <Text style={styles.pendingClear}>✕</Text>
+              <Text style={[styles.pendingClear, { color: palette.textSecondary }]}>✕</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        <View style={styles.composer}>
+        <View style={[styles.composer, { borderTopColor: palette.border }]}>
           <MediaPickerButton allowFiles onPicked={setPendingAttachment} size={38} />
           <TextInput
             value={input}
             onChangeText={setInput}
             placeholder="Nachricht schreiben…"
-            style={styles.input}
+            style={[styles.input, { backgroundColor: palette.surface, color: palette.text }]}
             selectionColor={BRAND.teal}
             maxLength={2000}
             multiline
@@ -183,6 +184,7 @@ export function ConversationScreen() {
 }
 
 function Bubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
+  const { palette } = useTheme();
   const hasImage = msg.attachmentUrl && (msg.attachmentType === 'image' || msg.attachmentType === 'gif');
   const hasFile = msg.attachmentUrl && msg.attachmentType === 'file';
   const showBody = msg.body && msg.body !== '📎';
@@ -192,7 +194,7 @@ function Bubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
       <View
         style={[
           styles.bubble,
-          isMine ? styles.bubbleMine : styles.bubbleOther,
+          isMine ? styles.bubbleMine : [styles.bubbleOther, { backgroundColor: palette.surface }],
           hasImage && styles.bubbleNoBg,
         ]}
       >
@@ -207,11 +209,11 @@ function Bubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
           <View style={styles.fileRow}>
             <Text style={{ fontSize: 22 }}>📎</Text>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.fileName, isMine && styles.bubbleTextMine]} numberOfLines={1}>
+              <Text style={[styles.fileName, { color: palette.text }, isMine && styles.bubbleTextMine]} numberOfLines={1}>
                 {msg.attachmentName ?? 'Datei'}
               </Text>
               {msg.attachmentSizeBytes ? (
-                <Text style={styles.fileSize}>
+                <Text style={[styles.fileSize, { color: palette.textSecondary }]}>
                   {(msg.attachmentSizeBytes / 1024).toFixed(0)} KB
                 </Text>
               ) : null}
@@ -219,7 +221,7 @@ function Bubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
           </View>
         ) : null}
         {showBody ? (
-          <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine, hasImage && styles.bubbleTextOverlay]}>
+          <Text style={[styles.bubbleText, { color: palette.text }, isMine && styles.bubbleTextMine, hasImage && styles.bubbleTextOverlay]}>
             {msg.body}
           </Text>
         ) : null}
