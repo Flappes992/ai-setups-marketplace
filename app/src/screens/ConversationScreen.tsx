@@ -10,6 +10,7 @@ import {
   Platform,
   Image,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -18,9 +19,10 @@ import type {
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
-import { useMessages, Message } from '@/hooks/useMessages';
+import { useMessages, Message, SendAttachment } from '@/hooks/useMessages';
 import { useAuth } from '@/auth/useAuth';
 import { useToast } from '@/components/Toast';
+import { MediaPickerButton } from '@/components/MediaPicker';
 import { BRAND } from '@/theme/ThemeProvider';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'Conversation'>;
@@ -33,10 +35,18 @@ export function ConversationScreen() {
   const myId = session?.user?.id;
   const toast = useToast();
   const params = route.params;
-  const { messages, loading, send, markAllRead } = useMessages(params.conversationId);
+  const { messages, loading, send, markAllRead, refresh } = useMessages(params.conversationId);
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [pendingAttachment, setPendingAttachment] = useState<SendAttachment | null>(null);
   const listRef = useRef<FlatList<Message>>(null);
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  }
 
   useEffect(() => {
     markAllRead();
@@ -49,15 +59,16 @@ export function ConversationScreen() {
   }, [messages.length]);
 
   async function handleSend() {
-    if (!input.trim()) return;
+    if (!input.trim() && !pendingAttachment) return;
     setSubmitting(true);
-    const result = await send(input);
+    const result = await send(input, pendingAttachment ?? undefined);
     setSubmitting(false);
     if (!result.ok) {
       toast.show(result.error ?? 'Senden fehlgeschlagen', 'error');
       return;
     }
     setInput('');
+    setPendingAttachment(null);
   }
 
   return (
@@ -101,8 +112,16 @@ export function ConversationScreen() {
             ref={listRef}
             data={messages}
             keyExtractor={(m) => m.id}
-            contentContainerStyle={{ padding: 16, gap: 8 }}
+            contentContainerStyle={{ padding: 16, gap: 8, flexGrow: 1 }}
             renderItem={({ item }) => <Bubble msg={item} isMine={item.senderId === myId} />}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={BRAND.teal}
+                colors={[BRAND.teal]}
+              />
+            }
             ListEmptyComponent={() => (
               <View style={styles.empty}>
                 <Text style={styles.emptyEmoji}>👋</Text>
@@ -112,7 +131,26 @@ export function ConversationScreen() {
           />
         )}
 
+        {pendingAttachment && (
+          <View style={styles.pendingAttachmentBar}>
+            {pendingAttachment.type !== 'file' ? (
+              <Image source={{ uri: pendingAttachment.url }} style={styles.pendingThumb} />
+            ) : (
+              <View style={styles.pendingFileIcon}>
+                <Text style={{ fontSize: 18 }}>📎</Text>
+              </View>
+            )}
+            <Text style={styles.pendingName} numberOfLines={1}>
+              {pendingAttachment.name}
+            </Text>
+            <TouchableOpacity onPress={() => setPendingAttachment(null)}>
+              <Text style={styles.pendingClear}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={styles.composer}>
+          <MediaPickerButton allowFiles onPicked={setPendingAttachment} size={38} />
           <TextInput
             value={input}
             onChangeText={setInput}
@@ -125,8 +163,11 @@ export function ConversationScreen() {
           />
           <TouchableOpacity
             onPress={handleSend}
-            disabled={!input.trim() || submitting}
-            style={[styles.sendBtn, (!input.trim() || submitting) && styles.sendBtnDisabled]}
+            disabled={(!input.trim() && !pendingAttachment) || submitting}
+            style={[
+              styles.sendBtn,
+              (!input.trim() && !pendingAttachment) || submitting ? styles.sendBtnDisabled : null,
+            ]}
             accessibilityLabel="send-message"
           >
             {submitting ? (
@@ -142,10 +183,46 @@ export function ConversationScreen() {
 }
 
 function Bubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
+  const hasImage = msg.attachmentUrl && (msg.attachmentType === 'image' || msg.attachmentType === 'gif');
+  const hasFile = msg.attachmentUrl && msg.attachmentType === 'file';
+  const showBody = msg.body && msg.body !== '📎';
+
   return (
     <View style={[styles.bubbleRow, isMine && styles.bubbleRowMine]}>
-      <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleOther]}>
-        <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>{msg.body}</Text>
+      <View
+        style={[
+          styles.bubble,
+          isMine ? styles.bubbleMine : styles.bubbleOther,
+          hasImage && styles.bubbleNoBg,
+        ]}
+      >
+        {hasImage && msg.attachmentUrl ? (
+          <Image
+            source={{ uri: msg.attachmentUrl }}
+            style={styles.bubbleImage}
+            resizeMode="cover"
+          />
+        ) : null}
+        {hasFile && msg.attachmentUrl ? (
+          <View style={styles.fileRow}>
+            <Text style={{ fontSize: 22 }}>📎</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.fileName, isMine && styles.bubbleTextMine]} numberOfLines={1}>
+                {msg.attachmentName ?? 'Datei'}
+              </Text>
+              {msg.attachmentSizeBytes ? (
+                <Text style={styles.fileSize}>
+                  {(msg.attachmentSizeBytes / 1024).toFixed(0)} KB
+                </Text>
+              ) : null}
+            </View>
+          </View>
+        ) : null}
+        {showBody ? (
+          <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine, hasImage && styles.bubbleTextOverlay]}>
+            {msg.body}
+          </Text>
+        ) : null}
       </View>
     </View>
   );
@@ -214,4 +291,29 @@ const styles = StyleSheet.create({
   },
   sendBtnDisabled: { backgroundColor: '#e5e5e5' },
   sendIcon: { color: '#0b3b35', fontSize: 22, fontWeight: '900' },
+  pendingAttachmentBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#f5f5f5',
+    gap: 10,
+  },
+  pendingThumb: { width: 44, height: 44, borderRadius: 8, backgroundColor: '#ddd' },
+  pendingFileIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: '#ddd',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pendingName: { flex: 1, fontSize: 13, color: '#333' },
+  pendingClear: { fontSize: 18, color: '#888', paddingHorizontal: 6 },
+  bubbleNoBg: { backgroundColor: 'transparent', padding: 0, overflow: 'hidden' },
+  bubbleImage: { width: 240, height: 240, borderRadius: 14, backgroundColor: '#ddd' },
+  fileRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 200 },
+  fileName: { fontSize: 14, color: '#111', fontWeight: '600' },
+  fileSize: { fontSize: 11, color: '#888' },
+  bubbleTextOverlay: { marginTop: 4 },
 });

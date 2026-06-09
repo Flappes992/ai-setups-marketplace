@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 280,
+    height: 340,
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
   heartBurst: {
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 20,
   },
   overlay: { position: 'absolute', bottom: 100, left: 16, right: 96 },
-  actionRail: { position: 'absolute', right: 12, bottom: 100, alignItems: 'center', gap: 18 },
+  actionRail: { position: 'absolute', right: 12, bottom: 130, alignItems: 'center', gap: 18 },
   actionButton: { alignItems: 'center', padding: 2 },
   actionIcon: {
     color: '#fff',

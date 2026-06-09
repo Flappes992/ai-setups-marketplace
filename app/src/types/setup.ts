@@ -1,5 +1,5 @@
-import { AssetType } from '@/types/database';
-export type { AssetType };
+import { AssetType, AssetSubtype, BrainManifest, ClaudeManifest } from '@/types/database';
+export type { AssetType, AssetSubtype, BrainManifest, ClaudeManifest };
 
 export interface Creator {
   id: string;
@@ -27,4 +27,9 @@ export interface Setup {
   ratingAverage: number;
   ratingsCount: number;
   createdAt: string;
+  roiTimeSavedMinutes?: number | null;
+  roiUseFrequency?: 'daily' | 'weekly' | 'monthly' | 'one_time' | null;
+  assetSubtype?: AssetSubtype | null;
+  brainManifest?: BrainManifest | null;
+  claudeManifest?: ClaudeManifest | null;
 }

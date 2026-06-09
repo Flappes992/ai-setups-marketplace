@@ -42,3 +42,5 @@ coverage/
 *.key
 *.mobileprovision
 *.orig.*
+
+.vercel

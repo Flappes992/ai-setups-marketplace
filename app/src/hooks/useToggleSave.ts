@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/auth/useAuth';
+import { evaluateAchievementsFor } from '@/hooks/useAchievements';
 
 interface UseToggleSaveResult {
   saved: boolean;
@@ -53,6 +54,8 @@ export function useToggleSave(setupId: string): UseToggleSaveResult {
       if (error) {
         setSaved(false);
         setCount((c) => c - 1);
+      } else {
+        evaluateAchievementsFor(userId);
       }
     } else {
       const { error } = await supabase

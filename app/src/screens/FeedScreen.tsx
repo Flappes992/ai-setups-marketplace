@@ -23,6 +23,7 @@ import { MainStackParamList } from '@/navigation/RootNavigator';
 import { useSetups } from '@/hooks/useSetups';
 import { getFollowingIds } from '@/hooks/useFollow';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
+import { useFeedPersonalization } from '@/hooks/useFeedPersonalization';
 import { useAuth } from '@/auth/useAuth';
 
 const { height } = Dimensions.get('window');
@@ -69,6 +70,7 @@ export function FeedScreen() {
   const { session } = useAuth();
   const { setups, loading, error, refetch } = useSetups();
   const unread = useUnreadNotifications();
+  const { scoreSetup } = useFeedPersonalization();
   const [refreshing, setRefreshing] = useState(false);
   const [mode, setMode] = useState<FeedMode>('foryou');
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -92,11 +94,18 @@ export function FeedScreen() {
   }, [mode, session?.user?.id]);
 
   const visibleSetups = useMemo(() => {
-    if (mode === 'following') {
-      return setups.filter((s) => followedIds.has(s.creator.id));
+    const base =
+      mode === 'following' ? setups.filter((s) => followedIds.has(s.creator.id)) : setups;
+    if (mode === 'foryou') {
+      // Personalized sort: score DESC, then recency DESC. Setups with no preference match keep
+      // their recency order (score=0) but appear after matched ones.
+      return [...base]
+        .map((s) => ({ s, score: scoreSetup(s), t: Date.parse(s.createdAt) || 0 }))
+        .sort((a, b) => b.score - a.score || b.t - a.t)
+        .map((x) => x.s);
     }
-    return setups;
-  }, [setups, mode, followedIds]);
+    return base;
+  }, [setups, mode, followedIds, scoreSetup]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -117,7 +126,8 @@ export function FeedScreen() {
 
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const cardIdx = Math.round(e.nativeEvent.contentOffset.y / height);
-    const visible = cardIdx >= 5;
+    // Only on the very last card — not before
+    const visible = visibleSetups.length > 1 && cardIdx >= visibleSetups.length - 1;
     if (visible !== showScrollTop) setShowScrollTop(visible);
   }
 
@@ -226,12 +236,16 @@ export function FeedScreen() {
             showsVerticalScrollIndicator={false}
             onScroll={onScroll}
             scrollEventThrottle={16}
+            bounces
+            alwaysBounceVertical
+            overScrollMode="always"
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={handleRefresh}
                 tintColor="#2DD4BF"
                 colors={['#2DD4BF']}
+                progressViewOffset={60}
               />
             }
           />
@@ -360,8 +374,9 @@ const styles = StyleSheet.create({
   },
   scrollTopWrap: {
     position: 'absolute',
-    bottom: 110,
-    right: 16,
+    top: '50%',
+    left: 14,
+    marginTop: -22,
   },
   scrollTopBtn: {
     width: 44,

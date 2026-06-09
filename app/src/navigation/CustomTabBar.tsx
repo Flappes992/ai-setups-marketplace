@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -8,17 +9,24 @@ import type { MainStackParamList } from '@/navigation/RootNavigator';
 import { BRAND } from '@/theme/ThemeProvider';
 import { useMyTier } from '@/hooks/useMyTier';
 import { useToast } from '@/components/Toast';
+import { useProfileBadge } from '@/hooks/useProfileBadge';
 
 type RootNav = NativeStackNavigationProp<MainStackParamList>;
 
 export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const rootNav = useNavigation<RootNav>();
-  const { tier } = useMyTier();
+  const { tier, refresh: refreshTier } = useMyTier();
   const toast = useToast();
+  const { count: profileBadge } = useProfileBadge();
 
   const isFeedActive = state.index === 0;
   const canPost = tier === 'creator' || tier === 'creator_plus';
+
+  // Bei jedem Tab-Wechsel Tier neu laden — fängt out-of-band DB-Updates ab
+  useEffect(() => {
+    refreshTier();
+  }, [state.index, refreshTier]);
 
   return (
     <View
@@ -37,6 +45,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
         }}
         onFeed={isFeedActive}
         label="home"
+        title="Home"
       />
 
       <TouchableOpacity
@@ -70,17 +79,20 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             {canPost ? '+' : '🔒'}
           </Text>
         </View>
+        <Text style={[styles.plusLabel, { color: isFeedActive ? '#fff' : '#111' }]}>Create</Text>
       </TouchableOpacity>
 
       <TabIconButton
         focused={state.index === 1}
-        glyph="⬡"
+        glyph="👤"
         onPress={() => {
           Haptics.selectionAsync();
           navigation.navigate('ProfileTab');
         }}
         onFeed={isFeedActive}
         label="profile"
+        title="Profile"
+        badge={profileBadge}
       />
     </View>
   );
@@ -92,12 +104,16 @@ function TabIconButton({
   onPress,
   onFeed,
   label,
+  title,
+  badge = 0,
 }: {
   focused: boolean;
   glyph: string;
   onPress: () => void;
   onFeed: boolean;
   label: string;
+  title: string;
+  badge?: number;
 }) {
   const inactiveColor = onFeed ? '#fff' : '#111';
   const activeColor = BRAND.teal;
@@ -109,8 +125,15 @@ function TabIconButton({
       accessibilityLabel={`tab-${label}`}
       activeOpacity={0.7}
     >
-      <Text style={[styles.iconText, { color, opacity: focused ? 1 : 0.55 }]}>{glyph}</Text>
-      {focused && <View style={[styles.activeDot, { backgroundColor: activeColor }]} />}
+      <View>
+        <Text style={[styles.iconText, { color, opacity: focused ? 1 : 0.65 }]}>{glyph}</Text>
+        {badge > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text>
+          </View>
+        )}
+      </View>
+      <Text style={[styles.iconLabel, { color, opacity: focused ? 1 : 0.65 }]}>{title}</Text>
     </TouchableOpacity>
   );
 }
@@ -135,18 +158,18 @@ const styles = StyleSheet.create({
   iconButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 56,
-    height: 44,
+    width: 64,
+    paddingVertical: 4,
   },
   iconText: {
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: '300',
   },
-  activeDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    marginTop: 3,
+  iconLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 2,
+    letterSpacing: 0.3,
   },
   plusButton: {
     alignItems: 'center',
@@ -171,9 +194,35 @@ const styles = StyleSheet.create({
   },
   plusText: {
     color: '#111',
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
-    lineHeight: 30,
+    lineHeight: 26,
     marginTop: -2,
+  },
+  plusLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 4,
+    letterSpacing: 0.3,
+  },
+  badge: {
+    position: 'absolute',
+    top: -2,
+    right: -8,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    paddingHorizontal: 4,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#fff',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '900',
+    lineHeight: 11,
   },
 });

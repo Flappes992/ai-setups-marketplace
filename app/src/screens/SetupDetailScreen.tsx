@@ -23,12 +23,16 @@ import { useAuth } from '@/auth/useAuth';
 import { usePurchase } from '@/hooks/usePurchase';
 import { CommentsSection } from '@/components/CommentsSection';
 import { ReviewSection } from '@/components/ReviewSection';
+import { RoiCard } from '@/components/RoiCard';
+import { BrainPackCard } from '@/components/BrainPackCard';
+import { ClaudePackCard } from '@/components/ClaudePackCard';
 import { TealGradient } from '@/components/TealGradient';
 import { useToggleLike } from '@/hooks/useToggleLike';
 import { useToggleSave } from '@/hooks/useToggleSave';
 import { useComments } from '@/hooks/useComments';
 import { useSetups } from '@/hooks/useSetups';
 import { useFollow } from '@/hooks/useFollow';
+import { useCreatorStats } from '@/hooks/useCreatorStats';
 import { BRAND } from '@/theme/ThemeProvider';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 
@@ -82,6 +86,7 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
   const { comments } = useComments(setup.id);
   const { setups: allSetups } = useSetups();
   const { following, toggle: toggleFollow } = useFollow(setup.creator.id);
+  const creatorStats = useCreatorStats(setup.creator.id);
   const [busy, setBusy] = useState(false);
   const [polling, setPolling] = useState(false);
 
@@ -112,17 +117,21 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
     }
   }, [polling, purchase?.status]);
 
-  const handleBuy = useCallback(async () => {
-    if (!userId) {
-      Alert.alert('Bitte erst einloggen');
-      return;
-    }
+  const startCheckout = useCallback(async () => {
     setBusy(true);
     try {
-      const url = `${WEB_CHECKOUT_BASE}/?setup_id=${encodeURIComponent(
-        setup.id,
-      )}&buyer_user_id=${encodeURIComponent(userId)}`;
-      await WebBrowser.openBrowserAsync(url);
+      // Käufer wird server-seitig aus dem Token abgeleitet — keine user_id in der URL.
+      const res = await fetch(`${WEB_CHECKOUT_BASE}/api/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token ?? ''}`,
+        },
+        body: JSON.stringify({ setup_id: setup.id }),
+      });
+      const json = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !json.url) throw new Error(json.error ?? 'Checkout fehlgeschlagen');
+      await WebBrowser.openBrowserAsync(json.url);
       setPolling(true);
       await refetch();
     } catch (e) {
@@ -131,7 +140,25 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
     } finally {
       setBusy(false);
     }
-  }, [userId, setup.id, refetch]);
+  }, [session?.access_token, setup.id, refetch]);
+
+  const handleBuy = useCallback(() => {
+    if (!userId || !session?.access_token) {
+      Alert.alert('Bitte erst einloggen');
+      return;
+    }
+    // Apple-Pflicht (External Purchase, EU): Hinweis vor Weiterleitung zum externen Anbieter.
+    Alert.alert(
+      'Weiter zur Zahlung',
+      'Der Kauf wird außerhalb des App Stores über unseren Zahlungsdienstleister Stripe ' +
+        'abgewickelt. Apple ist nicht Vertragspartner und übernimmt für diesen Kauf keine ' +
+        'Zahlungsabwicklung, Rückerstattung oder Support.',
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        { text: 'Weiter zu Stripe', onPress: () => startCheckout() },
+      ],
+    );
+  }, [userId, session?.access_token, startCheckout]);
 
   const handleOpenAsset = useCallback(async () => {
     if (!setup.assetUrl) {
@@ -181,7 +208,11 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
                 <View style={{ flex: 1 }}>
                   <Text style={styles.creatorName}>{setup.creator.displayName}</Text>
                   <Text style={styles.creatorMeta}>
-                    ★ {setup.creator.ratingAverage.toFixed(1)} · {setup.creator.setupsCount} Setups
+                    {creatorStats.reviewsCount > 0
+                      ? `★ ${creatorStats.averageRating.toFixed(1)} (${creatorStats.reviewsCount})`
+                      : '★ noch nicht bewertet'}{' '}
+                    · {creatorStats.setupsCount}{' '}
+                    {creatorStats.setupsCount === 1 ? 'Setup' : 'Setups'}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -205,7 +236,25 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
               <Stat icon="★" value={saveCount} label="Saves" tint={BRAND.teal} />
               <Stat icon="💬" value={comments.length} label="Kommentare" />
             </View>
+          </View>
 
+          {setup.assetSubtype === 'brainpack' && setup.brainManifest ? (
+            <BrainPackCard manifest={setup.brainManifest} />
+          ) : null}
+
+          {setup.assetSubtype === 'claudepack' && setup.claudeManifest ? (
+            <ClaudePackCard manifest={setup.claudeManifest} />
+          ) : null}
+
+          {setup.roiTimeSavedMinutes && setup.roiUseFrequency ? (
+            <RoiCard
+              minutesPerUse={setup.roiTimeSavedMinutes}
+              frequency={setup.roiUseFrequency}
+              priceCents={setup.priceCents}
+            />
+          ) : null}
+
+          <View style={styles.body}>
             <Text style={styles.sectionTitle}>Über das Setup</Text>
             <Text style={styles.description}>{setup.description}</Text>
 

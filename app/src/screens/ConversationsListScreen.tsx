@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   FlatList,
   Image,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -32,12 +33,19 @@ function timeAgo(iso: string): string {
 export function ConversationsListScreen() {
   const navigation = useNavigation<Nav>();
   const { items, loading, refresh } = useConversations();
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       refresh();
     }, [refresh]),
   );
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -66,6 +74,14 @@ export function ConversationsListScreen() {
           data={items}
           keyExtractor={(c) => c.id}
           renderItem={({ item }) => <Row item={item} onPress={() => navigation.navigate('Conversation', { conversationId: item.id, otherUserId: item.otherUserId, otherUsername: item.otherUsername, otherDisplayName: item.otherDisplayName, otherAvatarUrl: item.otherAvatarUrl })} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={BRAND.teal}
+              colors={[BRAND.teal]}
+            />
+          }
         />
       )}
     </SafeAreaView>

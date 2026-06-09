@@ -19,14 +19,18 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { useToast } from '@/components/Toast';
 import { TierCard } from '@/components/TierCard';
 import { StripeConnectCard } from '@/components/StripeConnectCard';
+import { LEGAL_URLS, SUPPORT_EMAIL } from '@/config/legal';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'Settings'>;
+
+const WEB_CHECKOUT_BASE = 'https://web-checkout-sicci-s-projects.vercel.app';
 
 export function SettingsScreen() {
   const navigation = useNavigation<Nav>();
   const { session } = useAuth();
   const { mode, setMode, palette } = useTheme();
   const toast = useToast();
+  const [deleting, setDeleting] = useState(false);
   const [pushNotifs, setPushNotifs] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [dataSaver, setDataSaver] = useState(false);
@@ -46,16 +50,40 @@ export function SettingsScreen() {
   }
 
   async function handleDeleteAccount() {
+    if (deleting) return;
     Alert.alert(
       'Account löschen',
-      'Das ist endgültig. Alle deine Setups, Käufe und Daten werden gelöscht.',
+      'Dein Profil, deine Setups und Aktivitäten werden gelöscht bzw. anonymisiert. ' +
+        'Aus steuerlichen Gründen bleiben abgeschlossene Zahlungsbelege anonymisiert erhalten. ' +
+        'Das kann nicht rückgängig gemacht werden.',
       [
         { text: 'Abbrechen', style: 'cancel' },
         {
           text: 'Endgültig löschen',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert('Noch nicht implementiert', 'Lösch-Funktion folgt in Phase 5.');
+          onPress: async () => {
+            const token = session?.access_token;
+            if (!token) {
+              Alert.alert('Fehler', 'Keine aktive Sitzung. Bitte neu anmelden.');
+              return;
+            }
+            setDeleting(true);
+            try {
+              const res = await fetch(`${WEB_CHECKOUT_BASE}/api/delete-account`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              if (!res.ok) {
+                const data = (await res.json().catch(() => ({}))) as { error?: string };
+                throw new Error(data.error ?? `HTTP ${res.status}`);
+              }
+              toast.show('Account gelöscht');
+              await supabase.auth.signOut();
+            } catch (e) {
+              const msg = e instanceof Error ? e.message : 'Unbekannter Fehler';
+              Alert.alert('Löschen fehlgeschlagen', msg);
+              setDeleting(false);
+            }
           },
         },
       ],
@@ -182,21 +210,27 @@ export function SettingsScreen() {
 
         <Section title="Über setiq">
           <Row label="Version" value="0.1.0 (Phase 4)" />
-          <Row label="AGB" onPress={() => Linking.openURL('https://setiq.net/agb')} />
+          <Row label="AGB" onPress={() => Linking.openURL(LEGAL_URLS.agb)} />
           <Row
             label="Datenschutz"
-            onPress={() => Linking.openURL('https://setiq.net/datenschutz')}
+            onPress={() => Linking.openURL(LEGAL_URLS.datenschutz)}
           />
-          <Row label="Impressum" onPress={() => Linking.openURL('https://setiq.net/impressum')} />
-          <Row label="Support" onPress={() => Linking.openURL('mailto:hi@setiq.net')} />
+          <Row label="Impressum" onPress={() => Linking.openURL(LEGAL_URLS.impressum)} />
+          <Row label="Support" onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)} />
         </Section>
 
         <View style={styles.dangerZone}>
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
             <Text style={styles.logoutText}>Abmelden</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount}>
-            <Text style={styles.deleteText}>Account löschen</Text>
+          <TouchableOpacity
+            style={styles.deleteBtn}
+            onPress={handleDeleteAccount}
+            disabled={deleting}
+          >
+            <Text style={styles.deleteText}>
+              {deleting ? 'Lösche…' : 'Account löschen'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

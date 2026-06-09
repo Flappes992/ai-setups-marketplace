@@ -9,10 +9,6 @@ import { SignInScreen } from '@/screens/SignInScreen';
 import { SignUpScreen } from '@/screens/SignUpScreen';
 import { ProfileScreen } from '@/screens/ProfileScreen';
 import { SetupUploadScreen } from '@/screens/SetupUploadScreen';
-import { MySetupsScreen } from '@/screens/MySetupsScreen';
-import { MyPurchasesScreen } from '@/screens/MyPurchasesScreen';
-import { SavedSetupsScreen } from '@/screens/SavedSetupsScreen';
-import { LikedSetupsScreen } from '@/screens/LikedSetupsScreen';
 import { SettingsScreen } from '@/screens/SettingsScreen';
 import { EditProfileScreen } from '@/screens/EditProfileScreen';
 import { SearchScreen } from '@/screens/SearchScreen';
@@ -24,7 +20,13 @@ import { CreatorProfileScreen } from '@/screens/CreatorProfileScreen';
 import { BlockedListScreen } from '@/screens/BlockedListScreen';
 import { ConversationsListScreen } from '@/screens/ConversationsListScreen';
 import { ConversationScreen } from '@/screens/ConversationScreen';
+import { AchievementsScreen } from '@/screens/AchievementsScreen';
+import { ConciergeScreen } from '@/screens/ConciergeScreen';
+import { BundlesScreen } from '@/screens/BundlesScreen';
+import { BundleCreateScreen } from '@/screens/BundleCreateScreen';
+import { BundleDetailScreen } from '@/screens/BundleDetailScreen';
 import { Setup } from '@/types/setup';
+import type { Bundle } from '@/hooks/useBundles';
 import { useAuth } from '@/auth/useAuth';
 
 export type AuthStackParamList = {
@@ -41,10 +43,6 @@ export type MainStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList> | undefined;
   SetupDetail: { setup: Setup; focusComment?: boolean };
   SetupUpload: undefined;
-  MySetups: undefined;
-  MyPurchases: undefined;
-  Saved: undefined;
-  Liked: undefined;
   Settings: undefined;
   EditProfile: undefined;
   Search: undefined;
@@ -62,6 +60,11 @@ export type MainStackParamList = {
     otherDisplayName: string;
     otherAvatarUrl: string | null;
   };
+  Achievements: undefined;
+  Concierge: undefined;
+  Bundles: undefined;
+  BundleCreate: undefined;
+  BundleDetail: { bundle: Bundle };
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -120,10 +123,6 @@ function MainNavigator() {
         component={SetupUploadScreen}
         options={{ presentation: 'modal' }}
       />
-      <MainStack.Screen name="MySetups" component={MySetupsScreen} />
-      <MainStack.Screen name="MyPurchases" component={MyPurchasesScreen} />
-      <MainStack.Screen name="Saved" component={SavedSetupsScreen} />
-      <MainStack.Screen name="Liked" component={LikedSetupsScreen} />
       <MainStack.Screen name="Settings" component={SettingsScreen} />
       <MainStack.Screen name="EditProfile" component={EditProfileScreen} />
       <MainStack.Screen name="Search" component={SearchScreen} />
@@ -135,6 +134,15 @@ function MainNavigator() {
       <MainStack.Screen name="BlockedList" component={BlockedListScreen} />
       <MainStack.Screen name="Conversations" component={ConversationsListScreen} />
       <MainStack.Screen name="Conversation" component={ConversationScreen} />
+      <MainStack.Screen name="Achievements" component={AchievementsScreen} />
+      <MainStack.Screen name="Concierge" component={ConciergeScreen} />
+      <MainStack.Screen name="Bundles" component={BundlesScreen} />
+      <MainStack.Screen
+        name="BundleCreate"
+        component={BundleCreateScreen}
+        options={{ presentation: 'modal' }}
+      />
+      <MainStack.Screen name="BundleDetail" component={BundleDetailScreen} />
     </MainStack.Navigator>
   );
 }

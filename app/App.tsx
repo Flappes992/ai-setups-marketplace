@@ -6,6 +6,7 @@ import { AuthProvider } from '@/auth/AuthContext';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import { ToastProvider } from '@/components/Toast';
 import { WelcomeSheet } from '@/components/WelcomeSheet';
+import { OnboardingQuiz } from '@/components/OnboardingQuiz';
 import { RootNavigator } from '@/navigation/RootNavigator';
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
               <ToastProvider>
                 <RootNavigator />
                 <WelcomeSheet />
+                <OnboardingQuiz />
               </ToastProvider>
             </NavigationContainer>
           </AuthProvider>

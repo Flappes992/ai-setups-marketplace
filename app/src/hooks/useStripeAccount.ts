@@ -53,8 +53,7 @@ export function useStripeAccount(): Result {
       try {
         const res = await fetch(`${WEB_CHECKOUT_BASE}/api/stripe/account-status`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: myId }),
+          headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
         });
         const json = await res.json();
         setStatus({
@@ -91,8 +90,7 @@ export function useStripeAccount(): Result {
     try {
       const res = await fetch(`${WEB_CHECKOUT_BASE}/api/stripe/connect-onboarding`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: myId }),
+        headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
       });
       const json = await res.json();
       if (!res.ok) return { url: null, error: json.error ?? 'Fehler' };

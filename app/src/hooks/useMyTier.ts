@@ -4,6 +4,13 @@ import { useAuth } from '@/auth/useAuth';
 
 export type Tier = 'explorer' | 'hustler' | 'creator' | 'creator_plus';
 
+// Cross-component sync: jeder Hook-Instance hört auf den Channel,
+// damit eine Änderung in einem Screen alle anderen TabBar/Profile sofort updated.
+const tierListeners = new Set<() => void>();
+function emitTierChange() {
+  tierListeners.forEach((l) => l());
+}
+
 export interface TierProgress {
   accountDays: { current: number; required: number; ok: boolean };
   purchases: { current: number; required: number; ok: boolean };
@@ -137,7 +144,39 @@ export function useMyTier(): MyTierResult {
 
   useEffect(() => {
     refresh();
+    const l = () => refresh();
+    tierListeners.add(l);
+    return () => {
+      tierListeners.delete(l);
+    };
   }, [refresh]);
+
+  // Realtime: jede Änderung an profiles.tier (auch direkt in DB) wird sofort übernommen
+  useEffect(() => {
+    if (!myId) return;
+    const channel = supabase
+      .channel(`profile-tier-${myId}-${Math.random().toString(36).slice(2, 8)}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${myId}`,
+        },
+        (payload) => {
+          const next = (payload.new as { tier?: Tier })?.tier;
+          if (next) {
+            setTier(next);
+            emitTierChange();
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [myId]);
 
   const applyForCreator = useCallback(
     async (note: string): Promise<{ ok: boolean; error?: string }> => {

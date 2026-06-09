@@ -1,36 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import { getServiceClient, getAuthedUserId } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
-
-interface RequestBody {
-  user_id: string;
-}
 
 export async function POST(req: NextRequest) {
   try {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!stripeKey || !supabaseUrl || !supabaseServiceRoleKey) {
+    const supabase = getServiceClient();
+    if (!stripeKey || !supabase) {
       return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
     }
 
-    const body = (await req.json()) as RequestBody;
-    if (!body.user_id) {
-      return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
+    // Auth: User-ID kommt aus dem verifizierten Token, NICHT aus dem Body (kein IDOR).
+    const userId = await getAuthedUserId(req, supabase);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const mockMode = process.env.STRIPE_CONNECT_MOCK === 'true';
-
     const stripe = new Stripe(stripeKey);
-    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
     const { data: profile } = await supabase
       .from('profiles')
       .select('stripe_account_id')
-      .eq('id', body.user_id)
+      .eq('id', userId)
       .single();
     const accountId = (profile as { stripe_account_id: string | null } | null)?.stripe_account_id;
     if (!accountId) {
@@ -49,7 +43,7 @@ export async function POST(req: NextRequest) {
           stripe_payouts_enabled: true,
           stripe_onboarded_at: new Date().toISOString(),
         })
-        .eq('id', body.user_id);
+        .eq('id', userId);
       return NextResponse.json({
         connected: true,
         account_id: accountId,
@@ -73,7 +67,7 @@ export async function POST(req: NextRequest) {
         stripe_payouts_enabled: payoutsEnabled,
         stripe_onboarded_at: detailsSubmitted ? new Date().toISOString() : null,
       })
-      .eq('id', body.user_id);
+      .eq('id', userId);
 
     return NextResponse.json({
       connected: true,

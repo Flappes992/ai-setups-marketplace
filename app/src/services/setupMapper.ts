@@ -29,5 +29,10 @@ export function mapDbSetupToSetup(db: DbSetupWithCreator): Setup {
     ratingAverage: db.rating_average,
     ratingsCount: db.ratings_count,
     createdAt: db.created_at,
+    roiTimeSavedMinutes: db.roi_time_saved_minutes ?? null,
+    roiUseFrequency: db.roi_use_frequency ?? null,
+    assetSubtype: db.asset_subtype ?? null,
+    brainManifest: db.brain_manifest ?? null,
+    claudeManifest: db.claude_manifest ?? null,
   };
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  View,
   Text,
   TextInput,
   TouchableOpacity,
@@ -8,9 +9,11 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/services/supabase';
+import { LEGAL_URLS } from '@/config/legal';
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -22,6 +25,7 @@ export function SignUpScreen() {
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +34,8 @@ export function SignUpScreen() {
     username.length > 0 &&
     displayName.length > 0 &&
     password.length > 0 &&
-    confirm.length > 0;
+    confirm.length > 0 &&
+    acceptedTerms;
 
   async function handleSubmit() {
     setError(null);
@@ -48,6 +53,10 @@ export function SignUpScreen() {
     }
     if (password !== confirm) {
       setError('Passwörter stimmen nicht überein');
+      return;
+    }
+    if (!acceptedTerms) {
+      setError('Bitte akzeptiere AGB und Datenschutzerklärung');
       return;
     }
     setLoading(true);
@@ -120,6 +129,30 @@ export function SignUpScreen() {
             accessibilityLabel="signup-confirm"
           />
 
+          <TouchableOpacity
+            style={styles.consentRow}
+            onPress={() => setAcceptedTerms((v) => !v)}
+            activeOpacity={0.7}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: acceptedTerms }}
+            accessibilityLabel="signup-accept-terms"
+          >
+            <View style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]}>
+              {acceptedTerms && <Text style={styles.checkmark}>✓</Text>}
+            </View>
+            <Text style={styles.consentText}>
+              Ich akzeptiere die{' '}
+              <Text style={styles.link} onPress={() => Linking.openURL(LEGAL_URLS.agb)}>
+                AGB
+              </Text>{' '}
+              und die{' '}
+              <Text style={styles.link} onPress={() => Linking.openURL(LEGAL_URLS.datenschutz)}>
+                Datenschutzerklärung
+              </Text>
+              . Setiq duldet keine anstößigen Inhalte oder missbräuchliches Verhalten.
+            </Text>
+          </TouchableOpacity>
+
           {error && <Text style={styles.error}>{error}</Text>}
 
           <TouchableOpacity
@@ -154,6 +187,21 @@ const styles = StyleSheet.create({
     color: '#111',
   },
   error: { color: '#cc0000', fontSize: 14, marginTop: 6 },
+  consentRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 8 },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#ccc',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+  },
+  checkboxChecked: { backgroundColor: '#2DD4BF', borderColor: '#2DD4BF' },
+  checkmark: { color: '#fff', fontSize: 15, fontWeight: '800', lineHeight: 18 },
+  consentText: { flex: 1, fontSize: 13, color: '#555', lineHeight: 19 },
+  link: { color: '#2DD4BF', fontWeight: '700' },
   button: {
     backgroundColor: '#111',
     paddingVertical: 16,

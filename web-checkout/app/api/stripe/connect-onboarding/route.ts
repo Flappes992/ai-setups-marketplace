@@ -1,37 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import { getServiceClient, getAuthedUserId } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
-
-interface RequestBody {
-  user_id: string;
-}
 
 export async function POST(req: NextRequest) {
   try {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-    if (!stripeKey || !supabaseUrl || !supabaseServiceRoleKey) {
+    const supabase = getServiceClient();
+    if (!stripeKey || !supabase) {
       return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
     }
 
-    const body = (await req.json()) as RequestBody;
-    if (!body.user_id) {
-      return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
+    // Auth: User-ID aus verifiziertem Token, NICHT aus dem Body (sonst IDOR:
+    // jeder könnte für fremde Accounts einen Onboarding-/Payout-Link erzeugen).
+    const userId = await getAuthedUserId(req, supabase);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const mockMode = process.env.STRIPE_CONNECT_MOCK === 'true';
 
     const stripe = new Stripe(stripeKey);
-    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, username, stripe_account_id')
-      .eq('id', body.user_id)
+      .eq('id', userId)
       .single();
     if (profileError || !profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
@@ -54,7 +50,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const { data: authUser } = await supabase.auth.admin.getUserById(body.user_id);
+    const { data: authUser } = await supabase.auth.admin.getUserById(userId);
     const email = authUser?.user?.email;
 
     let accountId = profile.stripe_account_id as string | null;

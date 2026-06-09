@@ -1,32 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import { getServiceClient, getAuthedUserId } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 interface RequestBody {
   setup_id: string;
-  buyer_user_id: string;
 }
 
 export async function POST(req: NextRequest) {
   try {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!stripeKey || !supabaseUrl || !supabaseServiceRoleKey) {
+    const supabase = getServiceClient();
+    if (!stripeKey || !supabase) {
       return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
     }
 
+    // Käufer-ID aus verifiziertem Token, NICHT aus dem Body (kein IDOR / kein
+    // Käufe-auf-fremde-IDs-schreiben).
+    const buyerUserId = await getAuthedUserId(req, supabase);
+    if (!buyerUserId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const stripe = new Stripe(stripeKey);
-    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
     const platformFeePercent = Number(process.env.PLATFORM_FEE_PERCENT ?? 15);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
     const body = (await req.json()) as RequestBody;
-    if (!body.setup_id || !body.buyer_user_id) {
-      return NextResponse.json({ error: 'Missing setup_id or buyer_user_id' }, { status: 400 });
+    if (!body.setup_id) {
+      return NextResponse.json({ error: 'Missing setup_id' }, { status: 400 });
     }
 
     const { data: setup, error: setupError } = await supabase
@@ -42,7 +46,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Setup not found or not live' }, { status: 404 });
     }
 
-    if (setup.creator_id === body.buyer_user_id) {
+    if (setup.creator_id === buyerUserId) {
       return NextResponse.json({ error: 'Cannot buy your own setup' }, { status: 400 });
     }
 
@@ -89,7 +93,7 @@ export async function POST(req: NextRequest) {
       cancel_url: `${appUrl}/cancel`,
       metadata: {
         setup_id: setup.id,
-        buyer_user_id: body.buyer_user_id,
+        buyer_user_id: buyerUserId,
         creator_id: setup.creator_id,
         platform_fee_cents: platformFee.toString(),
         creator_stripe_account: creator.stripe_account_id,
@@ -98,7 +102,7 @@ export async function POST(req: NextRequest) {
     });
 
     await supabase.from('purchases').insert({
-      user_id: body.buyer_user_id,
+      user_id: buyerUserId,
       setup_id: setup.id,
       amount_cents: setup.price_cents,
       platform_fee_cents: platformFee,

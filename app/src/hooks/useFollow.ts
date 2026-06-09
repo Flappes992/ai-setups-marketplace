@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/auth/useAuth';
+import { evaluateAchievementsFor } from '@/hooks/useAchievements';
 
 const listeners = new Set<() => void>();
 function emit() {
@@ -56,6 +57,7 @@ export function useFollow(creatorId: string | undefined): UseFollowResult {
         setFollowing(false);
         return;
       }
+      evaluateAchievementsFor(myId);
     } else {
       const { error } = await supabase
         .from('follows')

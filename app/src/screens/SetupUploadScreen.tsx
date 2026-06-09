@@ -11,6 +11,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -19,15 +20,131 @@ import * as VideoThumbnails from 'expo-video-thumbnails';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { AssetType } from '@/types/database';
+import type {
+  AssetType,
+  BrainVaultType,
+  ClaudeCommand,
+  ClaudeAgent,
+  ClaudeTargetEnv,
+} from '@/types/database';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 import { useAuth } from '@/auth/useAuth';
 import { supabase } from '@/services/supabase';
 import { uploadFileToStorage } from '@/services/storage';
 import { useSetups } from '@/hooks/useSetups';
 import { useMyTier } from '@/hooks/useMyTier';
+import { evaluateAchievementsFor } from '@/hooks/useAchievements';
+import { CreatorUploadGuide } from '@/components/CreatorUploadGuide';
+import { BRAND } from '@/theme/ThemeProvider';
 
 const DRAFT_KEY = 'setiq.upload.draft.v1';
+
+type TipKey =
+  | 'setup-art'
+  | 'title'
+  | 'description'
+  | 'tags'
+  | 'asset-type'
+  | 'asset-url'
+  | 'bundle-file'
+  | 'brainpack-file'
+  | 'vault-type'
+  | 'note-count'
+  | 'folder-tree'
+  | 'cp-targets'
+  | 'cp-persona'
+  | 'cp-commands'
+  | 'cp-agents'
+  | 'price'
+  | 'roi';
+
+const FIELD_TIPS: Record<TipKey, { title: string; what: string; why: string }> = {
+  'setup-art': {
+    title: 'Setup-Art',
+    what: 'Drei verschiedene Pakete: Standard (Klonbare Templates oder PDF-Bundles), BrainPack (Vault-Knowledge), ClaudePack (Personas + Commands + Subagents).',
+    why: 'Die richtige Wahl bestimmt wie dein Setup im Marketplace präsentiert wird — Käufer filtern danach und sehen passende Vorschau-Karten. Falsch eingeordnet = niemand findet es.',
+  },
+  title: {
+    title: 'Titel',
+    what: 'Max 80 Zeichen. Der erste und manchmal einzige Text den Käufer im Feed lesen.',
+    why: 'Konkret + Nutzen schlägt clever. „Cold-Email Closer GPT" konvertiert 2–3× besser als „Mein AI-Tool". Im Feed entscheiden die ersten 5 Worte ob jemand stoppt oder weiterswipt.',
+  },
+  description: {
+    title: 'Beschreibung',
+    what: 'Min 20, max 500 Zeichen. Erscheint auf der Detail-Seite unter dem Video.',
+    why: 'Beantworte „was kriege ich nach dem Kauf?" — nicht „was kann das Setup?". Käufer entscheidet hier ob er den Kauf-Button drückt. Klare Liste schlägt Marketing-Bla.',
+  },
+  tags: {
+    title: 'Tags',
+    what: 'Komma-getrennte Stichwörter. Mind. 1, am besten 3-5.',
+    why: 'Tags steuern wo dein Setup auftaucht: in der Suche, im Concierge-Empfehlungssystem, in Trending. Ohne passende Tags wirst du nur gefunden wenn jemand exakt deinen Titel sucht.',
+  },
+  'asset-type': {
+    title: 'Asset-Typ',
+    what: 'Klonbares Template = ein Link (z.B. Custom-GPT-URL). PDF/Video-Bundle = du lädst die Datei hoch.',
+    why: 'Klonbar = sofort einsetzbar nach Kauf, niedrigere Support-Last. Bundles haben höhere Preis-Akzeptanz aber mehr Käufer-Fragen.',
+  },
+  'asset-url': {
+    title: 'Klonbarer Link',
+    what: 'Die URL die der Käufer nach Kauf bekommt — z.B. ein Custom-GPT-Link, ein Notion-Template-Share-Link oder ein Make-Szenario-Klon-Link.',
+    why: 'Stelle sicher dass der Link öffentlich „klonbar" ist (nicht privat). Falscher Link = sofort Refund + 1-Stern-Review.',
+  },
+  'bundle-file': {
+    title: 'Bundle-Datei',
+    what: 'PDF (Tutorials, Frameworks) oder Video (Walkthroughs, Demos).',
+    why: 'Bundles können €19–99 verkaufen — höhere Margen. Aber: Mehrwert muss über dem Video deutlich sein. Wir hosten die Datei für dich.',
+  },
+  'brainpack-file': {
+    title: 'BrainPack-Datei',
+    what: 'Dein Vault als .zip — Obsidian-Ordner, Logseq-Graph, etc. Ohne persönliche Notizen, nur die Struktur + Templates.',
+    why: 'Käufer bekommen sofort einen einsatzfähigen Knowledge-Vault den sie an Claude/Cursor andocken. Hohe Wertwahrnehmung, da Käufer-Zeitersparnis schnell sichtbar.',
+  },
+  'vault-type': {
+    title: 'Vault-Typ',
+    what: 'Welches Tool wurde verwendet — Obsidian, Logseq oder ein anderes Markdown-Tool.',
+    why: 'Käufer filtern nach Tool. Wer kein Obsidian benutzt, kauft kein Obsidian-Vault. Klare Angabe → richtige Käufer → weniger Refunds.',
+  },
+  'note-count': {
+    title: 'Anzahl Notizen',
+    what: 'Wie viele Notizen sind im Vault enthalten.',
+    why: 'Käufer wollen wissen ob sie ein „leeres Template" oder ein „kuratiertes Wissens-System" kaufen. 50+ Notizen rechtfertigen höhere Preise (€50+).',
+  },
+  'folder-tree': {
+    title: 'Ordner-Tree',
+    what: 'Die Hauptordner-Struktur als Textliste (eine Zeile pro Ordner).',
+    why: 'Schafft Vertrauen: Käufer sieht VOR Kauf wie der Vault aufgebaut ist. Black-Box-Käufe konvertieren schlecht; Transparenz = Conversion.',
+  },
+  'cp-targets': {
+    title: 'Funktioniert in',
+    what: 'Wo dein Pack einsetzbar ist: Claude Code (CLI), Claude.ai Projects (Web), Claude Desktop.',
+    why: 'Käufer wählen je nach Tool. Multi-Target erhöht die Käuferzahl. Falsch deklariert = Refund-Risiko.',
+  },
+  'cp-persona': {
+    title: 'Persona',
+    what: 'System-Prompt der Claudes Verhalten prägt. Project-Scope = nur in einem Projekt, Global = in jeder Claude-Session.',
+    why: 'Eine gute Persona spart Käufern wochenlanges Prompt-Engineering. Sie wirkt jedes Mal wenn Claude antwortet — der höchste Hebel-Effekt überhaupt.',
+  },
+  'cp-commands': {
+    title: 'Slash-Commands',
+    what: 'Benutzerdefinierte Kürzel wie /standup, /review-pr. Trigger + Markdown-Body. Max 5 pro Pack.',
+    why: 'Slash-Commands automatisieren wiederkehrende Aufgaben. Käufer denken in „Minuten gespart pro Tag" — gut gebaute Commands zahlen sich täglich zurück.',
+  },
+  'cp-agents': {
+    title: 'Subagents',
+    what: 'Spezialisierte Agents mit eigenem Auftrag (z.B. code-reviewer, seo-writer). Max 3 pro Pack.',
+    why: 'Subagents = parallel arbeitende Spezialisten. Wer einen guten code-reviewer hat, schraubt seine PR-Quality dauerhaft hoch. Hohe Recurring-Value-Wahrnehmung.',
+  },
+  price: {
+    title: 'Preis',
+    what: 'In Euro, Komma als Dezimaltrenner. Mindestpreis 5,00 € (Creator+ darf auch 0 €).',
+    why: 'Sweet-Spot für ersten Verkauf: 9–19 €. Zu billig = Käufer zweifeln an Qualität. Zu teuer = niemand riskiert. Nach 5 Verkäufen iterierst du nach oben.',
+  },
+  roi: {
+    title: 'ROI für Käufer',
+    what: 'Wie viele Minuten dein Setup pro Nutzung spart und wie oft es genutzt wird.',
+    why: 'Auf der Detail-Seite wird daraus „Du sparst X Std/Monat" angezeigt — extrem starker Conversion-Trigger. Setups mit ROI-Angabe konvertieren laut interner Daten ~30 % besser.',
+  },
+};
 interface UploadDraft {
   title: string;
   description: string;
@@ -55,6 +172,29 @@ export function SetupUploadScreen() {
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [bundleUri, setBundleUri] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [roiMinutes, setRoiMinutes] = useState('');
+  const [roiFrequency, setRoiFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'one_time' | null>(
+    null,
+  );
+  const [mode, setMode] = useState<'standard' | 'brainpack' | 'claudepack'>('standard');
+  const [brainpackUri, setBrainpackUri] = useState<string | null>(null);
+  const [bpVaultType, setBpVaultType] = useState<BrainVaultType>('obsidian');
+  const [bpNoteCount, setBpNoteCount] = useState('');
+  const [bpTreeInput, setBpTreeInput] = useState('');
+  // ClaudePack state
+  const [cpPersonaTitle, setCpPersonaTitle] = useState('');
+  const [cpPersonaBody, setCpPersonaBody] = useState('');
+  const [cpPersonaScope, setCpPersonaScope] = useState<'project' | 'global'>('project');
+  const [cpCommands, setCpCommands] = useState<ClaudeCommand[]>([
+    { trigger: '', summary: '', body: '' },
+  ]);
+  const [cpAgents, setCpAgents] = useState<ClaudeAgent[]>([]);
+  const [cpTargets, setCpTargets] = useState<ClaudeTargetEnv[]>([
+    'claude-code',
+    'claude-projects',
+  ]);
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [activeTip, setActiveTip] = useState<TipKey | null>(null);
   const draftLoaded = useRef(false);
 
   const topTags = useMemo(() => {
@@ -112,21 +252,75 @@ export function SetupUploadScreen() {
     player.muted = true;
   });
 
-  const tagsArray = tagsInput
-    .split(',')
-    .map((t) => t.trim().toLowerCase())
-    .filter((t) => t.length > 0);
+  const tagsArray = (() => {
+    const explicit = tagsInput
+      .split(',')
+      .map((t) => t.trim().toLowerCase())
+      .filter((t) => t.length > 0);
+    if (mode === 'brainpack') {
+      const auto = ['brainpack', `vault-${bpVaultType}`];
+      for (const t of auto) if (!explicit.includes(t)) explicit.push(t);
+    }
+    if (mode === 'claudepack') {
+      const auto = ['claudepack', 'claude'];
+      for (const t of cpTargets) auto.push(t);
+      for (const t of auto) if (!explicit.includes(t)) explicit.push(t);
+    }
+    return explicit;
+  })();
 
   const priceCents = Math.round(parseFloat(priceEur.replace(',', '.')) * 100) || 0;
 
   const minPrice = isPlusCreator ? 0 : 500;
+  const bpNoteCountNum = Number(bpNoteCount) || 0;
+  const validBrainpack = !!brainpackUri && bpNoteCountNum >= 1;
+
+  const validCommands = cpCommands.filter(
+    (c) => c.trigger.trim().length > 0 && c.body.trim().length > 0,
+  );
+  const validAgents = cpAgents.filter(
+    (a) => a.name.trim().length > 0 && a.body.trim().length > 0,
+  );
+  const hasPersona = cpPersonaBody.trim().length >= 20 && cpPersonaTitle.trim().length > 0;
+  const validClaudepack =
+    cpTargets.length > 0 && (hasPersona || validCommands.length > 0 || validAgents.length > 0);
+
+  function updateCommand(i: number, patch: Partial<ClaudeCommand>) {
+    setCpCommands((arr) => arr.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
+  }
+  function addCommand() {
+    if (cpCommands.length >= 5) return;
+    setCpCommands((arr) => [...arr, { trigger: '', summary: '', body: '' }]);
+  }
+  function removeCommand(i: number) {
+    setCpCommands((arr) => arr.filter((_, idx) => idx !== i));
+  }
+  function updateAgent(i: number, patch: Partial<ClaudeAgent>) {
+    setCpAgents((arr) => arr.map((a, idx) => (idx === i ? { ...a, ...patch } : a)));
+  }
+  function addAgent() {
+    if (cpAgents.length >= 3) return;
+    setCpAgents((arr) => [...arr, { name: '', summary: '', body: '' }]);
+  }
+  function removeAgent(i: number) {
+    setCpAgents((arr) => arr.filter((_, idx) => idx !== i));
+  }
+  function toggleTarget(t: ClaudeTargetEnv) {
+    setCpTargets((arr) => (arr.includes(t) ? arr.filter((x) => x !== t) : [...arr, t]));
+  }
+  const validStandard =
+    assetType === 'clonable' ? assetUrl.startsWith('https://') : !!bundleUri;
   const valid =
     !!videoUri &&
     title.trim().length >= 3 &&
     description.trim().length >= 20 &&
     tagsArray.length >= 1 &&
     priceCents >= minPrice &&
-    (assetType === 'clonable' ? assetUrl.startsWith('https://') : !!bundleUri);
+    (mode === 'brainpack'
+      ? validBrainpack
+      : mode === 'claudepack'
+        ? validClaudepack
+        : validStandard);
 
   async function pickVideo() {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -146,6 +340,16 @@ export function SetupUploadScreen() {
     });
     if (!result.canceled && result.assets[0]) {
       setBundleUri(result.assets[0].uri);
+    }
+  }
+
+  async function pickBrainpack() {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['application/zip', 'application/x-zip-compressed', '*/*'],
+      copyToCacheDirectory: true,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setBrainpackUri(result.assets[0].uri);
     }
   }
 
@@ -172,7 +376,67 @@ export function SetupUploadScreen() {
       );
 
       let finalAssetUrl: string;
-      if (assetType === 'tutorial_bundle') {
+      let finalAssetType: AssetType = assetType;
+      let assetSubtype: 'brainpack' | 'claudepack' | null = null;
+      let brainManifest: object | null = null;
+      let claudeManifest: object | null = null;
+
+      if (mode === 'claudepack') {
+        finalAssetUrl = '';
+        finalAssetType = 'clonable';
+        assetSubtype = 'claudepack';
+        const packId = title
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+          .slice(0, 48) || `pack-${Date.now()}`;
+        claudeManifest = {
+          id: packId,
+          manifest_version: 1,
+          target_envs: cpTargets,
+          personas: hasPersona
+            ? [
+                {
+                  title: cpPersonaTitle.trim(),
+                  scope: cpPersonaScope,
+                  body: cpPersonaBody.trim(),
+                },
+              ]
+            : [],
+          commands: validCommands.map((c) => ({
+            trigger: c.trigger.trim().startsWith('/') ? c.trigger.trim() : '/' + c.trigger.trim(),
+            summary: c.summary.trim(),
+            body: c.body.trim(),
+          })),
+          agents: validAgents.map((a) => ({
+            name: a.name.trim(),
+            summary: a.summary.trim(),
+            body: a.body.trim(),
+          })),
+        };
+      } else if (mode === 'brainpack') {
+        if (!brainpackUri) throw new Error('BrainPack-Datei fehlt');
+        const bpUpload = await uploadFileToStorage(
+          'setup-assets',
+          brainpackUri,
+          session.user.id,
+          'zip' as 'pdf',
+        );
+        finalAssetUrl = bpUpload.publicUrl;
+        finalAssetType = 'clonable';
+        assetSubtype = 'brainpack';
+        brainManifest = {
+          vault_type: bpVaultType,
+          structure: 'custom',
+          note_count: bpNoteCountNum,
+          folder_tree_preview: bpTreeInput
+            .split('\n')
+            .map((s) => s.replace(/\t/g, '  '))
+            .filter((s) => s.trim().length > 0)
+            .slice(0, 50),
+        };
+      } else if (assetType === 'tutorial_bundle') {
         if (!bundleUri) throw new Error('Bundle-Datei fehlt');
         const assetUpload = await uploadFileToStorage(
           'setup-assets',
@@ -191,16 +455,22 @@ export function SetupUploadScreen() {
         description: description.trim(),
         video_url: videoUpload.publicUrl,
         video_thumbnail: thumbnailUpload.publicUrl,
-        asset_type: assetType,
+        asset_type: finalAssetType,
         asset_url: finalAssetUrl,
         price_cents: priceCents,
         currency: 'EUR',
         tags: tagsArray,
         status: 'live',
+        roi_time_saved_minutes: roiMinutes ? Number(roiMinutes) : null,
+        roi_use_frequency: roiFrequency,
+        asset_subtype: assetSubtype,
+        brain_manifest: brainManifest,
+        claude_manifest: claudeManifest,
       });
       if (insertError) throw new Error(insertError.message);
 
       await AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
+      evaluateAchievementsFor(session.user.id);
       Alert.alert('Live!', 'Dein Setup ist veröffentlicht.', [
         { text: 'OK', onPress: () => navigation.popToTop() },
       ]);
@@ -218,8 +488,63 @@ export function SetupUploadScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
+        <CreatorUploadGuide forceVisible={guideOpen} onClose={() => setGuideOpen(false)} />
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>Neues Setup</Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.title}>Neues Setup</Text>
+            <TouchableOpacity
+              onPress={() => setGuideOpen(true)}
+              style={styles.helpBtn}
+              accessibilityLabel="show-upload-guide"
+            >
+              <Text style={styles.helpBtnText}>?</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Section label="Setup-Art" onTipPress={() => setActiveTip('setup-art')}>
+            <View style={styles.switchRow}>
+              <TouchableOpacity
+                onPress={() => setMode('standard')}
+                style={[styles.switchOption, mode === 'standard' && styles.switchActive]}
+                accessibilityLabel="mode-standard"
+              >
+                <Text
+                  style={[styles.switchText, mode === 'standard' && styles.switchTextActive]}
+                >
+                  Standard
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setMode('brainpack')}
+                style={[styles.switchOption, mode === 'brainpack' && styles.switchActive]}
+                accessibilityLabel="mode-brainpack"
+              >
+                <Text
+                  style={[styles.switchText, mode === 'brainpack' && styles.switchTextActive]}
+                >
+                  🧠 BrainPack
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setMode('claudepack')}
+                style={[styles.switchOption, mode === 'claudepack' && styles.switchActive]}
+                accessibilityLabel="mode-claudepack"
+              >
+                <Text
+                  style={[styles.switchText, mode === 'claudepack' && styles.switchTextActive]}
+                >
+                  🪐 ClaudePack
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.hint}>
+              {mode === 'brainpack'
+                ? 'Komplettes Vault (Obsidian / Logseq / …) für AI-Kontext'
+                : mode === 'claudepack'
+                  ? 'Persona + Slash-Commands + Subagents für Claude'
+                  : 'Custom GPT, Prompt-Stack, n8n-Workflow, Tutorial-Bundle'}
+            </Text>
+          </Section>
 
           <Section label="Video">
             {videoUri ? (
@@ -244,9 +569,12 @@ export function SetupUploadScreen() {
                 <Text style={styles.pickerHint}>max. 60 Sek vertikal</Text>
               </TouchableOpacity>
             )}
+            <Text style={styles.videoHint}>
+              Präsentiere dein Value kurz und knapp mit einem Video.
+            </Text>
           </Section>
 
-          <Section label="Titel">
+          <Section label="Titel" onTipPress={() => setActiveTip('title')}>
             <TextInput
               selectionColor="#2DD4BF"
               placeholder="z.B. Cold-Email Automation mit Claude"
@@ -259,7 +587,7 @@ export function SetupUploadScreen() {
             <Text style={styles.hint}>{title.length}/80</Text>
           </Section>
 
-          <Section label="Beschreibung">
+          <Section label="Beschreibung" onTipPress={() => setActiveTip('description')}>
             <TextInput
               selectionColor="#2DD4BF"
               placeholder="Was macht dein Setup besonders?"
@@ -273,7 +601,7 @@ export function SetupUploadScreen() {
             <Text style={styles.hint}>{description.length}/500 (min. 20)</Text>
           </Section>
 
-          <Section label="Tags (Komma-getrennt)">
+          <Section label="Tags (Komma-getrennt)" onTipPress={() => setActiveTip('tags')}>
             <TextInput
               selectionColor="#2DD4BF"
               placeholder="z.B. claude, n8n, automation"
@@ -315,68 +643,349 @@ export function SetupUploadScreen() {
             )}
           </Section>
 
-          <Section label="Asset-Typ">
-            <View style={styles.switchRow}>
-              <TouchableOpacity
-                onPress={() => setAssetType('clonable')}
-                style={[styles.switchOption, assetType === 'clonable' && styles.switchActive]}
-                accessibilityLabel="upload-type-clonable"
-              >
-                <Text
-                  style={[styles.switchText, assetType === 'clonable' && styles.switchTextActive]}
-                >
-                  Klonbares Template
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setAssetType('tutorial_bundle')}
-                style={[
-                  styles.switchOption,
-                  assetType === 'tutorial_bundle' && styles.switchActive,
-                ]}
-                accessibilityLabel="upload-type-bundle"
-              >
-                <Text
-                  style={[
-                    styles.switchText,
-                    assetType === 'tutorial_bundle' && styles.switchTextActive,
-                  ]}
-                >
-                  PDF + Video Bundle
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Section>
+          {mode === 'standard' && (
+            <>
+              <Section label="Asset-Typ" onTipPress={() => setActiveTip('asset-type')}>
+                <View style={styles.switchRow}>
+                  <TouchableOpacity
+                    onPress={() => setAssetType('clonable')}
+                    style={[styles.switchOption, assetType === 'clonable' && styles.switchActive]}
+                    accessibilityLabel="upload-type-clonable"
+                  >
+                    <Text
+                      style={[
+                        styles.switchText,
+                        assetType === 'clonable' && styles.switchTextActive,
+                      ]}
+                    >
+                      Klonbares Template
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setAssetType('tutorial_bundle')}
+                    style={[
+                      styles.switchOption,
+                      assetType === 'tutorial_bundle' && styles.switchActive,
+                    ]}
+                    accessibilityLabel="upload-type-bundle"
+                  >
+                    <Text
+                      style={[
+                        styles.switchText,
+                        assetType === 'tutorial_bundle' && styles.switchTextActive,
+                      ]}
+                    >
+                      PDF + Video Bundle
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </Section>
 
-          {assetType === 'clonable' ? (
-            <Section label="Klonbarer Link (https://...)">
-              <TextInput
-                selectionColor="#2DD4BF"
-                placeholder="https://chat.openai.com/g/g-XXXX"
-                value={assetUrl}
-                onChangeText={setAssetUrl}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="url"
-                style={styles.input}
-                accessibilityLabel="upload-asset-url"
-              />
-            </Section>
-          ) : (
-            <Section label="Bundle-Datei (PDF oder Video)">
-              <TouchableOpacity
-                onPress={pickBundle}
-                style={styles.pickerArea}
-                accessibilityLabel="upload-pick-bundle"
-              >
-                <Text style={styles.pickerText}>
-                  {bundleUri ? 'Datei gewählt — ändern' : 'PDF oder Video wählen'}
-                </Text>
-              </TouchableOpacity>
-            </Section>
+              {assetType === 'clonable' ? (
+                <Section
+                  label="Klonbarer Link (https://...)"
+                  onTipPress={() => setActiveTip('asset-url')}
+                >
+                  <TextInput
+                    selectionColor="#2DD4BF"
+                    placeholder="https://chat.openai.com/g/g-XXXX"
+                    value={assetUrl}
+                    onChangeText={setAssetUrl}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="url"
+                    style={styles.input}
+                    accessibilityLabel="upload-asset-url"
+                  />
+                </Section>
+              ) : (
+                <Section
+                  label="Bundle-Datei (PDF oder Video)"
+                  onTipPress={() => setActiveTip('bundle-file')}
+                >
+                  <TouchableOpacity
+                    onPress={pickBundle}
+                    style={styles.pickerArea}
+                    accessibilityLabel="upload-pick-bundle"
+                  >
+                    <Text style={styles.pickerText}>
+                      {bundleUri ? 'Datei gewählt — ändern' : 'PDF oder Video wählen'}
+                    </Text>
+                  </TouchableOpacity>
+                </Section>
+              )}
+            </>
           )}
 
-          <Section label="Preis (€)">
+          {mode === 'brainpack' && (
+            <>
+              <Section
+                label="BrainPack-Datei (.zip)"
+                onTipPress={() => setActiveTip('brainpack-file')}
+              >
+                <TouchableOpacity
+                  onPress={pickBrainpack}
+                  style={styles.pickerArea}
+                  accessibilityLabel="upload-pick-brainpack"
+                >
+                  <Text style={styles.pickerText}>
+                    {brainpackUri ? 'BrainPack gewählt — ändern' : 'Vault-Ordner als .zip wählen'}
+                  </Text>
+                  <Text style={styles.pickerHint}>
+                    Pack dein Vault als .zip (ohne persönliche Notizen)
+                  </Text>
+                </TouchableOpacity>
+              </Section>
+
+              <Section label="Vault-Typ" onTipPress={() => setActiveTip('vault-type')}>
+                <View style={styles.switchRow}>
+                  {(
+                    [
+                      ['obsidian', 'Obsidian'],
+                      ['logseq', 'Logseq'],
+                      ['custom', 'Andere'],
+                    ] as const
+                  ).map(([val, label]) => (
+                    <TouchableOpacity
+                      key={val}
+                      onPress={() => setBpVaultType(val)}
+                      style={[styles.switchOption, bpVaultType === val && styles.switchActive]}
+                      accessibilityLabel={`bp-vault-${val}`}
+                    >
+                      <Text
+                        style={[
+                          styles.switchText,
+                          bpVaultType === val && styles.switchTextActive,
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </Section>
+
+              <Section label="Anzahl Notizen" onTipPress={() => setActiveTip('note-count')}>
+                <TextInput
+                  selectionColor="#2DD4BF"
+                  placeholder="z.B. 84"
+                  value={bpNoteCount}
+                  onChangeText={setBpNoteCount}
+                  keyboardType="number-pad"
+                  style={styles.input}
+                  accessibilityLabel="bp-note-count"
+                />
+              </Section>
+
+              <Section
+                label="Ordner-Tree-Preview (optional, eine pro Zeile)"
+                onTipPress={() => setActiveTip('folder-tree')}
+              >
+                <TextInput
+                  selectionColor="#2DD4BF"
+                  placeholder={'00 Inbox\n01 Projects\n02 Areas\n03 Resources\n04 Archive'}
+                  value={bpTreeInput}
+                  onChangeText={setBpTreeInput}
+                  multiline
+                  style={[styles.input, styles.textarea]}
+                  autoCapitalize="none"
+                  accessibilityLabel="bp-tree"
+                />
+              </Section>
+            </>
+          )}
+
+          {mode === 'claudepack' && (
+            <>
+              <Section
+                label="Funktioniert in (mind. 1)"
+                onTipPress={() => setActiveTip('cp-targets')}
+              >
+                <View style={styles.switchRow}>
+                  {(
+                    [
+                      ['claude-code', 'Claude Code'],
+                      ['claude-projects', 'Projects'],
+                      ['claude-desktop', 'Desktop'],
+                    ] as const
+                  ).map(([val, label]) => (
+                    <TouchableOpacity
+                      key={val}
+                      onPress={() => toggleTarget(val)}
+                      style={[styles.switchOption, cpTargets.includes(val) && styles.switchActive]}
+                      accessibilityLabel={`cp-target-${val}`}
+                    >
+                      <Text
+                        style={[
+                          styles.switchText,
+                          cpTargets.includes(val) && styles.switchTextActive,
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </Section>
+
+              <Section label="🧑 Persona (optional)" onTipPress={() => setActiveTip('cp-persona')}>
+                <TextInput
+                  selectionColor="#2DD4BF"
+                  placeholder={'Persona-Name, z.B. „Cold-Email Closer"'}
+                  value={cpPersonaTitle}
+                  onChangeText={setCpPersonaTitle}
+                  style={styles.input}
+                  accessibilityLabel="cp-persona-title"
+                  maxLength={60}
+                />
+                <View style={[styles.switchRow, { marginTop: 6 }]}>
+                  {(
+                    [
+                      ['project', 'Projekt-Scope'],
+                      ['global', 'Global (CLAUDE.md)'],
+                    ] as const
+                  ).map(([val, label]) => (
+                    <TouchableOpacity
+                      key={val}
+                      onPress={() => setCpPersonaScope(val)}
+                      style={[styles.switchOption, cpPersonaScope === val && styles.switchActive]}
+                      accessibilityLabel={`cp-persona-scope-${val}`}
+                    >
+                      <Text
+                        style={[
+                          styles.switchText,
+                          cpPersonaScope === val && styles.switchTextActive,
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <TextInput
+                  selectionColor="#2DD4BF"
+                  placeholder={'Du bist ein erfahrener … (mind. 20 Zeichen wenn ausgefüllt)'}
+                  value={cpPersonaBody}
+                  onChangeText={setCpPersonaBody}
+                  multiline
+                  style={[styles.input, styles.textarea, { marginTop: 6 }]}
+                  accessibilityLabel="cp-persona-body"
+                />
+              </Section>
+
+              <Section
+                label={`⚡ Slash-Commands (${cpCommands.length}/5)`}
+                onTipPress={() => setActiveTip('cp-commands')}
+              >
+                {cpCommands.map((c, i) => (
+                  <View key={i} style={styles.cpItemBox}>
+                    <View style={styles.cpItemHeader}>
+                      <Text style={styles.cpItemLabel}>Command {i + 1}</Text>
+                      {cpCommands.length > 1 && (
+                        <TouchableOpacity
+                          onPress={() => removeCommand(i)}
+                          accessibilityLabel={`cp-cmd-remove-${i}`}
+                        >
+                          <Text style={styles.cpRemoveText}>entfernen</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    <TextInput
+                      selectionColor="#2DD4BF"
+                      placeholder="Trigger, z.B. /standup"
+                      value={c.trigger}
+                      onChangeText={(t) => updateCommand(i, { trigger: t })}
+                      autoCapitalize="none"
+                      style={styles.input}
+                      accessibilityLabel={`cp-cmd-trigger-${i}`}
+                    />
+                    <TextInput
+                      selectionColor="#2DD4BF"
+                      placeholder="Kurzbeschreibung"
+                      value={c.summary}
+                      onChangeText={(t) => updateCommand(i, { summary: t })}
+                      style={[styles.input, { marginTop: 6 }]}
+                      accessibilityLabel={`cp-cmd-summary-${i}`}
+                    />
+                    <TextInput
+                      selectionColor="#2DD4BF"
+                      placeholder={'Command-Body als Markdown\n\nz.B. "Du bist ein Standup-Bot. Fasse meinen Tag zusammen…"'}
+                      value={c.body}
+                      onChangeText={(t) => updateCommand(i, { body: t })}
+                      multiline
+                      style={[styles.input, styles.textarea, { marginTop: 6 }]}
+                      accessibilityLabel={`cp-cmd-body-${i}`}
+                    />
+                  </View>
+                ))}
+                {cpCommands.length < 5 && (
+                  <TouchableOpacity
+                    onPress={addCommand}
+                    style={styles.cpAddBtn}
+                    accessibilityLabel="cp-cmd-add"
+                  >
+                    <Text style={styles.cpAddText}>+ Command hinzufügen</Text>
+                  </TouchableOpacity>
+                )}
+              </Section>
+
+              <Section
+                label={`🤖 Subagents (${cpAgents.length}/3)`}
+                onTipPress={() => setActiveTip('cp-agents')}
+              >
+                {cpAgents.map((a, i) => (
+                  <View key={i} style={styles.cpItemBox}>
+                    <View style={styles.cpItemHeader}>
+                      <Text style={styles.cpItemLabel}>Agent {i + 1}</Text>
+                      <TouchableOpacity
+                        onPress={() => removeAgent(i)}
+                        accessibilityLabel={`cp-agent-remove-${i}`}
+                      >
+                        <Text style={styles.cpRemoveText}>entfernen</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <TextInput
+                      selectionColor="#2DD4BF"
+                      placeholder="Name, z.B. code-reviewer"
+                      value={a.name}
+                      onChangeText={(t) => updateAgent(i, { name: t })}
+                      autoCapitalize="none"
+                      style={styles.input}
+                      accessibilityLabel={`cp-agent-name-${i}`}
+                    />
+                    <TextInput
+                      selectionColor="#2DD4BF"
+                      placeholder="Kurzbeschreibung"
+                      value={a.summary}
+                      onChangeText={(t) => updateAgent(i, { summary: t })}
+                      style={[styles.input, { marginTop: 6 }]}
+                      accessibilityLabel={`cp-agent-summary-${i}`}
+                    />
+                    <TextInput
+                      selectionColor="#2DD4BF"
+                      placeholder={'Agent-Body als Markdown (System-Prompt + Anweisungen)'}
+                      value={a.body}
+                      onChangeText={(t) => updateAgent(i, { body: t })}
+                      multiline
+                      style={[styles.input, styles.textarea, { marginTop: 6 }]}
+                      accessibilityLabel={`cp-agent-body-${i}`}
+                    />
+                  </View>
+                ))}
+                {cpAgents.length < 3 && (
+                  <TouchableOpacity
+                    onPress={addAgent}
+                    style={styles.cpAddBtn}
+                    accessibilityLabel="cp-agent-add"
+                  >
+                    <Text style={styles.cpAddText}>+ Subagent hinzufügen</Text>
+                  </TouchableOpacity>
+                )}
+              </Section>
+            </>
+          )}
+
+          <Section label="Preis (€)" onTipPress={() => setActiveTip('price')}>
             <TextInput
               selectionColor="#2DD4BF"
               placeholder="z.B. 29.00"
@@ -390,6 +999,47 @@ export function SetupUploadScreen() {
               {isPlusCreator
                 ? 'Creator+ Privileg: 0 € erlaubt (Community-Setup)'
                 : 'Mindestpreis: 5,00 €'}
+            </Text>
+          </Section>
+
+          <Section
+            label="ROI für Käufer (optional, aber Conversion-Booster)"
+            onTipPress={() => setActiveTip('roi')}
+          >
+            <TextInput
+              selectionColor="#2DD4BF"
+              placeholder="Minuten gespart pro Nutzung (z.B. 15)"
+              value={roiMinutes}
+              onChangeText={setRoiMinutes}
+              keyboardType="number-pad"
+              style={styles.input}
+              accessibilityLabel="upload-roi-minutes"
+            />
+            <View style={[styles.switchRow, { marginTop: 8 }]}>
+              {(
+                [
+                  ['daily', 'Täglich'],
+                  ['weekly', 'Wöchentlich'],
+                  ['monthly', 'Monatlich'],
+                  ['one_time', 'Einmalig'],
+                ] as const
+              ).map(([val, label]) => (
+                <TouchableOpacity
+                  key={val}
+                  onPress={() => setRoiFrequency(val)}
+                  style={[styles.switchOption, roiFrequency === val && styles.switchActive]}
+                  accessibilityLabel={`upload-roi-${val}`}
+                >
+                  <Text
+                    style={[styles.switchText, roiFrequency === val && styles.switchTextActive]}
+                  >
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.hint}>
+              Käufer sehen damit „Du sparst X Std/Monat" — krasser Sales-Trigger.
             </Text>
           </Section>
 
@@ -412,14 +1062,67 @@ export function SetupUploadScreen() {
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={activeTip !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setActiveTip(null)}
+        statusBarTranslucent
+      >
+        <TouchableOpacity
+          style={styles.tipBackdrop}
+          activeOpacity={1}
+          onPress={() => setActiveTip(null)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.tipSheet}>
+            {activeTip && (
+              <>
+                <Text style={styles.tipModalTitle}>{FIELD_TIPS[activeTip].title}</Text>
+                <Text style={styles.tipModalSubtitle}>Was du angeben sollst</Text>
+                <Text style={styles.tipModalBody}>{FIELD_TIPS[activeTip].what}</Text>
+                <Text style={styles.tipModalSubtitle}>Was es dir bringt</Text>
+                <Text style={styles.tipModalBody}>{FIELD_TIPS[activeTip].why}</Text>
+                <TouchableOpacity
+                  onPress={() => setActiveTip(null)}
+                  style={styles.tipClose}
+                  accessibilityLabel="close-tip"
+                >
+                  <Text style={styles.tipCloseText}>Verstanden</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
 
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
+function Section({
+  label,
+  children,
+  onTipPress,
+}: {
+  label: string;
+  children: React.ReactNode;
+  onTipPress?: () => void;
+}) {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionLabel}>{label}</Text>
+      <View style={styles.sectionLabelRow}>
+        <Text style={styles.sectionLabel}>{label}</Text>
+        {onTipPress && (
+          <TouchableOpacity
+            onPress={onTipPress}
+            style={styles.tipBtn}
+            accessibilityLabel={`tip-${label}`}
+            hitSlop={8}
+          >
+            <Text style={styles.tipBtnText}>?</Text>
+          </TouchableOpacity>
+        )}
+      </View>
       {children}
     </View>
   );
@@ -430,6 +1133,27 @@ const styles = StyleSheet.create({
   content: { padding: 20, gap: 8 },
   title: { fontSize: 28, fontWeight: '800', color: '#111', marginBottom: 12 },
   section: { marginBottom: 18 },
+  sectionLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  tipBtn: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#181B22',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tipBtnText: {
+    color: '#5EEAD4',
+    fontSize: 11,
+    fontWeight: '900',
+    lineHeight: 13,
+  },
+  videoHint: { fontSize: 12, color: '#888', marginTop: 6, fontStyle: 'italic' },
   sectionLabel: {
     fontSize: 12,
     fontWeight: '700',
@@ -506,4 +1230,87 @@ const styles = StyleSheet.create({
   submitDisabled: { backgroundColor: '#999' },
   submitText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   disclaimer: { fontSize: 12, color: '#888', marginTop: 12, textAlign: 'center' },
+  cpItemBox: {
+    backgroundColor: '#fafafa',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 8,
+    gap: 4,
+  },
+  cpItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  cpItemLabel: { fontSize: 11, fontWeight: '800', color: '#666', textTransform: 'uppercase' },
+  cpRemoveText: { fontSize: 11, color: '#cc3344', fontWeight: '700' },
+  cpAddBtn: {
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#ddd',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  cpAddText: { color: '#666', fontWeight: '700', fontSize: 13 },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  helpBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#181B22',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  helpBtnText: { color: BRAND.tealLight, fontSize: 16, fontWeight: '900' },
+  tipBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  tipSheet: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: '#181B22',
+    borderRadius: 18,
+    padding: 22,
+  },
+  tipModalTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 14,
+  },
+  tipModalSubtitle: {
+    color: BRAND.tealLight,
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: 6,
+    marginBottom: 6,
+  },
+  tipModalBody: {
+    color: '#ddd',
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+  tipClose: {
+    marginTop: 16,
+    backgroundColor: BRAND.teal,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  tipCloseText: { color: '#0b3b35', fontWeight: '800', fontSize: 14 },
 });

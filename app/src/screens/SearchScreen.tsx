@@ -26,6 +26,8 @@ type Nav = NativeStackNavigationProp<MainStackParamList, 'Search'>;
 const TRENDING_FALLBACK = ['claude', 'n8n', 'chatgpt', 'automation', 'notion', 'workflow'];
 
 const CATEGORIES = [
+  { key: 'claudepack', icon: '🪐', label: 'ClaudePacks', query: 'claudepack' },
+  { key: 'brainpack', icon: '🧠', label: 'BrainPacks', query: 'brainpack' },
   { key: 'gpt', icon: '🤖', label: 'Custom GPTs', query: 'gpt' },
   { key: 'prompt', icon: '✨', label: 'Prompt-Stacks', query: 'prompt' },
   { key: 'workflow', icon: '⚡', label: 'Workflows', query: 'workflow' },
@@ -99,6 +101,19 @@ export function SearchScreen() {
 
       {query.trim().length < 2 ? (
         <ScrollView contentContainerStyle={styles.trending} keyboardShouldPersistTaps="handled">
+          <TouchableOpacity
+            style={styles.conciergeBanner}
+            onPress={() => navigation.navigate('Concierge')}
+            accessibilityLabel="open-concierge"
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={styles.conciergeTitle}>🤖 Setup-Concierge</Text>
+              <Text style={styles.conciergeSub}>
+                Beschreib was du brauchst — KI findet das passende Setup
+              </Text>
+            </View>
+            <Text style={styles.conciergeArrow}>›</Text>
+          </TouchableOpacity>
           <Text style={styles.sectionTitle}>Entdecken</Text>
           <View style={styles.catGrid}>
             {CATEGORIES.map((c) => (
@@ -202,6 +217,18 @@ const styles = StyleSheet.create({
   },
   clearBtn: { fontSize: 18, color: '#999', paddingHorizontal: 8 },
   trending: { padding: 20 },
+  conciergeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#181B22',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+    gap: 12,
+  },
+  conciergeTitle: { color: '#5EEAD4', fontSize: 14, fontWeight: '800' },
+  conciergeSub: { color: '#fff', fontSize: 12, marginTop: 4, opacity: 0.85 },
+  conciergeArrow: { color: '#5EEAD4', fontSize: 24, fontWeight: '900' },
   sectionTitle: {
     fontSize: 12,
     fontWeight: '700',

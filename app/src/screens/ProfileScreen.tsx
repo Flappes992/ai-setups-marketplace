@@ -23,6 +23,7 @@ import { SetupGrid } from '@/components/SetupGrid';
 import { EmptyState } from '@/components/EmptyState';
 import { useTheme, BRAND } from '@/theme/ThemeProvider';
 import { getFollowerCount, getFollowingCount } from '@/hooks/useFollow';
+import { useProfileBadge } from '@/hooks/useProfileBadge';
 
 type ProfileNav = NativeStackNavigationProp<MainStackParamList, 'Tabs'>;
 
@@ -49,6 +50,13 @@ export function ProfileScreen() {
   const saved = useSavedSetups();
   const liked = useLikedSetups();
   const purchases = useMyPurchases();
+  const { markSeen: markProfileSeen } = useProfileBadge();
+
+  useFocusEffect(
+    useCallback(() => {
+      markProfileSeen();
+    }, [markProfileSeen]),
+  );
 
   const loadProfile = useCallback(async () => {
     if (!session?.user.id) return;
@@ -259,6 +267,25 @@ export function ProfileScreen() {
               Seit dem {joinedDateFull} auf der Überholspur
             </Text>
           )}
+
+          <View style={styles.quickRow}>
+            <TouchableOpacity
+              style={[styles.quickBtn, { backgroundColor: palette.surface }]}
+              onPress={() => navigation.navigate('Achievements')}
+              accessibilityLabel="achievements"
+            >
+              <Text style={styles.quickIcon}>🏆</Text>
+              <Text style={[styles.quickLabel, { color: palette.text }]}>Achievements</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.quickBtn, { backgroundColor: palette.surface }]}
+              onPress={() => navigation.navigate('Bundles')}
+              accessibilityLabel="bundles"
+            >
+              <Text style={styles.quickIcon}>📦</Text>
+              <Text style={[styles.quickLabel, { color: palette.text }]}>Bundles</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View
@@ -401,6 +428,18 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
     opacity: 0.7,
   },
+  quickRow: { flexDirection: 'row', gap: 10, marginTop: 16 },
+  quickBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  quickIcon: { fontSize: 18 },
+  quickLabel: { fontSize: 13, fontWeight: '700' },
   displayName: { fontSize: 22, fontWeight: '800', color: '#111' },
   username: { fontSize: 14, color: '#666', marginTop: 2 },
   bio: {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/services/supabase';
+import { evaluateAchievementsFor } from '@/hooks/useAchievements';
 
 export type PurchaseStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
@@ -35,8 +36,12 @@ export function usePurchase(setupId: string, userId: string | undefined): UsePur
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    setPurchase((data as PurchaseRow | null) ?? null);
+    const next = (data as PurchaseRow | null) ?? null;
+    setPurchase(next);
     setLoading(false);
+    if (next?.status === 'completed' && userId) {
+      evaluateAchievementsFor(userId);
+    }
   }, [setupId, userId]);
 
   useEffect(() => {

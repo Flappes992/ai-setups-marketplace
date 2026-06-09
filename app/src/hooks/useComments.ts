@@ -3,6 +3,13 @@ import { supabase } from '@/services/supabase';
 import { useAuth } from '@/auth/useAuth';
 import { getMutualBlockSet } from '@/hooks/useBlock';
 
+export type CommentAttachmentType = 'image' | 'gif';
+
+export interface CommentAttachment {
+  url: string;
+  type: CommentAttachmentType;
+}
+
 export interface Comment {
   id: string;
   userId: string;
@@ -14,6 +21,8 @@ export interface Comment {
   parentId: string | null;
   likeCount: number;
   likedByMe: boolean;
+  attachmentUrl: string | null;
+  attachmentType: CommentAttachmentType | null;
 }
 
 interface CommentRow {
@@ -22,6 +31,8 @@ interface CommentRow {
   body: string;
   created_at: string;
   parent_id: string | null;
+  attachment_url: string | null;
+  attachment_type: CommentAttachmentType | null;
 }
 
 interface ProfileLite {
@@ -36,7 +47,11 @@ interface UseCommentsResult {
   loading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
-  add: (body: string, parentId?: string | null) => Promise<{ ok: boolean; error?: string }>;
+  add: (
+    body: string,
+    parentId?: string | null,
+    attachment?: CommentAttachment,
+  ) => Promise<{ ok: boolean; error?: string }>;
   remove: (id: string) => Promise<void>;
   toggleLike: (id: string) => Promise<void>;
   report: (id: string, reason?: string) => Promise<void>;
@@ -53,7 +68,7 @@ export function useComments(setupId: string): UseCommentsResult {
     setError(null);
     const { data, error: fetchError } = await supabase
       .from('comments')
-      .select('id, user_id, body, created_at, parent_id')
+      .select('id, user_id, body, created_at, parent_id, attachment_url, attachment_type')
       .eq('setup_id', setupId)
       .order('created_at', { ascending: false });
 
@@ -118,6 +133,8 @@ export function useComments(setupId: string): UseCommentsResult {
           parentId: r.parent_id,
           likeCount: countMap.get(r.id) ?? 0,
           likedByMe: mineSet.has(r.id),
+          attachmentUrl: r.attachment_url,
+          attachmentType: r.attachment_type,
         };
       }),
     );
@@ -169,20 +186,27 @@ export function useComments(setupId: string): UseCommentsResult {
     async (
       body: string,
       parentId: string | null = null,
+      attachment?: CommentAttachment,
     ): Promise<{ ok: boolean; error?: string }> => {
       if (!myId) return { ok: false, error: 'Nicht eingeloggt' };
       const trimmed = body.trim();
-      if (!trimmed) return { ok: false, error: 'Leerer Kommentar' };
+      if (!trimmed && !attachment) return { ok: false, error: 'Leerer Kommentar' };
+
+      const insertPayload: Record<string, unknown> = {
+        setup_id: setupId,
+        user_id: myId,
+        body: trimmed || (attachment ? '📎' : ''),
+        parent_id: parentId,
+      };
+      if (attachment) {
+        insertPayload.attachment_url = attachment.url;
+        insertPayload.attachment_type = attachment.type;
+      }
 
       const { data, error: insertError } = await supabase
         .from('comments')
-        .insert({
-          setup_id: setupId,
-          user_id: myId,
-          body: trimmed,
-          parent_id: parentId,
-        })
-        .select('id, user_id, body, created_at, parent_id')
+        .insert(insertPayload)
+        .select('id, user_id, body, created_at, parent_id, attachment_url, attachment_type')
         .single();
 
       if (insertError || !data) {
@@ -191,13 +215,7 @@ export function useComments(setupId: string): UseCommentsResult {
         return { ok: false, error: msg };
       }
 
-      const inserted = data as {
-        id: string;
-        user_id: string;
-        body: string;
-        created_at: string;
-        parent_id: string | null;
-      };
+      const inserted = data as CommentRow;
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -221,6 +239,8 @@ export function useComments(setupId: string): UseCommentsResult {
         parentId: inserted.parent_id,
         likeCount: 0,
         likedByMe: false,
+        attachmentUrl: inserted.attachment_url,
+        attachmentType: inserted.attachment_type,
       };
       setComments((cs) => [newComment, ...cs]);
       return { ok: true };
