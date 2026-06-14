@@ -87,7 +87,7 @@ export function BundleCreateScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
       <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
         <Text style={[styles.title, { color: palette.text }]}>Neues Bundle</Text>
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   },
   checkSel: { backgroundColor: BRAND.teal, borderColor: BRAND.teal },
   checkMark: { color: '#0b3b35', fontSize: 12, fontWeight: '900' },
-  preview: { backgroundColor: '#181B22', padding: 14, borderRadius: 12, gap: 8 },
+  preview: { backgroundColor: '#181B22', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', padding: 14, borderRadius: 12, gap: 8 },
   previewTitle: { color: BRAND.tealLight, fontSize: 12, fontWeight: '800', letterSpacing: 0.4 },
   previewRow: { flexDirection: 'row', justifyContent: 'space-between' },
   previewLabel: { color: '#fff', fontSize: 13 },

@@ -12,6 +12,7 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { supabase } from '@/services/supabase';
 import { useTheme } from '@/theme/ThemeProvider';
 import { LEGAL_URLS } from '@/config/legal';
@@ -22,6 +23,7 @@ function isValidEmail(value: string): boolean {
 
 export function SignUpScreen() {
   const { palette } = useTheme();
+  const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -80,6 +82,14 @@ export function SignUpScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backRow}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityLabel="back"
+          >
+            <Text style={[styles.backRowIcon, { color: palette.text }]}>‹ Zurück</Text>
+          </TouchableOpacity>
           <Text style={[styles.title, { color: palette.text }]}>Konto erstellen</Text>
           <Text style={[styles.subtitle, { color: palette.textSecondary }]}>Entdecke und teile AI-Setups</Text>
 
@@ -179,6 +189,8 @@ export function SignUpScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { padding: 24, gap: 12 },
+  backRow: { alignSelf: 'flex-start', marginBottom: 4 },
+  backRowIcon: { fontSize: 16, fontWeight: '600' },
   title: { fontSize: 30, fontWeight: '800', color: '#111', marginBottom: 4 },
   subtitle: { fontSize: 15, color: '#666', marginBottom: 20 },
   input: {

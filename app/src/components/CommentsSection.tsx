@@ -16,7 +16,8 @@ import { useComments, Comment } from '@/hooks/useComments';
 import { useToast } from '@/components/Toast';
 import { ReportModal } from '@/components/ReportModal';
 import { supabase } from '@/services/supabase';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
+import type { Palette } from '@/theme/ThemeProvider';
 
 const MAX_COMMENT_LEN = 500;
 type SortMode = 'newest' | 'oldest';
@@ -45,6 +46,7 @@ interface ReplyTarget {
 }
 
 export function CommentsSection({ setupId, inputRef }: Props) {
+  const { palette } = useTheme();
   const { session } = useAuth();
   const userId = session?.user?.id;
   const toast = useToast();
@@ -164,8 +166,13 @@ export function CommentsSection({ setupId, inputRef }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.headRow}>
-        <Text style={styles.heading}>
-          Kommentare {comments.length > 0 && <Text style={styles.count}>· {comments.length}</Text>}
+        <Text style={[styles.heading, { color: palette.text }]}>
+          Kommentare{' '}
+          {comments.length > 0 && (
+            <Text style={[styles.count, { color: palette.textSecondary }]}>
+              · {comments.length}
+            </Text>
+          )}
         </Text>
         {tree.parents.length > 1 && (
           <View style={styles.sortRow}>
@@ -173,10 +180,20 @@ export function CommentsSection({ setupId, inputRef }: Props) {
               <TouchableOpacity
                 key={m}
                 onPress={() => setSort(m)}
-                style={[styles.sortChip, sort === m && styles.sortChipActive]}
+                style={[
+                  styles.sortChip,
+                  { backgroundColor: palette.surface },
+                  sort === m && styles.sortChipActive,
+                ]}
                 accessibilityLabel={`sort-${m}`}
               >
-                <Text style={[styles.sortText, sort === m && styles.sortTextActive]}>
+                <Text
+                  style={[
+                    styles.sortText,
+                    { color: palette.textSecondary },
+                    sort === m && styles.sortTextActive,
+                  ]}
+                >
                   {m === 'newest' ? 'Neuste' : 'Älteste'}
                 </Text>
               </TouchableOpacity>
@@ -187,11 +204,11 @@ export function CommentsSection({ setupId, inputRef }: Props) {
 
       {replyTo && (
         <View style={styles.replyBar}>
-          <Text style={styles.replyBarText}>
+          <Text style={[styles.replyBarText, { color: palette.textSecondary }]}>
             Antwort an <Text style={styles.replyBarUser}>@{replyTo.username}</Text>
           </Text>
           <TouchableOpacity onPress={() => setReplyTo(null)} accessibilityLabel="cancel-reply">
-            <Text style={styles.replyBarClear}>✕</Text>
+            <Text style={[styles.replyBarClear, { color: palette.textSecondary }]}>✕</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -202,28 +219,48 @@ export function CommentsSection({ setupId, inputRef }: Props) {
             ref={localInputRef}
             selectionColor={BRAND.teal}
             placeholder={placeholder}
+            placeholderTextColor={palette.textSecondary}
             value={input}
             onChangeText={setInput}
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: palette.surface,
+                borderColor: palette.border,
+                color: palette.text,
+              },
+            ]}
             maxLength={MAX_COMMENT_LEN}
             editable={!!userId && !submitting}
             accessibilityLabel="comment-input"
             multiline
           />
           {input.length > 0 && (
-            <Text style={[styles.charCount, nearLimit && styles.charCountWarn]}>{remaining}</Text>
+            <Text
+              style={[
+                styles.charCount,
+                { color: palette.textSecondary },
+                nearLimit && styles.charCountWarn,
+              ]}
+            >
+              {remaining}
+            </Text>
           )}
         </View>
         <TouchableOpacity
-          style={[styles.submit, (!input.trim() || submitting) && styles.submitDisabled]}
+          style={[
+            styles.submit,
+            { backgroundColor: palette.text },
+            (!input.trim() || submitting) && styles.submitDisabled,
+          ]}
           onPress={handleSubmit}
           disabled={!input.trim() || submitting}
           accessibilityLabel="comment-submit"
         >
           {submitting ? (
-            <ActivityIndicator color="#fff" size="small" />
+            <ActivityIndicator color={palette.bg} size="small" />
           ) : (
-            <Text style={styles.submitText}>Senden</Text>
+            <Text style={[styles.submitText, { color: palette.bg }]}>Senden</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -231,12 +268,15 @@ export function CommentsSection({ setupId, inputRef }: Props) {
       {loading ? (
         <ActivityIndicator style={{ marginTop: 12 }} />
       ) : tree.parents.length === 0 ? (
-        <Text style={styles.empty}>Noch keine Kommentare. Sei der erste.</Text>
+        <Text style={[styles.empty, { color: palette.textSecondary }]}>
+          Noch keine Kommentare. Sei der erste.
+        </Text>
       ) : (
         tree.parents.map((c) => (
           <View key={c.id}>
             <CommentRow
               comment={c}
+              palette={palette}
               onLike={() => toggleLike(c.id)}
               onReply={() => startReply(c)}
               onLongPress={() => handleLongPress(c)}
@@ -247,6 +287,7 @@ export function CommentsSection({ setupId, inputRef }: Props) {
                 <View key={r.id} style={styles.replyWrap}>
                   <CommentRow
                     comment={r}
+                    palette={palette}
                     onLike={() => toggleLike(r.id)}
                     onReply={() => startReply(r)}
                     onLongPress={() => handleLongPress(r)}
@@ -273,12 +314,14 @@ export function CommentsSection({ setupId, inputRef }: Props) {
 
 function CommentRow({
   comment,
+  palette,
   onLike,
   onReply,
   onLongPress,
   isReply,
 }: {
   comment: Comment;
+  palette: Palette;
   onLike: () => void;
   onReply: () => void;
   onLongPress: () => void;
@@ -298,29 +341,51 @@ function CommentRow({
           style={isReply ? styles.avatarSm : styles.avatar}
         />
       ) : (
-        <View style={[isReply ? styles.avatarSm : styles.avatar, styles.avatarFallback]}>
-          <Text style={styles.avatarLetter}>{comment.displayName.charAt(0).toUpperCase()}</Text>
+        <View
+          style={[
+            isReply ? styles.avatarSm : styles.avatar,
+            styles.avatarFallback,
+            { backgroundColor: palette.border },
+          ]}
+        >
+          <Text style={[styles.avatarLetter, { color: palette.textSecondary }]}>
+            {comment.displayName.charAt(0).toUpperCase()}
+          </Text>
         </View>
       )}
       <View style={styles.rowBody}>
         <View style={styles.rowHeader}>
-          <Text style={styles.displayName}>{comment.displayName}</Text>
-          <Text style={styles.meta}>
+          <Text style={[styles.displayName, { color: palette.text }]}>
+            {comment.displayName}
+          </Text>
+          <Text style={[styles.meta, { color: palette.textSecondary }]}>
             @{comment.username} · {timeAgo(comment.createdAt)}
           </Text>
         </View>
-        <Text style={styles.body}>{comment.body}</Text>
+        <Text style={[styles.body, { color: palette.text }]}>{comment.body}</Text>
         <View style={styles.actions}>
           <TouchableOpacity
             onPress={onLike}
             style={styles.actionBtn}
             accessibilityLabel="like-comment"
           >
-            <Text style={[styles.actionIcon, comment.likedByMe && styles.actionIconLiked]}>
+            <Text
+              style={[
+                styles.actionIcon,
+                { color: palette.textSecondary },
+                comment.likedByMe && styles.actionIconLiked,
+              ]}
+            >
               {comment.likedByMe ? '♥' : '♡'}
             </Text>
             {comment.likeCount > 0 && (
-              <Text style={[styles.actionCount, comment.likedByMe && styles.actionCountLiked]}>
+              <Text
+                style={[
+                  styles.actionCount,
+                  { color: palette.textSecondary },
+                  comment.likedByMe && styles.actionCountLiked,
+                ]}
+              >
                 {comment.likeCount}
               </Text>
             )}
@@ -330,7 +395,7 @@ function CommentRow({
             style={styles.actionBtn}
             accessibilityLabel="reply-comment"
           >
-            <Text style={styles.actionText}>Antworten</Text>
+            <Text style={[styles.actionText, { color: palette.textSecondary }]}>Antworten</Text>
           </TouchableOpacity>
         </View>
       </View>

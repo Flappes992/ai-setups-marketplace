@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 interface Props {
   icon: string;
@@ -10,11 +10,12 @@ interface Props {
 }
 
 export function EmptyState({ icon, title, subtitle, ctaLabel, onCta }: Props) {
+  const { palette } = useTheme();
   return (
     <View style={styles.wrap}>
       <Text style={styles.icon}>{icon}</Text>
-      <Text style={styles.title}>{title}</Text>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      <Text style={[styles.title, { color: palette.text }]}>{title}</Text>
+      {subtitle ? <Text style={[styles.subtitle, { color: palette.textSecondary }]}>{subtitle}</Text> : null}
       {ctaLabel && onCta ? (
         <TouchableOpacity
           onPress={onCta}

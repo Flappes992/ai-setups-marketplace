@@ -27,6 +27,7 @@ import { useFollow, getFollowerCount } from '@/hooks/useFollow';
 import { useBlock } from '@/hooks/useBlock';
 import { SetupGrid } from '@/components/SetupGrid';
 import { EmptyState } from '@/components/EmptyState';
+import { StatRow } from '@/components/StatRow';
 import { useToast } from '@/components/Toast';
 import { ReportModal } from '@/components/ReportModal';
 import { useConversations } from '@/hooks/useConversations';
@@ -121,7 +122,7 @@ export function CreatorProfileScreen() {
         edges={['top', 'bottom']}
       >
         <View style={[styles.topBar, { backgroundColor: palette.bg }]}>
-          <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back">
+          <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back" hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
           </TouchableOpacity>
         </View>
@@ -139,7 +140,7 @@ export function CreatorProfileScreen() {
         edges={['top', 'bottom']}
       >
         <View style={[styles.topBar, { backgroundColor: palette.bg }]}>
-          <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back">
+          <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back" hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
           </TouchableOpacity>
           <View style={{ width: 30 }} />
@@ -188,7 +189,7 @@ export function CreatorProfileScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
       <View style={[styles.topBar, { backgroundColor: palette.bg }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back">
+        <TouchableOpacity onPress={() => navigation.goBack()} accessibilityLabel="back" hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
         <Text style={[styles.topTitle, { color: palette.text }]}>@{profile.username}</Text>
@@ -251,17 +252,13 @@ export function CreatorProfileScreen() {
             <Text style={[styles.bioPlaceholder, { color: palette.textSecondary }]}>Keine Bio</Text>
           )}
 
-          <View style={styles.statsRow}>
-            <Stat label="Setups" value={setupsCount} palette={palette} />
-            <Sep palette={palette} />
-            <Stat label="Likes" value={likesReceived} palette={palette} />
-            <Sep palette={palette} />
-            <Stat
-              label="Tier"
-              value={creatorTier ? (creatorTier === 'gold' ? '★' : '◆') : '—'}
-              palette={palette}
-            />
-          </View>
+          <StatRow
+            stats={[
+              { label: 'Setups', value: setupsCount },
+              { label: 'Likes', value: likesReceived },
+              { label: 'Tier', value: creatorTier ? (creatorTier === 'gold' ? '★' : '◆') : '—' },
+            ]}
+          />
 
           {!isSelf && (
             <View style={styles.ctaRow}>
@@ -352,29 +349,6 @@ export function CreatorProfileScreen() {
       />
     </SafeAreaView>
   );
-}
-
-type Palette = ReturnType<typeof useTheme>['palette'];
-
-function Stat({
-  label,
-  value,
-  palette,
-}: {
-  label: string;
-  value: number | string;
-  palette: Palette;
-}) {
-  return (
-    <View style={styles.stat}>
-      <Text style={[styles.statValue, { color: palette.text }]} numberOfLines={1}>{value}</Text>
-      <Text style={[styles.statLabel, { color: palette.textSecondary }]}>{label}</Text>
-    </View>
-  );
-}
-
-function Sep({ palette }: { palette: Palette }) {
-  return <View style={[styles.statSep, { backgroundColor: palette.border }]} />;
 }
 
 const styles = StyleSheet.create({

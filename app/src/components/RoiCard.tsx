@@ -105,6 +105,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 14,
     backgroundColor: '#181B22',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
     gap: 12,
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8 },

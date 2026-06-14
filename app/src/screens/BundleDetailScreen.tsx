@@ -30,7 +30,7 @@ export function BundleDetailScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
       <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
         <Text style={[styles.topTitle, { color: palette.text }]}>Bundle</Text>
@@ -108,6 +108,8 @@ const styles = StyleSheet.create({
   priceBox: {
     flexDirection: 'row',
     backgroundColor: '#181B22',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
     padding: 16,
     borderRadius: 14,
     gap: 14,

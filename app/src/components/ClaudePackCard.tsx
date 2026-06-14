@@ -101,6 +101,8 @@ function Meta({ count, label }: { count: number; label: string }) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#181B22',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
     borderRadius: 16,
     padding: 16,
     marginVertical: 14,

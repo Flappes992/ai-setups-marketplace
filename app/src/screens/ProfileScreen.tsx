@@ -21,6 +21,7 @@ import { useLikedSetups } from '@/hooks/useLikedSetups';
 import { useMyPurchases } from '@/hooks/useMyPurchases';
 import { SetupGrid } from '@/components/SetupGrid';
 import { EmptyState } from '@/components/EmptyState';
+import { StatRow } from '@/components/StatRow';
 import { useTheme, BRAND } from '@/theme/ThemeProvider';
 import { getFollowerCount, getFollowingCount } from '@/hooks/useFollow';
 import { useProfileBadge } from '@/hooks/useProfileBadge';
@@ -217,28 +218,7 @@ export function ProfileScreen() {
             </Text>
           )}
 
-          <View style={styles.statsRow}>
-            {stats.map((s, i) => {
-              const StatWrap = s.onPress ? TouchableOpacity : View;
-              return (
-                <View key={s.label} style={styles.statContainer}>
-                  <StatWrap
-                    style={styles.stat}
-                    onPress={s.onPress}
-                    accessibilityLabel={s.onPress ? `stat-${s.label}` : undefined}
-                  >
-                    <Text style={[styles.statValue, { color: palette.text }]} numberOfLines={1}>{s.value}</Text>
-                    <Text style={[styles.statLabel, { color: palette.textSecondary }]}>
-                      {s.label}
-                    </Text>
-                  </StatWrap>
-                  {i < stats.length - 1 && (
-                    <View style={[styles.statSep, { backgroundColor: palette.border }]} />
-                  )}
-                </View>
-              );
-            })}
-          </View>
+          <StatRow stats={stats} />
 
           <View style={styles.ctaRow}>
             <TouchableOpacity

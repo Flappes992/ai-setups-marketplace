@@ -13,7 +13,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useReviews, Review } from '@/hooks/useReviews';
 import { useToast } from '@/components/Toast';
-import { BRAND } from '@/theme/ThemeProvider';
+import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 interface Props {
   setupId: string;
@@ -44,15 +44,16 @@ export function ReviewSection({ setupId, purchaseId, canReview }: Props) {
   const { reviews, loading, average, count, myReview, add, remove } = useReviews(setupId);
   const [composerOpen, setComposerOpen] = useState(false);
   const toast = useToast();
+  const { palette } = useTheme();
 
   return (
     <View style={styles.wrap}>
       <View style={styles.header}>
-        <Text style={styles.title}>Bewertungen</Text>
+        <Text style={[styles.title, { color: palette.text }]}>Bewertungen</Text>
         {count > 0 && (
           <View style={styles.summary}>
             <StarRow rating={Math.round(average)} size={16} />
-            <Text style={styles.avgText}>
+            <Text style={[styles.avgText, { color: palette.textSecondary }]}>
               {average.toFixed(1)} · {count}
             </Text>
           </View>
@@ -75,7 +76,9 @@ export function ReviewSection({ setupId, purchaseId, canReview }: Props) {
       {loading ? (
         <ActivityIndicator color={BRAND.teal} style={{ marginTop: 12 }} />
       ) : reviews.length === 0 ? (
-        <Text style={styles.empty}>Noch keine Bewertungen.</Text>
+        <Text style={[styles.empty, { color: palette.textSecondary }]}>
+          Noch keine Bewertungen.
+        </Text>
       ) : (
         reviews.map((r) => (
           <ReviewRow
@@ -116,22 +119,30 @@ function ReviewRow({
   isMine: boolean;
   onDelete: () => void;
 }) {
+  const { palette } = useTheme();
   return (
     <View style={styles.row}>
       {review.avatarUrl ? (
-        <Image source={{ uri: review.avatarUrl }} style={styles.avatar} />
+        <Image
+          source={{ uri: review.avatarUrl }}
+          style={[styles.avatar, { backgroundColor: palette.border }]}
+        />
       ) : (
-        <View style={[styles.avatar, styles.avatarFallback]}>
-          <Text style={styles.avatarLetter}>{review.displayName.charAt(0).toUpperCase()}</Text>
+        <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: palette.border }]}>
+          <Text style={[styles.avatarLetter, { color: palette.textSecondary }]}>
+            {review.displayName.charAt(0).toUpperCase()}
+          </Text>
         </View>
       )}
       <View style={{ flex: 1 }}>
         <View style={styles.rowHead}>
-          <Text style={styles.name}>{review.displayName}</Text>
+          <Text style={[styles.name, { color: palette.text }]}>{review.displayName}</Text>
           <StarRow rating={review.rating} />
         </View>
-        <Text style={styles.handle}>@{review.username}</Text>
-        {review.body ? <Text style={styles.body}>{review.body}</Text> : null}
+        <Text style={[styles.handle, { color: palette.textSecondary }]}>@{review.username}</Text>
+        {review.body ? (
+          <Text style={[styles.body, { color: palette.text }]}>{review.body}</Text>
+        ) : null}
         {isMine && (
           <TouchableOpacity onPress={onDelete} style={styles.deleteBtn}>
             <Text style={styles.deleteText}>Löschen</Text>
@@ -227,9 +238,9 @@ function ReviewComposerModal({
 const styles = StyleSheet.create({
   wrap: { padding: 20, gap: 14 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontSize: 18, fontWeight: '800', color: '#111' },
+  title: { fontSize: 18, fontWeight: '800' },
   summary: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  avgText: { fontSize: 13, fontWeight: '700', color: '#666' },
+  avgText: { fontSize: 13, fontWeight: '700' },
   cta: {
     backgroundColor: BRAND.teal,
     paddingVertical: 11,
@@ -237,15 +248,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ctaText: { color: '#0b3b35', fontWeight: '800', fontSize: 14 },
-  empty: { color: '#999', fontSize: 14, paddingVertical: 8 },
+  empty: { fontSize: 14, paddingVertical: 8 },
   row: { flexDirection: 'row', gap: 10, paddingBottom: 4 },
-  avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#eee' },
+  avatar: { width: 36, height: 36, borderRadius: 18 },
   avatarFallback: { alignItems: 'center', justifyContent: 'center' },
-  avatarLetter: { color: '#666', fontWeight: '700', fontSize: 14 },
+  avatarLetter: { fontWeight: '700', fontSize: 14 },
   rowHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  name: { fontSize: 14, fontWeight: '700', color: '#111' },
-  handle: { fontSize: 12, color: '#888', marginTop: 2 },
-  body: { fontSize: 14, color: '#333', marginTop: 4, lineHeight: 19 },
+  name: { fontSize: 14, fontWeight: '700' },
+  handle: { fontSize: 12, marginTop: 2 },
+  body: { fontSize: 14, marginTop: 4, lineHeight: 19 },
   deleteBtn: { alignSelf: 'flex-start', marginTop: 4 },
   deleteText: { color: '#cc0000', fontSize: 12, fontWeight: '600' },
 

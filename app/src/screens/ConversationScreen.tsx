@@ -75,7 +75,7 @@ export function ConversationScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top']}>
       <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <Text style={[styles.backIcon, { color: palette.text }]}>‹</Text>
         </TouchableOpacity>
         <TouchableOpacity

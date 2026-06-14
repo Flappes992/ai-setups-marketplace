@@ -404,6 +404,15 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
           </TouchableOpacity>
         )}
       </View>
+
+      <TouchableOpacity
+        style={styles.floatingBack}
+        onPress={() => navigation.goBack()}
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        accessibilityLabel="back"
+      >
+        <Text style={styles.floatingBackIcon}>‹</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -439,6 +448,19 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   hero: { width: '100%', height: 300, backgroundColor: '#222' },
+  floatingBack: {
+    position: 'absolute',
+    top: 8,
+    left: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 20,
+  },
+  floatingBackIcon: { color: '#fff', fontSize: 30, fontWeight: '600', lineHeight: 34, marginTop: -2 },
   body: { padding: 20 },
   title: { fontSize: 26, fontWeight: '700', marginBottom: 16, color: '#111' },
   creatorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24, gap: 8 },

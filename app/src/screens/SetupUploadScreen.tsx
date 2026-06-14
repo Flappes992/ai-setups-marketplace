@@ -511,6 +511,14 @@ export function SetupUploadScreen() {
         <CreatorUploadGuide forceVisible={guideOpen} onClose={() => setGuideOpen(false)} />
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.headerRow}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.closeBtn}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityLabel="close-upload"
+            >
+              <Text style={[styles.closeBtnText, { color: palette.text }]}>✕</Text>
+            </TouchableOpacity>
             <Text style={[styles.title, { color: palette.text }]}>Neues Setup</Text>
             <TouchableOpacity
               onPress={() => setGuideOpen(true)}
@@ -1443,6 +1451,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  closeBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  closeBtnText: { fontSize: 22, fontWeight: '500', lineHeight: 26 },
   helpBtn: {
     width: 32,
     height: 32,

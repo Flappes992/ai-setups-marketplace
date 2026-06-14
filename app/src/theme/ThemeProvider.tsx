@@ -4,7 +4,7 @@ import { useColorScheme } from 'react-native';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 
-interface Palette {
+export interface Palette {
   bg: string;
   bgSecondary: string;
   surface: string;
