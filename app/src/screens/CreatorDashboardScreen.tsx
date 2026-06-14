@@ -85,7 +85,7 @@ export function CreatorDashboardScreen() {
                 {s.title}
               </Text>
               <Text style={[styles.rowPrice, { color: palette.textSecondary }]}>
-                {s.negotiable ? `${eur(s.priceCents)} · verhandelbar` : eur(s.priceCents)}
+                {s.negotiable ? `${eur(s.priceCents)} (VB)` : eur(s.priceCents)}
               </Text>
             </View>
           ))

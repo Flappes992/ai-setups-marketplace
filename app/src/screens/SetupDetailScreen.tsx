@@ -432,8 +432,9 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
                 {busy ? (
                   <ActivityIndicator color="#0b3b35" />
                 ) : (
-                  <Text style={styles.purchaseGradientText}>
+                  <Text style={styles.purchaseGradientText} numberOfLines={1} adjustsFontSizeToFit>
                     Setup holen · {formatPriceEur(setup.priceCents)}
+                    {setup.negotiable ? ' (VB)' : ''}
                   </Text>
                 )}
               </TealGradient>

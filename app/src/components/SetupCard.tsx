@@ -268,7 +268,10 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
           ))}
         </View>
         <View style={styles.priceRow}>
-          <Text style={styles.price}>{formatPriceEur(setup.priceCents)}</Text>
+          <Text style={styles.price}>
+            {formatPriceEur(setup.priceCents)}
+            {setup.negotiable ? <Text style={styles.vb}> (VB)</Text> : null}
+          </Text>
           <View style={styles.typeBadge}>
             <Text style={styles.typeBadgeIcon}>{typeMeta.icon}</Text>
             <Text style={styles.typeBadgeLabel}>{typeMeta.label}</Text>
@@ -360,7 +363,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   tagText: { color: '#fff', fontSize: 11, fontWeight: '600' },
-  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  priceRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, rowGap: 8 },
   price: {
     backgroundColor: BRAND.teal,
     color: '#0b3b35',
@@ -373,11 +376,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.45)',
   },
+  vb: { fontWeight: '700', fontSize: 12, color: '#0b3b35', opacity: 0.7 },
   newBadgeText: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
   newBadgeInline: {
     backgroundColor: BRAND.like,
     paddingHorizontal: 11,
-    paddingVertical: 7,
+    paddingVertical: 8,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.45)',
@@ -390,7 +394,7 @@ const styles = StyleSheet.create({
     gap: 5,
     backgroundColor: 'rgba(0,0,0,0.45)',
     paddingHorizontal: 11,
-    paddingVertical: 7,
+    paddingVertical: 8,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.25)',

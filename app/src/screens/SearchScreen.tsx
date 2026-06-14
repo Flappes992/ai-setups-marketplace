@@ -188,6 +188,7 @@ export function SearchScreen() {
                     style: 'currency',
                     currency: 'EUR',
                   }).format(item.priceCents / 100)}
+                  {item.negotiable ? ' (VB)' : ''}
                 </Text>
               </View>
             </TouchableOpacity>

@@ -53,7 +53,9 @@ export function SetupGrid({ setups, emptyText, emptyView }: Props) {
         >
           <Image source={{ uri: item.videoThumbnail }} style={styles.thumb} />
           <View style={styles.priceBadge}>
-            <Text style={styles.priceText}>{Math.round(item.priceCents / 100)}€</Text>
+            <Text style={styles.priceText} numberOfLines={1}>
+              {Math.round(item.priceCents / 100)}€{item.negotiable ? ' (VB)' : ''}
+            </Text>
           </View>
         </TouchableOpacity>
       )}
@@ -75,6 +77,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 6,
     left: 6,
+    maxWidth: ITEM - 12,
     backgroundColor: 'rgba(0,0,0,0.6)',
     paddingHorizontal: 6,
     paddingVertical: 2,

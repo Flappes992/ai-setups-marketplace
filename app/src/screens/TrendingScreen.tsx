@@ -151,6 +151,7 @@ function Section({
                 style: 'currency',
                 currency: 'EUR',
               }).format(s.priceCents / 100)}
+              {s.negotiable ? ' (VB)' : ''}
             </Text>
           </TouchableOpacity>
         ))
@@ -206,6 +207,7 @@ function RatedSection({
                 style: 'currency',
                 currency: 'EUR',
               }).format(r.setup.priceCents / 100)}
+              {r.setup.negotiable ? ' (VB)' : ''}
             </Text>
           </TouchableOpacity>
         ))
