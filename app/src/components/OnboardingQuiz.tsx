@@ -249,7 +249,7 @@ function IntroSlide() {
         wirklich zu dir passen und nicht random rauschen.
       </Text>
       <Text style={styles.introBody}>
-        Dauert {SLIDES.length - 1 * 10}-30 Sekunden. Du kannst jederzeit abbrechen.
+        Dauert 20–30 Sekunden. Du kannst jederzeit abbrechen.
       </Text>
     </View>
   );

@@ -148,8 +148,9 @@ const styles = StyleSheet.create({
     borderTopWidth: Platform.OS === 'ios' ? 0 : StyleSheet.hairlineWidth,
   },
   containerOnFeed: {
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    borderTopColor: 'transparent',
+    backgroundColor: '#181B22',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.08)',
   },
   containerOnProfile: {
     backgroundColor: 'rgba(255,255,255,0.96)',

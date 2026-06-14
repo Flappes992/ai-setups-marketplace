@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#1a1a1a',
   },
-  overlay: { position: 'absolute', bottom: 80, left: 16, right: 100 },
+  overlay: { position: 'absolute', bottom: 100, left: 16, right: 96 },
   creatorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   avatar: { width: 32, height: 32, borderRadius: 16, marginRight: 8, backgroundColor: '#333' },
   creatorName: { width: 100, height: 14, borderRadius: 4, backgroundColor: '#333' },

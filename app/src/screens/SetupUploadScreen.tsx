@@ -177,7 +177,7 @@ export function SetupUploadScreen() {
   const [roiFrequency, setRoiFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'one_time' | null>(
     null,
   );
-  const [mode, setMode] = useState<'standard' | 'brainpack' | 'claudepack'>('standard');
+  const [mode, setMode] = useState<'standard' | 'skill' | 'brainpack' | 'claudepack'>('standard');
   const [brainpackUri, setBrainpackUri] = useState<string | null>(null);
   const [bpVaultType, setBpVaultType] = useState<BrainVaultType>('obsidian');
   const [bpNoteCount, setBpNoteCount] = useState('');
@@ -266,6 +266,9 @@ export function SetupUploadScreen() {
       const auto = ['claudepack', 'claude'];
       for (const t of cpTargets) auto.push(t);
       for (const t of auto) if (!explicit.includes(t)) explicit.push(t);
+    }
+    if (mode === 'skill') {
+      if (!explicit.includes('skill')) explicit.push('skill');
     }
     return explicit;
   })();
@@ -378,7 +381,7 @@ export function SetupUploadScreen() {
 
       let finalAssetUrl: string;
       let finalAssetType: AssetType = assetType;
-      let assetSubtype: 'brainpack' | 'claudepack' | null = null;
+      let assetSubtype: 'brainpack' | 'claudepack' | 'skill' | null = null;
       let brainManifest: object | null = null;
       let claudeManifest: object | null = null;
 
@@ -450,6 +453,9 @@ export function SetupUploadScreen() {
         finalAssetUrl = assetUrl;
       }
 
+      // Skill nutzt die Standard-Asset-Eingabe (Datei/Link), wird aber als Skill markiert
+      if (mode === 'skill') assetSubtype = 'skill';
+
       const { error: insertError } = await supabase.from('setups').insert({
         creator_id: session.user.id,
         title: title.trim(),
@@ -484,7 +490,8 @@ export function SetupUploadScreen() {
   }
 
   const switchOptionTheme = { backgroundColor: palette.surface };
-  const switchActiveTheme = { backgroundColor: palette.text };
+  // Aktiver Toggle = Teal-Pill (statt palette.text/weiß → war im Dark Mode weiß-auf-weiß)
+  const switchActiveTheme = { backgroundColor: palette.accent };
   const switchTextTheme = { color: palette.textSecondary };
   const inputTheme = { backgroundColor: palette.surface, color: palette.text };
 
@@ -501,6 +508,7 @@ export function SetupUploadScreen() {
             <TouchableOpacity
               onPress={() => setGuideOpen(true)}
               style={styles.helpBtn}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               accessibilityLabel="show-upload-guide"
             >
               <Text style={styles.helpBtnText}>?</Text>
@@ -527,6 +535,26 @@ export function SetupUploadScreen() {
                   ]}
                 >
                   Standard
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setMode('skill')}
+                style={[
+                  styles.switchOption,
+                  switchOptionTheme,
+                  mode === 'skill' && styles.switchActive,
+                  mode === 'skill' && switchActiveTheme,
+                ]}
+                accessibilityLabel="mode-skill"
+              >
+                <Text
+                  style={[
+                    styles.switchText,
+                    switchTextTheme,
+                    mode === 'skill' && styles.switchTextActive,
+                  ]}
+                >
+                  🧩 Skill
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -575,11 +603,13 @@ export function SetupUploadScreen() {
                 ? 'Komplettes Vault (Obsidian / Logseq / …) für AI-Kontext'
                 : mode === 'claudepack'
                   ? 'Persona + Slash-Commands + Subagents für Claude'
-                  : 'Custom GPT, Prompt-Stack, n8n-Workflow, Tutorial-Bundle'}
+                  : mode === 'skill'
+                    ? 'Eine Fähigkeit, die du für Claude/Agents gebaut hast – als Datei oder klonbarer Link'
+                    : 'Custom GPT, Prompt-Stack, n8n-Workflow, Tutorial-Bundle'}
             </Text>
           </Section>
 
-          <Section label="Video">
+          <Section label="Video (wird im Feed angezeigt)">
             {videoUri ? (
               <View>
                 <VideoView
@@ -687,7 +717,7 @@ export function SetupUploadScreen() {
             )}
           </Section>
 
-          {mode === 'standard' && (
+          {(mode === 'standard' || mode === 'skill') && (
             <>
               <Section label="Asset-Typ" onTipPress={() => setActiveTip('asset-type')}>
                 <View style={styles.switchRow}>
@@ -1219,7 +1249,7 @@ function Section({
             onPress={onTipPress}
             style={styles.tipBtn}
             accessibilityLabel={`tip-${label}`}
-            hitSlop={8}
+            hitSlop={14}
           >
             <Text style={styles.tipBtnText}>?</Text>
           </TouchableOpacity>
@@ -1321,7 +1351,7 @@ const styles = StyleSheet.create({
   },
   switchActive: { backgroundColor: '#111' },
   switchText: { color: '#444', fontWeight: '600', fontSize: 13 },
-  switchTextActive: { color: '#fff' },
+  switchTextActive: { color: '#04201c' },
   submit: {
     backgroundColor: '#111',
     paddingVertical: 16,

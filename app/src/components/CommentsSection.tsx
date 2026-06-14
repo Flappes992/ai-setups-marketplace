@@ -350,6 +350,7 @@ const styles = StyleSheet.create({
     borderColor: '#e5e5e5',
     borderRadius: 12,
     padding: 12,
+    paddingRight: 34,
     fontSize: 15,
     color: '#111',
     minHeight: 44,

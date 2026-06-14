@@ -92,9 +92,9 @@ export function ConversationScreen() {
               </Text>
             </View>
           )}
-          <View>
-            <Text style={[styles.topName, { color: palette.text }]}>{params.otherDisplayName}</Text>
-            <Text style={[styles.topHandle, { color: palette.textSecondary }]}>@{params.otherUsername}</Text>
+          <View style={{ flexShrink: 1 }}>
+            <Text style={[styles.topName, { color: palette.text }]} numberOfLines={1}>{params.otherDisplayName}</Text>
+            <Text style={[styles.topHandle, { color: palette.textSecondary }]} numberOfLines={1}>@{params.otherUsername}</Text>
           </View>
         </TouchableOpacity>
         <View style={{ width: 30 }} />

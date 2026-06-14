@@ -128,9 +128,9 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 11, color: '#888', marginTop: 2 },
   evalBtn: { color: BRAND.tealDark, fontWeight: '800', fontSize: 13 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, gap: 10 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, justifyContent: 'space-between', rowGap: 10 },
   card: {
-    width: '47%',
+    width: '48%',
     backgroundColor: '#fafafa',
     padding: 14,
     borderRadius: 14,

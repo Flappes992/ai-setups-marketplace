@@ -9,6 +9,8 @@ import {
   Pressable,
   ActivityIndicator,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/auth/useAuth';
@@ -86,6 +88,10 @@ export function ReportModal({ visible, onClose, targetType, targetId, targetLabe
   return (
     <Modal visible={visible} animationType="slide" transparent statusBarTranslucent>
       <Pressable style={styles.backdrop} onPress={handleClose}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.kav}
+        >
         <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
           <View style={styles.header}>
             <Text style={styles.title}>{TITLE_BY_TYPE[targetType]}</Text>
@@ -149,6 +155,7 @@ export function ReportModal({ visible, onClose, targetType, targetId, targetLabe
             </TouchableOpacity>
           </View>
         </Pressable>
+        </KeyboardAvoidingView>
       </Pressable>
     </Modal>
   );
@@ -159,6 +166,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'flex-end',
+  },
+  kav: {
+    width: '100%',
   },
   sheet: {
     backgroundColor: '#fff',

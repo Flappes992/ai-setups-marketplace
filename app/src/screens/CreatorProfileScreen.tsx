@@ -229,7 +229,7 @@ export function CreatorProfileScreen() {
             )}
           </View>
 
-          <Text style={[styles.displayName, { color: palette.text }]}>{profile.display_name}</Text>
+          <Text style={[styles.displayName, { color: palette.text }]} numberOfLines={1}>{profile.display_name}</Text>
           <Text style={[styles.username, { color: palette.textSecondary }]}>
             @{profile.username}
           </Text>
@@ -367,7 +367,7 @@ function Stat({
 }) {
   return (
     <View style={styles.stat}>
-      <Text style={[styles.statValue, { color: palette.text }]}>{value}</Text>
+      <Text style={[styles.statValue, { color: palette.text }]} numberOfLines={1}>{value}</Text>
       <Text style={[styles.statLabel, { color: palette.textSecondary }]}>{label}</Text>
     </View>
   );

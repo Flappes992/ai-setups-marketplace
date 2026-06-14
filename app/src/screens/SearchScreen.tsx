@@ -28,6 +28,7 @@ const TRENDING_FALLBACK = ['claude', 'n8n', 'chatgpt', 'automation', 'notion', '
 
 const CATEGORIES = [
   { key: 'claudepack', icon: '🪐', label: 'ClaudePacks', query: 'claudepack' },
+  { key: 'skill', icon: '🧩', label: 'Skills', query: 'skill' },
   { key: 'brainpack', icon: '🧠', label: 'BrainPacks', query: 'brainpack' },
   { key: 'gpt', icon: '🤖', label: 'Custom GPTs', query: 'gpt' },
   { key: 'prompt', icon: '✨', label: 'Prompt-Stacks', query: 'prompt' },

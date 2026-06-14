@@ -32,6 +32,24 @@ const creatorC: Setup['creator'] = {
 
 export const mockSetups: Setup[] = [
   {
+    id: 'sk1',
+    creator: creatorC,
+    title: 'Code-Review-Skill für Claude Code',
+    description:
+      'Ein Skill, der jeden PR automatisch auf Bugs, Security-Lücken und Edge-Cases prüft – mit Begründung pro Fund. Installieren, einmal aufrufen, fertig. Genau die Art Skill, die du eh schon gebaut hast – nur jetzt verkaufbar.',
+    videoUrl: 'https://placeholder-video.com/sk1.mp4',
+    videoThumbnail: 'https://picsum.photos/seed/sk1/800/1200',
+    assetType: 'clonable',
+    assetSubtype: 'skill',
+    assetUrl: 'https://mock.com/skills/code-review-skill.zip',
+    priceCents: 1900,
+    currency: 'EUR',
+    tags: ['skill', 'claude', 'code-review', 'dev'],
+    ratingAverage: 4.9,
+    ratingsCount: 41,
+    createdAt: '2026-05-25T08:00:00Z',
+  },
+  {
     id: 's1',
     creator: creatorA,
     title: 'Cold-Email Automation mit Claude',

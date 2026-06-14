@@ -239,7 +239,7 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
             accessibilityLabel={`open-creator-${setup.creator.username}`}
           >
             <Image source={{ uri: setup.creator.avatarUrl }} style={styles.avatar} />
-            <Text style={styles.creatorName}>@{setup.creator.username}</Text>
+            <Text style={styles.creatorName} numberOfLines={1}>@{setup.creator.username}</Text>
           </TouchableOpacity>
           {!isOwnSetup && (
             <TouchableOpacity
@@ -256,7 +256,7 @@ export function SetupCard({ setup, onTagPress }: SetupCardProps) {
             </TouchableOpacity>
           )}
         </View>
-        <Text style={styles.title}>{setup.title}</Text>
+        <Text style={styles.title} numberOfLines={2}>{setup.title}</Text>
         <Text style={styles.description} numberOfLines={2}>
           {setup.description}
         </Text>
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   creatorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  creatorTap: { flexDirection: 'row', alignItems: 'center' },
+  creatorTap: { flexDirection: 'row', alignItems: 'center', flexShrink: 1 },
   avatar: {
     width: 32,
     height: 32,
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: BRAND.teal,
   },
-  creatorName: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  creatorName: { color: '#fff', fontSize: 14, fontWeight: '700', flexShrink: 1 },
   title: { color: '#fff', fontSize: 20, fontWeight: '800', marginBottom: 4 },
   description: {
     color: 'rgba(255,255,255,0.9)',

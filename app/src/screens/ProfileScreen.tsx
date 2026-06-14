@@ -188,12 +188,12 @@ export function ProfileScreen() {
               </View>
             )}
             {creatorTier && (
-              <View style={[styles.tierBadge, { backgroundColor: tierColor ?? BRAND.teal }]}>
+              <View style={[styles.tierBadge, { backgroundColor: tierColor ?? BRAND.teal, borderColor: palette.bg }]}>
                 <Text style={styles.tierBadgeText}>{creatorTier === 'gold' ? '★' : '◆'}</Text>
               </View>
             )}
           </View>
-          <Text style={[styles.displayName, { color: palette.text }]}>{profile.display_name}</Text>
+          <Text style={[styles.displayName, { color: palette.text }]} numberOfLines={1}>{profile.display_name}</Text>
           <Text style={[styles.username, { color: palette.textSecondary }]}>
             @{profile.username}
           </Text>
@@ -227,7 +227,7 @@ export function ProfileScreen() {
                     onPress={s.onPress}
                     accessibilityLabel={s.onPress ? `stat-${s.label}` : undefined}
                   >
-                    <Text style={[styles.statValue, { color: palette.text }]}>{s.value}</Text>
+                    <Text style={[styles.statValue, { color: palette.text }]} numberOfLines={1}>{s.value}</Text>
                     <Text style={[styles.statLabel, { color: palette.textSecondary }]}>
                       {s.label}
                     </Text>
@@ -464,11 +464,11 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 22,
-    gap: 12,
   },
   statContainer: { flexDirection: 'row', alignItems: 'center' },
-  statSep: { width: 1, height: 24, backgroundColor: '#e5e5e5', marginLeft: 12 },
+  statSep: { width: 1, height: 24, backgroundColor: '#e5e5e5', marginHorizontal: 12 },
   stat: { alignItems: 'center', minWidth: 64 },
   statValue: { fontSize: 18, fontWeight: '800', color: '#111' },
   statLabel: {
