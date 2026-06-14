@@ -33,6 +33,16 @@ interface Report {
   reporter?: ProfileLite;
 }
 
+interface ReviewSetup {
+  id: string;
+  title: string;
+  description: string | null;
+  price_cents: number;
+  creator_id: string;
+  created_at: string;
+  creator?: ProfileLite;
+}
+
 export default async function AdminPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const adminKey = process.env.ADMIN_KEY;
@@ -54,7 +64,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
   }
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-  const [{ data: apps }, { data: reports }] = await Promise.all([
+  const [{ data: apps }, { data: reports }, { data: reviewSetups }] = await Promise.all([
     supabase
       .from('creator_applications')
       .select('user_id, status, note, created_at')
@@ -65,11 +75,18 @@ export default async function AdminPage({ searchParams }: PageProps) {
       .select('id, reporter_id, target_type, target_id, reason, created_at')
       .order('created_at', { ascending: false })
       .limit(50),
+    supabase
+      .from('setups')
+      .select('id, title, description, price_cents, creator_id, created_at')
+      .eq('status', 'review')
+      .order('created_at', { ascending: true })
+      .limit(50),
   ]);
 
   const allUserIds = new Set<string>([
     ...((apps as Application[] | null) ?? []).map((a) => a.user_id),
     ...((reports as Report[] | null) ?? []).map((r) => r.reporter_id),
+    ...((reviewSetups as ReviewSetup[] | null) ?? []).map((s) => s.creator_id),
   ]);
   const { data: profiles } = await supabase
     .from('profiles')
@@ -86,6 +103,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
     ...r,
     reporter: pmap.get(r.reporter_id),
   }));
+  const setupRows = ((reviewSetups as ReviewSetup[] | null) ?? []).map((s) => ({
+    ...s,
+    creator: pmap.get(s.creator_id),
+  }));
 
   const pendingCount = applications.filter((a) => a.status === 'pending').length;
 
@@ -94,9 +115,18 @@ export default async function AdminPage({ searchParams }: PageProps) {
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h1 style={{ margin: 0, fontSize: 22 }}>Setiq Admin</h1>
         <span style={{ fontSize: 12, opacity: 0.6 }}>
-          {applications.length} apps · {pendingCount} pending · {reportRows.length} reports
+          {setupRows.length} review · {pendingCount} apps pending · {reportRows.length} reports
         </span>
       </header>
+
+      <section style={section}>
+        <h2 style={h2}>Setups zur Prüfung ({setupRows.length})</h2>
+        {setupRows.length === 0 ? (
+          <p style={{ opacity: 0.5 }}>Keine Setups in der Warteschlange.</p>
+        ) : (
+          setupRows.map((s) => <SetupReviewRow key={s.id} setup={s} adminKey={adminKey} />)
+        )}
+      </section>
 
       <section style={section}>
         <h2 style={h2}>Creator Applications</h2>
@@ -168,6 +198,42 @@ function ApplicationRow({ app, adminKey }: { app: Application; adminKey: string 
       {app.note && (
         <p style={{ marginTop: 8, marginBottom: 0, fontSize: 13, lineHeight: 1.5 }}>{app.note}</p>
       )}
+    </div>
+  );
+}
+
+function SetupReviewRow({ setup, adminKey }: { setup: ReviewSetup; adminKey: string }) {
+  return (
+    <div style={card}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <strong style={{ fontSize: 15 }}>{setup.title}</strong>
+          <div style={{ marginTop: 2, fontSize: 12, opacity: 0.6 }}>
+            von @{setup.creator?.username ?? 'unknown'} ·{' '}
+            {(setup.price_cents / 100).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}{' '}
+            · {new Date(setup.created_at).toLocaleString('de-DE')}
+          </div>
+          {setup.description && (
+            <p style={{ marginTop: 8, marginBottom: 0, fontSize: 13, lineHeight: 1.5, opacity: 0.85 }}>
+              {setup.description}
+            </p>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <form action="/api/admin/moderate-setup" method="POST">
+            <input type="hidden" name="key" value={adminKey} />
+            <input type="hidden" name="setup_id" value={setup.id} />
+            <input type="hidden" name="decision" value="approve" />
+            <button type="submit" style={btnApprove}>Freigeben</button>
+          </form>
+          <form action="/api/admin/moderate-setup" method="POST">
+            <input type="hidden" name="key" value={adminKey} />
+            <input type="hidden" name="setup_id" value={setup.id} />
+            <input type="hidden" name="decision" value="reject" />
+            <button type="submit" style={btnReject}>Ablehnen</button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

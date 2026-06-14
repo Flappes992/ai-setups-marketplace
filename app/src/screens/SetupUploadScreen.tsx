@@ -476,7 +476,7 @@ export function SetupUploadScreen() {
         negotiable: isPlusCreator ? negotiable : false,
         currency: 'EUR',
         tags: tagsArray,
-        status: 'live',
+        status: 'review',
         roi_time_saved_minutes: roiMinutes ? Number(roiMinutes) : null,
         roi_use_frequency: roiFrequency,
         asset_subtype: assetSubtype,
@@ -487,7 +487,7 @@ export function SetupUploadScreen() {
 
       await AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
       evaluateAchievementsFor(session.user.id);
-      Alert.alert('Live!', 'Dein Setup ist veröffentlicht.', [
+      Alert.alert('Eingereicht ✅', 'Dein Setup wird kurz geprüft und geht dann live. Du bekommst Bescheid.', [
         { text: 'OK', onPress: () => navigation.popToTop() },
       ]);
     } catch (e) {
