@@ -256,6 +256,14 @@ export function ProfileScreen() {
           <View style={styles.quickRow}>
             <TouchableOpacity
               style={[styles.quickBtn, { backgroundColor: palette.surface }]}
+              onPress={() => navigation.navigate('CreatorDashboard')}
+              accessibilityLabel="creator-dashboard"
+            >
+              <Text style={styles.quickIcon}>📊</Text>
+              <Text style={[styles.quickLabel, { color: palette.text }]}>Dashboard</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.quickBtn, { backgroundColor: palette.surface }]}
               onPress={() => navigation.navigate('Achievements')}
               accessibilityLabel="achievements"
             >

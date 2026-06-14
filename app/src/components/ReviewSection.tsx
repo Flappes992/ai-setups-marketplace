@@ -140,6 +140,9 @@ function ReviewRow({
           <StarRow rating={review.rating} />
         </View>
         <Text style={[styles.handle, { color: palette.textSecondary }]}>@{review.username}</Text>
+        <View style={styles.verifiedBadge}>
+          <Text style={styles.verifiedBadgeText}>✓ Verifizierter Kauf</Text>
+        </View>
         {review.body ? (
           <Text style={[styles.body, { color: palette.text }]}>{review.body}</Text>
         ) : null}
@@ -256,6 +259,15 @@ const styles = StyleSheet.create({
   rowHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   name: { fontSize: 14, fontWeight: '700' },
   handle: { fontSize: 12, marginTop: 2 },
+  verifiedBadge: {
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: 'rgba(45,212,191,0.12)',
+  },
+  verifiedBadgeText: { color: BRAND.teal, fontSize: 10, fontWeight: '800' },
   body: { fontSize: 14, marginTop: 4, lineHeight: 19 },
   deleteBtn: { alignSelf: 'flex-start', marginTop: 4 },
   deleteText: { color: '#cc0000', fontSize: 12, fontWeight: '600' },

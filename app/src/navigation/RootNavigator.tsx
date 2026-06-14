@@ -21,6 +21,7 @@ import { BlockedListScreen } from '@/screens/BlockedListScreen';
 import { ConversationsListScreen } from '@/screens/ConversationsListScreen';
 import { ConversationScreen } from '@/screens/ConversationScreen';
 import { AchievementsScreen } from '@/screens/AchievementsScreen';
+import { CreatorDashboardScreen } from '@/screens/CreatorDashboardScreen';
 import { ConciergeScreen } from '@/screens/ConciergeScreen';
 import { BundlesScreen } from '@/screens/BundlesScreen';
 import { BundleCreateScreen } from '@/screens/BundleCreateScreen';
@@ -62,6 +63,7 @@ export type MainStackParamList = {
     initialText?: string;
   };
   Achievements: undefined;
+  CreatorDashboard: undefined;
   Concierge: undefined;
   Bundles: undefined;
   BundleCreate: undefined;
@@ -136,6 +138,7 @@ function MainNavigator() {
       <MainStack.Screen name="Conversations" component={ConversationsListScreen} />
       <MainStack.Screen name="Conversation" component={ConversationScreen} />
       <MainStack.Screen name="Achievements" component={AchievementsScreen} />
+      <MainStack.Screen name="CreatorDashboard" component={CreatorDashboardScreen} />
       <MainStack.Screen name="Concierge" component={ConciergeScreen} />
       <MainStack.Screen name="Bundles" component={BundlesScreen} />
       <MainStack.Screen
