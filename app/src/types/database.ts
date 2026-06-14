@@ -88,6 +88,7 @@ export interface DbSetup {
   asset_type: AssetType;
   asset_url: string | null;
   price_cents: number;
+  negotiable: boolean;
   currency: string;
   tags: string[];
   rating_average: number;

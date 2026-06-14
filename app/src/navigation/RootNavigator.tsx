@@ -59,6 +59,7 @@ export type MainStackParamList = {
     otherUsername: string;
     otherDisplayName: string;
     otherAvatarUrl: string | null;
+    initialText?: string;
   };
   Achievements: undefined;
   Concierge: undefined;

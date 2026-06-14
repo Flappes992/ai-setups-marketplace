@@ -22,6 +22,8 @@ export interface Setup {
   assetUrl: string;
   /** Preis in Cents */
   priceCents: number;
+  /** Preis verhandelbar (Creator+-Feature) — Käufer können ein Angebot machen */
+  negotiable?: boolean;
   currency: 'EUR';
   tags: string[];
   ratingAverage: number;

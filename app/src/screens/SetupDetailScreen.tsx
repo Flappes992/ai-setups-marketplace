@@ -33,6 +33,8 @@ import { useComments } from '@/hooks/useComments';
 import { useSetups } from '@/hooks/useSetups';
 import { useFollow } from '@/hooks/useFollow';
 import { useCreatorStats } from '@/hooks/useCreatorStats';
+import { useConversations } from '@/hooks/useConversations';
+import { useToast } from '@/components/Toast';
 import { BRAND, useTheme } from '@/theme/ThemeProvider';
 import type { MainStackParamList } from '@/navigation/RootNavigator';
 
@@ -79,6 +81,8 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
     return () => sub.remove();
   }, []);
   const { session } = useAuth();
+  const { openOrCreate } = useConversations();
+  const toast = useToast();
   const userId = session?.user?.id;
   const isOwner = userId === setup.creator.id;
   const { purchase, refetch } = usePurchase(setup.id, userId);
@@ -163,6 +167,26 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
       ],
     );
   }, [userId, session?.access_token, startCheckout]);
+
+  const handleNegotiate = useCallback(async () => {
+    if (!userId) {
+      Alert.alert('Bitte erst einloggen');
+      return;
+    }
+    const cid = await openOrCreate(setup.creator.id);
+    if (!cid) {
+      toast.show('Konnte Chat nicht öffnen', 'error');
+      return;
+    }
+    navigation.navigate('Conversation', {
+      conversationId: cid,
+      otherUserId: setup.creator.id,
+      otherUsername: setup.creator.username,
+      otherDisplayName: setup.creator.displayName,
+      otherAvatarUrl: setup.creator.avatarUrl,
+      initialText: `Hi! Ich interessiere mich für „${setup.title}" (gelistet für ${formatPriceEur(setup.priceCents)}). Da der Preis verhandelbar ist – ich würde dir ___ € anbieten. Passt das?`,
+    });
+  }, [userId, openOrCreate, setup, navigation, toast]);
 
   const handleOpenAsset = useCallback(async () => {
     if (!setup.assetUrl) {
@@ -385,23 +409,36 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
           </View>
         )}
         {buttonState === 'buy' && (
-          <TouchableOpacity
-            activeOpacity={0.85}
-            disabled={busy}
-            onPress={handleBuy}
-            accessibilityLabel="open-checkout"
-            style={styles.purchaseShadow}
-          >
-            <TealGradient style={styles.purchaseGradient}>
-              {busy ? (
-                <ActivityIndicator color="#0b3b35" />
-              ) : (
-                <Text style={styles.purchaseGradientText}>
-                  Setup holen · {formatPriceEur(setup.priceCents)}
+          <>
+            {setup.negotiable && (
+              <TouchableOpacity
+                onPress={handleNegotiate}
+                style={[styles.negotiateBtn, { borderColor: palette.border }]}
+                accessibilityLabel="negotiate-price"
+              >
+                <Text style={[styles.negotiateBtnText, { color: palette.text }]}>
+                  💬 Preis vorschlagen
                 </Text>
-              )}
-            </TealGradient>
-          </TouchableOpacity>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              disabled={busy}
+              onPress={handleBuy}
+              accessibilityLabel="open-checkout"
+              style={styles.purchaseShadow}
+            >
+              <TealGradient style={styles.purchaseGradient}>
+                {busy ? (
+                  <ActivityIndicator color="#0b3b35" />
+                ) : (
+                  <Text style={styles.purchaseGradientText}>
+                    Setup holen · {formatPriceEur(setup.priceCents)}
+                  </Text>
+                )}
+              </TealGradient>
+            </TouchableOpacity>
+          </>
         )}
       </View>
 
@@ -514,6 +551,14 @@ const styles = StyleSheet.create({
   ownedButton: { backgroundColor: '#16a34a' },
   disabledButton: { backgroundColor: '#999' },
   purchaseButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  negotiateBtn: {
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  negotiateBtnText: { fontSize: 15, fontWeight: '800' },
   purchaseShadow: {
     borderRadius: 14,
     shadowColor: '#14B8A6',

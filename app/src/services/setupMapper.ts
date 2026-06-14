@@ -24,6 +24,7 @@ export function mapDbSetupToSetup(db: DbSetupWithCreator): Setup {
     assetType: db.asset_type,
     assetUrl: db.asset_url ?? '',
     priceCents: db.price_cents,
+    negotiable: db.negotiable ?? false,
     currency: db.currency as 'EUR',
     tags: db.tags,
     ratingAverage: db.rating_average,

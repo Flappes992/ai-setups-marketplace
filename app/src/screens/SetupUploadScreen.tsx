@@ -198,6 +198,7 @@ export function SetupUploadScreen() {
   const [activeTip, setActiveTip] = useState<TipKey | null>(null);
   const [videoTipVisible, setVideoTipVisible] = useState(false);
   const videoTipShown = useRef(false);
+  const [negotiable, setNegotiable] = useState(false);
   const draftLoaded = useRef(false);
 
   const topTags = useMemo(() => {
@@ -277,7 +278,7 @@ export function SetupUploadScreen() {
 
   const priceCents = Math.round(parseFloat(priceEur.replace(',', '.')) * 100) || 0;
 
-  const minPrice = isPlusCreator ? 0 : 500;
+  const minPrice = 500;
   const bpNoteCountNum = Number(bpNoteCount) || 0;
   const validBrainpack = !!brainpackUri && bpNoteCountNum >= 1;
 
@@ -472,6 +473,7 @@ export function SetupUploadScreen() {
         asset_type: finalAssetType,
         asset_url: finalAssetUrl,
         price_cents: priceCents,
+        negotiable: isPlusCreator ? negotiable : false,
         currency: 'EUR',
         tags: tagsArray,
         status: 'live',
@@ -1132,10 +1134,41 @@ export function SetupUploadScreen() {
               accessibilityLabel="upload-price"
             />
             <Text style={[styles.hint, { color: palette.textSecondary }]}>
-              {isPlusCreator
-                ? 'Creator+ Privileg: 0 € erlaubt (Community-Setup)'
-                : 'Mindestpreis: 5,00 €'}
+              Mindestpreis: 5,00 €
             </Text>
+            {isPlusCreator && (
+              <TouchableOpacity
+                onPress={() => setNegotiable((v) => !v)}
+                style={[
+                  styles.negotiableToggle,
+                  { borderColor: palette.border },
+                  negotiable && {
+                    borderColor: palette.accent,
+                    backgroundColor: 'rgba(45,212,191,0.08)',
+                  },
+                ]}
+                accessibilityLabel="toggle-negotiable"
+              >
+                <View
+                  style={[
+                    styles.negotiableCheck,
+                    { borderColor: palette.border },
+                    negotiable && { backgroundColor: palette.accent, borderColor: palette.accent },
+                  ]}
+                >
+                  {negotiable && <Text style={styles.negotiableCheckMark}>✓</Text>}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.negotiableTitle, { color: palette.text }]}>
+                    💎 Preis verhandelbar
+                  </Text>
+                  <Text style={[styles.negotiableSub, { color: palette.textSecondary }]}>
+                    Creator+: Käufer können dir ein Angebot machen — so erkennst du echtes
+                    Kaufinteresse.
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
           </Section>
 
           <Section
@@ -1508,4 +1541,24 @@ const styles = StyleSheet.create({
   videoTipRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 7 },
   videoTipBullet: { color: BRAND.teal, fontSize: 13, fontWeight: '900', lineHeight: 18 },
   videoTipText: { color: '#9aa3ad', fontSize: 12.5, lineHeight: 18, flex: 1 },
+  negotiableToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  negotiableCheck: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  negotiableCheckMark: { color: '#04201c', fontSize: 13, fontWeight: '900' },
+  negotiableTitle: { fontSize: 14, fontWeight: '800' },
+  negotiableSub: { fontSize: 12, lineHeight: 16, marginTop: 2 },
 });

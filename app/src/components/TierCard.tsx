@@ -36,7 +36,7 @@ const TIER_META: Record<Tier, { name: string; emoji: string; line: string; color
   creator_plus: {
     name: 'Creator+',
     emoji: '💎',
-    line: 'Founding-Creator. Du darfst gratis Setups posten.',
+    line: 'Founding-Creator. Du kannst Preise verhandelbar machen.',
     color: BRAND.teal,
   },
 };
@@ -153,7 +153,7 @@ export function TierCard() {
                 Wer launcht, postet, sich in der Community zeigt, fällt auf.
               </Text>
               <Text style={styles.plusInvitePerk}>
-                Privileg: kostenlose Setups als Community-Beitrag posten.
+                Privileg: Preise verhandelbar machen — echtes Kaufinteresse erkennen.
               </Text>
             </View>
           </View>
@@ -167,8 +167,9 @@ export function TierCard() {
             <View style={{ flex: 1 }}>
               <Text style={styles.plusActiveTitle}>Founding Creator+</Text>
               <Text style={styles.plusActiveSub}>
-                Du gehörst zu den ersten von Sicci persönlich ausgewählten Creators. Du darfst
-                Setups gratis posten als Community-Beitrag.
+                Du gehörst zu den ersten von Sicci persönlich ausgewählten Creators. Dein Privileg:
+                Setups verhandelbar machen — Käufer können dir Angebote schicken, du erkennst echtes
+                Kaufinteresse.
               </Text>
             </View>
           </View>

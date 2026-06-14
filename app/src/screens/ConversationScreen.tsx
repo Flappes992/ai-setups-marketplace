@@ -37,7 +37,7 @@ export function ConversationScreen() {
   const toast = useToast();
   const params = route.params;
   const { messages, loading, send, markAllRead, refresh } = useMessages(params.conversationId);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState(params.initialText ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<SendAttachment | null>(null);
