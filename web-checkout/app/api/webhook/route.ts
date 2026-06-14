@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { sendPushToUser } from '@/lib/push';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +45,27 @@ export async function POST(req: NextRequest) {
             completed_at: new Date().toISOString(),
           })
           .eq('stripe_session_id', session.id);
+
+        // Push an den Creator: dein Setup wurde verkauft (best-effort)
+        try {
+          const { data: purchase } = await supabase
+            .from('purchases')
+            .select('setup:setups!inner(title, creator_id)')
+            .eq('stripe_session_id', session.id)
+            .single();
+          const setup = (purchase?.setup ?? null) as
+            | { title: string; creator_id: string }
+            | null;
+          if (setup?.creator_id) {
+            await sendPushToUser(supabase, setup.creator_id, {
+              title: 'Verkauft 🎉',
+              body: `Dein Setup „${setup.title}" wurde gekauft.`,
+              data: { type: 'sale' },
+            });
+          }
+        } catch {
+          // Push darf den Webhook nie kippen
+        }
         break;
       }
       case 'checkout.session.expired': {

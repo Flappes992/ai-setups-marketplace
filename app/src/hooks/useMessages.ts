@@ -2,6 +2,22 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/auth/useAuth';
 
+const WEB_CHECKOUT_BASE = 'https://web-checkout-sicci-s-projects.vercel.app';
+
+/* Push an den Empfänger anstoßen — best-effort, blockiert das Senden nie. */
+async function notifyMessage(conversationId: string, preview: string, accessToken?: string) {
+  if (!accessToken) return;
+  try {
+    await fetch(`${WEB_CHECKOUT_BASE}/api/push/notify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ conversationId, preview }),
+    });
+  } catch {
+    // ignore
+  }
+}
+
 export type AttachmentType = 'image' | 'gif' | 'file';
 
 export interface Message {
@@ -157,6 +173,9 @@ export function useMessages(conversationId: string | null): Result {
         .select('id, sender_id, body, created_at, read_at, attachment_url, attachment_type, attachment_name, attachment_size_bytes')
         .single();
       if (error || !data) return { ok: false, error: error?.message ?? 'Senden fehlgeschlagen' };
+
+      // Empfänger per Push benachrichtigen (fire-and-forget)
+      void notifyMessage(conversationId, trimmed || 'Anhang', session?.access_token);
 
       type InsertResult = {
         id: string;
