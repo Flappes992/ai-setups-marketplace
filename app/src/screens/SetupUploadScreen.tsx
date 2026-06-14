@@ -196,6 +196,8 @@ export function SetupUploadScreen() {
   ]);
   const [guideOpen, setGuideOpen] = useState(false);
   const [activeTip, setActiveTip] = useState<TipKey | null>(null);
+  const [videoTipVisible, setVideoTipVisible] = useState(false);
+  const videoTipShown = useRef(false);
   const draftLoaded = useRef(false);
 
   const topTags = useMemo(() => {
@@ -334,6 +336,11 @@ export function SetupUploadScreen() {
     });
     if (!result.canceled && result.assets[0]) {
       setVideoUri(result.assets[0].uri);
+      // Einmaliger Vertrauens-Nudge beim ersten Video
+      if (!videoTipShown.current) {
+        videoTipShown.current = true;
+        setVideoTipVisible(true);
+      }
     }
   }
 
@@ -1226,6 +1233,49 @@ export function SetupUploadScreen() {
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
+
+      {/* Vertrauens-Nudge nach Video-Auswahl */}
+      <Modal
+        visible={videoTipVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setVideoTipVisible(false)}
+        statusBarTranslucent
+      >
+        <TouchableOpacity
+          style={styles.tipBackdrop}
+          activeOpacity={1}
+          onPress={() => setVideoTipVisible(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.tipSheet}>
+            <Text style={styles.tipModalTitle}>Dein Video verkauft 🎬</Text>
+            <Text style={styles.tipModalBody}>
+              Käufer entscheiden in den ersten Sekunden. Ein Video, das Vertrauen
+              weckt, verkauft deutlich mehr als ein hektischer Screen-Mitschnitt.
+            </Text>
+            <Text style={styles.tipModalSubtitle}>So weckst du Vertrauen</Text>
+            {[
+              'Zeig dein Gesicht oder deine Stimme — echte Menschen wirken glaubwürdig',
+              'Zeig das Ergebnis, nicht nur den Aufbau',
+              'Erste 3 Sekunden: sag klar, was es bringt',
+              'Ruhige Hand, gutes Licht, vertikal gefilmt',
+              'Ehrlich statt übertrieben — überzeugt am Ende mehr',
+            ].map((tip) => (
+              <View key={tip} style={styles.videoTipRow}>
+                <Text style={styles.videoTipBullet}>›</Text>
+                <Text style={styles.videoTipText}>{tip}</Text>
+              </View>
+            ))}
+            <TouchableOpacity
+              onPress={() => setVideoTipVisible(false)}
+              style={styles.tipClose}
+              accessibilityLabel="close-video-tip"
+            >
+              <Text style={styles.tipCloseText}>Verstanden</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1445,4 +1495,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tipCloseText: { color: '#0b3b35', fontWeight: '800', fontSize: 14 },
+  videoTipRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 7 },
+  videoTipBullet: { color: BRAND.teal, fontSize: 13, fontWeight: '900', lineHeight: 18 },
+  videoTipText: { color: '#9aa3ad', fontSize: 12.5, lineHeight: 18, flex: 1 },
 });
