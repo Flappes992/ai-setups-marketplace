@@ -26,6 +26,8 @@ import { ConciergeScreen } from '@/screens/ConciergeScreen';
 import { BundlesScreen } from '@/screens/BundlesScreen';
 import { BundleCreateScreen } from '@/screens/BundleCreateScreen';
 import { BundleDetailScreen } from '@/screens/BundleDetailScreen';
+import { ScanImportScreen } from '@/screens/ScanImportScreen';
+import type { ScanPrefill } from '@/lib/scanImport';
 import { Setup } from '@/types/setup';
 import type { Bundle } from '@/hooks/useBundles';
 import { useAuth } from '@/auth/useAuth';
@@ -43,7 +45,8 @@ export type TabParamList = {
 export type MainStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList> | undefined;
   SetupDetail: { setup: Setup; focusComment?: boolean };
-  SetupUpload: undefined;
+  SetupUpload: { prefill?: ScanPrefill } | undefined;
+  ScanImport: undefined;
   Settings: undefined;
   EditProfile: undefined;
   Search: undefined;
@@ -124,6 +127,11 @@ function MainNavigator() {
       <MainStack.Screen
         name="SetupUpload"
         component={SetupUploadScreen}
+        options={{ presentation: 'modal' }}
+      />
+      <MainStack.Screen
+        name="ScanImport"
+        component={ScanImportScreen}
         options={{ presentation: 'modal' }}
       />
       <MainStack.Screen name="Settings" component={SettingsScreen} />

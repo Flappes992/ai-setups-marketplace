@@ -18,7 +18,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type {
   AssetType,
@@ -158,6 +159,8 @@ type UploadNav = NativeStackNavigationProp<MainStackParamList, 'SetupUpload'>;
 
 export function SetupUploadScreen() {
   const navigation = useNavigation<UploadNav>();
+  const route = useRoute<RouteProp<MainStackParamList, 'SetupUpload'>>();
+  const prefill = route.params?.prefill;
   const { palette } = useTheme();
   const { session } = useAuth();
   const { setups: allSetups } = useSetups();
@@ -199,7 +202,9 @@ export function SetupUploadScreen() {
   const [videoTipVisible, setVideoTipVisible] = useState(false);
   const videoTipShown = useRef(false);
   const [negotiable, setNegotiable] = useState(false);
+  const [scanContent, setScanContent] = useState<string | null>(null);
   const draftLoaded = useRef(false);
+  const prefillApplied = useRef<string | null>(null);
 
   const topTags = useMemo(() => {
     const counts = new Map<string, number>();
@@ -210,7 +215,26 @@ export function SetupUploadScreen() {
       .slice(0, 12);
   }, [allSetups]);
 
+  // Setiq-Scan-Import: füllt die Felder vor (überschreibt einen evtl. Entwurf)
   useEffect(() => {
+    if (!prefill) return;
+    const key = `${prefill.title}::${prefill.content}`;
+    if (prefillApplied.current === key) return;
+    prefillApplied.current = key;
+    setTitle(prefill.title.slice(0, 80));
+    setDescription(prefill.description.slice(0, 500));
+    setTagsInput(prefill.tags.join(', '));
+    if (prefill.priceEur > 0) setPriceEur(String(prefill.priceEur));
+    setMode(prefill.mode);
+    setScanContent(prefill.content || null);
+    draftLoaded.current = true;
+  }, [prefill]);
+
+  useEffect(() => {
+    if (route.params?.prefill) {
+      draftLoaded.current = true;
+      return;
+    }
     AsyncStorage.getItem(DRAFT_KEY)
       .then((raw) => {
         if (!raw) {
@@ -531,6 +555,39 @@ export function SetupUploadScreen() {
               <Text style={styles.helpBtnText}>?</Text>
             </TouchableOpacity>
           </View>
+
+          {!scanContent && (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ScanImport')}
+              style={[styles.scanCta, { borderColor: palette.accent, backgroundColor: palette.surface }]}
+              accessibilityLabel="open-scan-import"
+            >
+              <Text style={[styles.scanCtaText, { color: palette.accent }]}>
+                ✨ Schneller: Per Setiq-Scan importieren
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {scanContent && (
+            <View style={[styles.scanBanner, { borderColor: palette.accent, backgroundColor: palette.surface }]}>
+              <Text style={[styles.scanBannerTitle, { color: palette.text }]}>
+                ✨ Aus Setiq-Scan importiert
+              </Text>
+              <Text style={[styles.scanBannerHint, { color: palette.textSecondary }]}>
+                Titel, Beschreibung, Tags und Preis sind vorausgefüllt. Füg noch ein Video hinzu
+                und – falls klonbar – deinen Link oder die Datei. Der gesäuberte Inhalt (zum
+                Kopieren):
+              </Text>
+              <ScrollView style={styles.scanContentBox} nestedScrollEnabled>
+                <Text selectable style={[styles.scanContentText, { color: palette.text }]}>
+                  {scanContent}
+                </Text>
+              </ScrollView>
+              <Text style={[styles.scanBannerWarn, { color: palette.textSecondary }]}>
+                ⚠️ Prüf den Inhalt nochmal selbst auf persönliche Daten, bevor du veröffentlichst.
+              </Text>
+            </View>
+          )}
 
           <Section label="Setup-Art" onTipPress={() => setActiveTip('setup-art')}>
             <View style={styles.switchRow}>
@@ -1561,4 +1618,33 @@ const styles = StyleSheet.create({
   negotiableCheckMark: { color: '#04201c', fontSize: 13, fontWeight: '900' },
   negotiableTitle: { fontSize: 14, fontWeight: '800' },
   negotiableSub: { fontSize: 12, lineHeight: 16, marginTop: 2 },
+  scanCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    marginBottom: 14,
+  },
+  scanCtaText: { fontSize: 13, fontWeight: '800' },
+  scanBanner: {
+    borderWidth: 1.5,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 14,
+    gap: 8,
+  },
+  scanBannerTitle: { fontSize: 14, fontWeight: '800' },
+  scanBannerHint: { fontSize: 12.5, lineHeight: 18 },
+  scanContentBox: {
+    maxHeight: 160,
+    borderRadius: 10,
+    backgroundColor: 'rgba(127,127,127,0.08)',
+    padding: 10,
+  },
+  scanContentText: { fontSize: 12, lineHeight: 17, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
+  scanBannerWarn: { fontSize: 11.5, lineHeight: 16, fontStyle: 'italic' },
 });
