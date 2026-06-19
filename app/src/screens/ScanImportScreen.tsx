@@ -22,6 +22,8 @@ import {
   type ScanPrefill,
 } from '@/lib/scanImport';
 import { BRAND, useTheme } from '@/theme/ThemeProvider';
+import { CopyButton } from '@/components/CopyButton';
+import { SETIQ_SCAN_PROMPT } from '@/lib/scanPrompt';
 
 type Nav = NativeStackNavigationProp<MainStackParamList, 'ScanImport'>;
 
@@ -40,7 +42,11 @@ export function ScanImportScreen() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const inputTheme = { backgroundColor: palette.surface, color: palette.text, borderColor: palette.border };
+  const inputTheme = {
+    backgroundColor: palette.surface,
+    color: palette.text,
+    borderColor: palette.border,
+  };
 
   function handleParse() {
     const parsed = parseScanOutput(raw);
@@ -63,7 +69,10 @@ export function ScanImportScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: palette.bg }]}
+      edges={['top', 'bottom']}
+    >
       <View style={[styles.topBar, { borderBottomColor: palette.border }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -83,8 +92,13 @@ export function ScanImportScreen() {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {!result && (
             <>
-              <View style={[styles.howBox, { backgroundColor: palette.surface, borderColor: palette.border }]}>
-                <Text style={[styles.howTitle, { color: palette.text }]}>So geht's</Text>
+              <View
+                style={[
+                  styles.howBox,
+                  { backgroundColor: palette.surface, borderColor: palette.border },
+                ]}
+              >
+                <Text style={[styles.howTitle, { color: palette.text }]}>{"So geht's"}</Text>
                 {[
                   'Kopier den Setiq-Scan-Prompt in dein eigenes ChatGPT / Claude.',
                   'Häng dein Setup dran (Prompts, CLAUDE.md, Workflows …).',
@@ -95,6 +109,14 @@ export function ScanImportScreen() {
                     <Text style={[styles.howText, { color: palette.textSecondary }]}>{s}</Text>
                   </View>
                 ))}
+                <CopyButton
+                  value={SETIQ_SCAN_PROMPT}
+                  label="📋 Setiq-Scan-Prompt kopieren"
+                  copiedLabel="✓ Prompt kopiert"
+                  toastText="Setiq-Scan-Prompt kopiert"
+                  accessibilityLabel="copy-scan-prompt"
+                  style={{ marginTop: 4 }}
+                />
               </View>
 
               <TextInput
@@ -150,14 +172,26 @@ export function ScanImportScreen() {
 
               {/* All-in-One */}
               {result.allInOne && (
-                <View style={[styles.aioCard, { borderColor: BRAND.teal, backgroundColor: palette.surface }]}>
+                <View
+                  style={[
+                    styles.aioCard,
+                    { borderColor: BRAND.teal, backgroundColor: palette.surface },
+                  ]}
+                >
                   <Text style={styles.aioBadge}>ALL-IN-ONE</Text>
-                  <Text style={[styles.cardTitle, { color: palette.text }]}>{result.allInOne.title}</Text>
-                  <Text style={[styles.cardDesc, { color: palette.textSecondary }]} numberOfLines={3}>
+                  <Text style={[styles.cardTitle, { color: palette.text }]}>
+                    {result.allInOne.title}
+                  </Text>
+                  <Text
+                    style={[styles.cardDesc, { color: palette.textSecondary }]}
+                    numberOfLines={3}
+                  >
                     {result.allInOne.description}
                   </Text>
                   <View style={styles.cardFooter}>
-                    <Text style={[styles.priceTag, { color: BRAND.teal }]}>{eur(result.allInOne.priceEur)}</Text>
+                    <Text style={[styles.priceTag, { color: BRAND.teal }]}>
+                      {eur(result.allInOne.priceEur)}
+                    </Text>
                     <TouchableOpacity
                       style={styles.useBtn}
                       onPress={() => startUpload(allInOnePrefill(result.allInOne!, result.assets))}
@@ -173,23 +207,36 @@ export function ScanImportScreen() {
               {result.assets.map((a, i) => (
                 <View
                   key={i}
-                  style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.border }]}
+                  style={[
+                    styles.card,
+                    { backgroundColor: palette.surface, borderColor: palette.border },
+                  ]}
                 >
                   <View style={styles.cardTopRow}>
-                    <Text style={[styles.catChip, { color: palette.textSecondary, borderColor: palette.border }]}>
+                    <Text
+                      style={[
+                        styles.catChip,
+                        { color: palette.textSecondary, borderColor: palette.border },
+                      ]}
+                    >
                       {categoryLabel(a.category)}
                     </Text>
                     <Text style={styles.qualityStars}>{stars(a.qualityScore)}</Text>
                   </View>
                   <Text style={[styles.cardTitle, { color: palette.text }]}>{a.title}</Text>
-                  <Text style={[styles.cardDesc, { color: palette.textSecondary }]} numberOfLines={3}>
+                  <Text
+                    style={[styles.cardDesc, { color: palette.textSecondary }]}
+                    numberOfLines={3}
+                  >
                     {a.description}
                   </Text>
                   {a.removedHere.length > 0 && (
                     <Text style={styles.removedNote}>🔒 entfernt: {a.removedHere.join(', ')}</Text>
                   )}
                   <View style={styles.cardFooter}>
-                    <Text style={[styles.priceTag, { color: palette.text }]}>{eur(a.priceEur)}</Text>
+                    <Text style={[styles.priceTag, { color: palette.text }]}>
+                      {eur(a.priceEur)}
+                    </Text>
                     <TouchableOpacity
                       style={styles.useBtn}
                       onPress={() => startUpload(assetToPrefill(a))}

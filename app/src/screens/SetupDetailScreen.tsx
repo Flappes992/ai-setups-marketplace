@@ -27,6 +27,8 @@ import { RoiCard } from '@/components/RoiCard';
 import { BrainPackCard } from '@/components/BrainPackCard';
 import { ClaudePackCard } from '@/components/ClaudePackCard';
 import { TealGradient } from '@/components/TealGradient';
+import { CopyButton } from '@/components/CopyButton';
+import { buildInstallPrompt } from '@/lib/installPrompt';
 import { useToggleLike } from '@/hooks/useToggleLike';
 import { useToggleSave } from '@/hooks/useToggleSave';
 import { useComments } from '@/hooks/useComments';
@@ -284,6 +286,31 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
             <ClaudePackCard manifest={setup.claudeManifest} />
           ) : null}
 
+          {buttonState === 'owned' ? (
+            <View
+              style={[
+                styles.installBox,
+                { backgroundColor: palette.surface, borderColor: BRAND.teal },
+              ]}
+            >
+              <Text style={[styles.installTitle, { color: palette.text }]}>
+                🤖 In deinem Claude installieren
+              </Text>
+              <Text style={[styles.installSub, { color: palette.textSecondary }]}>
+                Kopier den Prompt und gib ihn deinem Claude (oder ChatGPT) — er richtet das Setup
+                Schritt für Schritt bei dir ein.
+              </Text>
+              <CopyButton
+                value={() => buildInstallPrompt(setup)}
+                label="📋 Install-Prompt kopieren"
+                copiedLabel="✓ Prompt kopiert"
+                toastText="Install-Prompt kopiert"
+                accessibilityLabel="copy-install-prompt"
+                style={{ marginTop: 12 }}
+              />
+            </View>
+          ) : null}
+
           {setup.roiTimeSavedMinutes && setup.roiUseFrequency ? (
             <RoiCard
               minutesPerUse={setup.roiTimeSavedMinutes}
@@ -391,17 +418,22 @@ export function SetupDetailScreen({ setup, focusComment }: SetupDetailScreenProp
             <Text style={styles.purchaseButtonText}>Eigenes Setup</Text>
           </View>
         )}
-        {buttonState === 'owned' && (
-          <TouchableOpacity
-            style={[styles.purchaseButton, styles.ownedButton]}
-            onPress={handleOpenAsset}
-            accessibilityLabel="open-asset"
-          >
-            <Text style={styles.purchaseButtonText}>
-              {setup.assetType === 'clonable' ? 'Template öffnen' : 'Bundle herunterladen'}
-            </Text>
-          </TouchableOpacity>
-        )}
+        {buttonState === 'owned' &&
+          (setup.assetUrl ? (
+            <TouchableOpacity
+              style={[styles.purchaseButton, styles.ownedButton]}
+              onPress={handleOpenAsset}
+              accessibilityLabel="open-asset"
+            >
+              <Text style={styles.purchaseButtonText}>
+                {setup.assetType === 'clonable' ? 'Datei öffnen' : 'Bundle herunterladen'}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={[styles.purchaseButton, styles.ownedButton]}>
+              <Text style={styles.purchaseButtonText}>✓ Gekauft — Install-Prompt oben</Text>
+            </View>
+          ))}
         {buttonState === 'pending' && (
           <View style={[styles.purchaseButton, styles.disabledButton]}>
             <ActivityIndicator color="#fff" />
@@ -498,8 +530,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 20,
   },
-  floatingBackIcon: { color: '#fff', fontSize: 30, fontWeight: '600', lineHeight: 34, marginTop: -2 },
+  floatingBackIcon: {
+    color: '#fff',
+    fontSize: 30,
+    fontWeight: '600',
+    lineHeight: 34,
+    marginTop: -2,
+  },
   body: { padding: 20 },
+  installBox: {
+    marginHorizontal: 16,
+    marginTop: 14,
+    borderWidth: 1.5,
+    borderRadius: 16,
+    padding: 16,
+  },
+  installTitle: { fontSize: 16, fontWeight: '800' },
+  installSub: { fontSize: 13, lineHeight: 19, marginTop: 6 },
   title: { fontSize: 26, fontWeight: '700', marginBottom: 16, color: '#111' },
   creatorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24, gap: 8 },
   creatorTap: { flexDirection: 'row', alignItems: 'center', flex: 1 },

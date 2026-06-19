@@ -36,6 +36,8 @@ import { useSetups } from '@/hooks/useSetups';
 import { useMyTier } from '@/hooks/useMyTier';
 import { evaluateAchievementsFor } from '@/hooks/useAchievements';
 import { CreatorUploadGuide } from '@/components/CreatorUploadGuide';
+import { CopyButton } from '@/components/CopyButton';
+import { buildExportPrompt, EXPORT_MODE_LABEL } from '@/lib/exportPrompts';
 import { BRAND, useTheme } from '@/theme/ThemeProvider';
 
 const DRAFT_KEY = 'setiq.upload.draft.v1';
@@ -177,9 +179,9 @@ export function SetupUploadScreen() {
   const [bundleUri, setBundleUri] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [roiMinutes, setRoiMinutes] = useState('');
-  const [roiFrequency, setRoiFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'one_time' | null>(
-    null,
-  );
+  const [roiFrequency, setRoiFrequency] = useState<
+    'daily' | 'weekly' | 'monthly' | 'one_time' | null
+  >(null);
   const [mode, setMode] = useState<'standard' | 'skill' | 'brainpack' | 'claudepack'>('standard');
   const [brainpackUri, setBrainpackUri] = useState<string | null>(null);
   const [bpVaultType, setBpVaultType] = useState<BrainVaultType>('obsidian');
@@ -193,10 +195,7 @@ export function SetupUploadScreen() {
     { trigger: '', summary: '', body: '' },
   ]);
   const [cpAgents, setCpAgents] = useState<ClaudeAgent[]>([]);
-  const [cpTargets, setCpTargets] = useState<ClaudeTargetEnv[]>([
-    'claude-code',
-    'claude-projects',
-  ]);
+  const [cpTargets, setCpTargets] = useState<ClaudeTargetEnv[]>(['claude-code', 'claude-projects']);
   const [guideOpen, setGuideOpen] = useState(false);
   const [activeTip, setActiveTip] = useState<TipKey | null>(null);
   const [videoTipVisible, setVideoTipVisible] = useState(false);
@@ -309,9 +308,7 @@ export function SetupUploadScreen() {
   const validCommands = cpCommands.filter(
     (c) => c.trigger.trim().length > 0 && c.body.trim().length > 0,
   );
-  const validAgents = cpAgents.filter(
-    (a) => a.name.trim().length > 0 && a.body.trim().length > 0,
-  );
+  const validAgents = cpAgents.filter((a) => a.name.trim().length > 0 && a.body.trim().length > 0);
   const hasPersona = cpPersonaBody.trim().length >= 20 && cpPersonaTitle.trim().length > 0;
   const validClaudepack =
     cpTargets.length > 0 && (hasPersona || validCommands.length > 0 || validAgents.length > 0);
@@ -339,8 +336,7 @@ export function SetupUploadScreen() {
   function toggleTarget(t: ClaudeTargetEnv) {
     setCpTargets((arr) => (arr.includes(t) ? arr.filter((x) => x !== t) : [...arr, t]));
   }
-  const validStandard =
-    assetType === 'clonable' ? assetUrl.startsWith('https://') : !!bundleUri;
+  const validStandard = assetType === 'clonable' ? assetUrl.startsWith('https://') : !!bundleUri;
   const valid =
     !!videoUri &&
     title.trim().length >= 3 &&
@@ -421,12 +417,13 @@ export function SetupUploadScreen() {
         finalAssetUrl = '';
         finalAssetType = 'clonable';
         assetSubtype = 'claudepack';
-        const packId = title
-          .trim()
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '')
-          .slice(0, 48) || `pack-${Date.now()}`;
+        const packId =
+          title
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .slice(0, 48) || `pack-${Date.now()}`;
         claudeManifest = {
           id: packId,
           manifest_version: 1,
@@ -511,9 +508,11 @@ export function SetupUploadScreen() {
 
       await AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
       evaluateAchievementsFor(session.user.id);
-      Alert.alert('Eingereicht ✅', 'Dein Setup wird kurz geprüft und geht dann live. Du bekommst Bescheid.', [
-        { text: 'OK', onPress: () => navigation.popToTop() },
-      ]);
+      Alert.alert(
+        'Eingereicht ✅',
+        'Dein Setup wird kurz geprüft und geht dann live. Du bekommst Bescheid.',
+        [{ text: 'OK', onPress: () => navigation.popToTop() }],
+      );
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unbekannter Fehler';
       Alert.alert('Fehler', msg);
@@ -529,7 +528,10 @@ export function SetupUploadScreen() {
   const inputTheme = { backgroundColor: palette.surface, color: palette.text };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: palette.bg }]} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: palette.bg }]}
+      edges={['top', 'bottom']}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
@@ -559,7 +561,10 @@ export function SetupUploadScreen() {
           {!scanContent && (
             <TouchableOpacity
               onPress={() => navigation.navigate('ScanImport')}
-              style={[styles.scanCta, { borderColor: palette.accent, backgroundColor: palette.surface }]}
+              style={[
+                styles.scanCta,
+                { borderColor: palette.accent, backgroundColor: palette.surface },
+              ]}
               accessibilityLabel="open-scan-import"
             >
               <Text style={[styles.scanCtaText, { color: palette.accent }]}>
@@ -569,14 +574,18 @@ export function SetupUploadScreen() {
           )}
 
           {scanContent && (
-            <View style={[styles.scanBanner, { borderColor: palette.accent, backgroundColor: palette.surface }]}>
+            <View
+              style={[
+                styles.scanBanner,
+                { borderColor: palette.accent, backgroundColor: palette.surface },
+              ]}
+            >
               <Text style={[styles.scanBannerTitle, { color: palette.text }]}>
                 ✨ Aus Setiq-Scan importiert
               </Text>
               <Text style={[styles.scanBannerHint, { color: palette.textSecondary }]}>
-                Titel, Beschreibung, Tags und Preis sind vorausgefüllt. Füg noch ein Video hinzu
-                und – falls klonbar – deinen Link oder die Datei. Der gesäuberte Inhalt (zum
-                Kopieren):
+                Titel, Beschreibung, Tags und Preis sind vorausgefüllt. Füg noch ein Video hinzu und
+                – falls klonbar – deinen Link oder die Datei. Der gesäuberte Inhalt (zum Kopieren):
               </Text>
               <ScrollView style={styles.scanContentBox} nestedScrollEnabled>
                 <Text selectable style={[styles.scanContentText, { color: palette.text }]}>
@@ -683,6 +692,41 @@ export function SetupUploadScreen() {
             </Text>
           </Section>
 
+          {!scanContent && (
+            <View
+              style={[
+                styles.exportBox,
+                { borderColor: palette.accent, backgroundColor: palette.surface },
+              ]}
+            >
+              <Text style={[styles.exportTitle, { color: palette.text }]}>
+                🤖 Schon ein {EXPORT_MODE_LABEL[mode]}? Lass es deinen Claude exportieren
+              </Text>
+              <Text style={[styles.exportHint, { color: palette.textSecondary }]}>
+                Kopier den Export-Prompt, gib ihn deinem Claude/ChatGPT mit deinem{' '}
+                {EXPORT_MODE_LABEL[mode]} — du bekommst gesäubertes JSON zurück. Das fügst du dann
+                unter „Setiq-Scan importieren“ ein und alles ist vorausgefüllt.
+              </Text>
+              <CopyButton
+                value={() => buildExportPrompt(mode)}
+                label={`📋 Export-Prompt für ${EXPORT_MODE_LABEL[mode]} kopieren`}
+                copiedLabel="✓ Prompt kopiert"
+                toastText="Export-Prompt kopiert"
+                accessibilityLabel="copy-export-prompt"
+                style={{ marginTop: 12 }}
+              />
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ScanImport')}
+                style={styles.exportImportLink}
+                accessibilityLabel="goto-scan-import"
+              >
+                <Text style={[styles.exportImportLinkText, { color: palette.accent }]}>
+                  JSON fertig? → Hier importieren
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <Section label="Video (wird im Feed angezeigt)">
             {videoUri ? (
               <View>
@@ -701,7 +745,10 @@ export function SetupUploadScreen() {
             ) : (
               <TouchableOpacity
                 onPress={pickVideo}
-                style={[styles.pickerArea, { backgroundColor: palette.surface, borderColor: palette.border }]}
+                style={[
+                  styles.pickerArea,
+                  { backgroundColor: palette.surface, borderColor: palette.border },
+                ]}
                 accessibilityLabel="upload-video-pick"
               >
                 <Text style={[styles.pickerText, { color: palette.text }]}>
@@ -863,7 +910,10 @@ export function SetupUploadScreen() {
                 >
                   <TouchableOpacity
                     onPress={pickBundle}
-                    style={[styles.pickerArea, { backgroundColor: palette.surface, borderColor: palette.border }]}
+                    style={[
+                      styles.pickerArea,
+                      { backgroundColor: palette.surface, borderColor: palette.border },
+                    ]}
                     accessibilityLabel="upload-pick-bundle"
                   >
                     <Text style={[styles.pickerText, { color: palette.text }]}>
@@ -883,7 +933,10 @@ export function SetupUploadScreen() {
               >
                 <TouchableOpacity
                   onPress={pickBrainpack}
-                  style={[styles.pickerArea, { backgroundColor: palette.surface, borderColor: palette.border }]}
+                  style={[
+                    styles.pickerArea,
+                    { backgroundColor: palette.surface, borderColor: palette.border },
+                  ]}
                   accessibilityLabel="upload-pick-brainpack"
                 >
                   <Text style={[styles.pickerText, { color: palette.text }]}>
@@ -1058,7 +1111,10 @@ export function SetupUploadScreen() {
                 onTipPress={() => setActiveTip('cp-commands')}
               >
                 {cpCommands.map((c, i) => (
-                  <View key={i} style={[styles.cpItemBox, { backgroundColor: palette.bgSecondary }]}>
+                  <View
+                    key={i}
+                    style={[styles.cpItemBox, { backgroundColor: palette.bgSecondary }]}
+                  >
                     <View style={styles.cpItemHeader}>
                       <Text style={[styles.cpItemLabel, { color: palette.textSecondary }]}>
                         Command {i + 1}
@@ -1093,7 +1149,9 @@ export function SetupUploadScreen() {
                     />
                     <TextInput
                       selectionColor="#2DD4BF"
-                      placeholder={'Command-Body als Markdown\n\nz.B. "Du bist ein Standup-Bot. Fasse meinen Tag zusammen…"'}
+                      placeholder={
+                        'Command-Body als Markdown\n\nz.B. "Du bist ein Standup-Bot. Fasse meinen Tag zusammen…"'
+                      }
                       placeholderTextColor={palette.textSecondary}
                       value={c.body}
                       onChangeText={(t) => updateCommand(i, { body: t })}
@@ -1121,7 +1179,10 @@ export function SetupUploadScreen() {
                 onTipPress={() => setActiveTip('cp-agents')}
               >
                 {cpAgents.map((a, i) => (
-                  <View key={i} style={[styles.cpItemBox, { backgroundColor: palette.bgSecondary }]}>
+                  <View
+                    key={i}
+                    style={[styles.cpItemBox, { backgroundColor: palette.bgSecondary }]}
+                  >
                     <View style={styles.cpItemHeader}>
                       <Text style={[styles.cpItemLabel, { color: palette.textSecondary }]}>
                         Agent {i + 1}
@@ -1275,7 +1336,7 @@ export function SetupUploadScreen() {
               ))}
             </View>
             <Text style={[styles.hint, { color: palette.textSecondary }]}>
-              Käufer sehen damit „Du sparst X Std/Monat" — krasser Sales-Trigger.
+              Käufer sehen damit „Du sparst X Std/Monat“ — krasser Sales-Trigger.
             </Text>
           </Section>
 
@@ -1348,8 +1409,8 @@ export function SetupUploadScreen() {
           <TouchableOpacity activeOpacity={1} style={styles.tipSheet}>
             <Text style={styles.tipModalTitle}>Dein Video verkauft 🎬</Text>
             <Text style={styles.tipModalBody}>
-              Käufer entscheiden in den ersten Sekunden. Ein Video, das Vertrauen
-              weckt, verkauft deutlich mehr als ein hektischer Screen-Mitschnitt.
+              Käufer entscheiden in den ersten Sekunden. Ein Video, das Vertrauen weckt, verkauft
+              deutlich mehr als ein hektischer Screen-Mitschnitt.
             </Text>
             <Text style={styles.tipModalSubtitle}>So weckst du Vertrauen</Text>
             {[
@@ -1630,6 +1691,16 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   scanCtaText: { fontSize: 13, fontWeight: '800' },
+  exportBox: {
+    borderWidth: 1.5,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 14,
+  },
+  exportTitle: { fontSize: 15, fontWeight: '800' },
+  exportHint: { fontSize: 13, lineHeight: 19, marginTop: 6 },
+  exportImportLink: { alignItems: 'center', paddingTop: 12 },
+  exportImportLinkText: { fontSize: 13, fontWeight: '700' },
   scanBanner: {
     borderWidth: 1.5,
     borderRadius: 14,
@@ -1645,6 +1716,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(127,127,127,0.08)',
     padding: 10,
   },
-  scanContentText: { fontSize: 12, lineHeight: 17, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
+  scanContentText: {
+    fontSize: 12,
+    lineHeight: 17,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
   scanBannerWarn: { fontSize: 11.5, lineHeight: 16, fontStyle: 'italic' },
 });
